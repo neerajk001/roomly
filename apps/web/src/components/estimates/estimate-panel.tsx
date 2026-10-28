@@ -8,8 +8,9 @@ import {
   type ScopeItem,
 } from "@roomdesigner/shared";
 import { computeEstimate, rankChanges, type RateItem } from "@roomdesigner/estimate";
+import { track } from "@/lib/analytics";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const RANGE_BPS = 2000;
 
@@ -29,6 +30,10 @@ export interface EstimatePanelProps {
 }
 
 export function EstimatePanel(props: EstimatePanelProps) {
+  useEffect(() => {
+    track("estimate_viewed", { usedTypical: props.usedTypicalSize });
+  }, [props.usedTypicalSize]);
+
   const [selected, setSelected] = useState<Set<string>>(
     () => new Set(props.scope.map((item) => item.itemKey)),
   );

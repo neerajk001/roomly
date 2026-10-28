@@ -15,6 +15,7 @@ import {
   typicalSizeFor,
   totalCreditCost,
 } from "@roomdesigner/shared";
+import { track } from "@/lib/analytics";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -91,6 +92,10 @@ export function GuidedWizard({ currency }: { currency: string }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
+
+  useEffect(() => {
+    track("wizard_started");
+  }, []);
 
   useEffect(() => {
     const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -196,6 +201,7 @@ export function GuidedWizard({ currency }: { currency: string }) {
         return;
       }
 
+      track("wizard_completed", { roomType: draft.roomType, renter: draft.renterMode });
       window.localStorage.removeItem(STORAGE_KEY);
       await goToRoomAction(created.projectId, created.roomId);
       router.refresh();

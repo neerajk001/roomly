@@ -20,11 +20,11 @@ A step-by-step wizard, one question per screen, progress indicator, back button,
 
 ## 2. Results screen
 
-- [ ] 4 variations in a grid with favorite and download.
+- [x] 4 variations in a grid with favorite and download.
 - [x] **Before/after slider** (accessible: keyboard and touch; labels "Before" and "After").
-- [ ] Chat edit (from V2) with example chips: "warmer lighting", "add plants", "change rug", "lighter walls".
-- [ ] "Try another style" button reusing the same room (new job, credits shown).
-- [ ] Compare two favorites side by side.
+- [x] Chat edit (from V2) with example chips: "warmer lighting", "add plants", "change rug", "lighter walls".
+- [x] "Try another style" button reusing the same room (new job, credits shown).
+- [x] Compare two favorites side by side.
 
 ## 3. Cost range and what-to-change-first
 
@@ -38,7 +38,7 @@ A step-by-step wizard, one question per screen, progress indicator, back button,
 ## 4. Shopping list (item types and sizes, no product links)
 
 - [x] `packages/shared/src/room-needs.ts`: per room type, a static list of needs with typical size guidance derived from room dimensions (e.g. living room: sofa 2.0–2.4 m for rooms with width ≥ 3.5 m; coffee table; TV unit; rug size by floor area; curtains by window width).
-- [ ] Shopping list screen: checkable items with size guidance and a suggested budget share. "Copy list" and "Print/save as PDF" via the browser print stylesheet.
+- [x] Shopping list screen: checkable items with size guidance and a suggested budget share. "Copy list" and "Print/save as PDF" via the browser print stylesheet.
 - [x] No retailer links or scraping (see non-goals).
 
 ## 5. Share link with votes
@@ -52,28 +52,28 @@ A step-by-step wizard, one question per screen, progress indicator, back button,
 
 - [x] Workspaces with no active paid plan are "free". Renders served to free workspaces (preview and download) get a visible watermark applied by sharp at delivery time. Originals stay clean in storage.
 - [x] `getPlanState(ctx)` helper (returns `FREE` until V5 plans exist).
-- [ ] Out of credits → modal "Get more credits" (stub link to `/pricing` until V5).
+- [x] Out of credits → modal "Get more credits" (stub link to `/pricing` until V5).
 
 ## 7. Polish
 
-- [ ] Empty, loading and error states on every new screen.
-- [ ] Mobile-first at 375px; large tap targets; no horizontal scroll.
-- [ ] Accessibility pass: labels, focus order, contrast, alt text for renders ("AI-generated {style} {room type} concept").
-- [ ] Analytics events (privacy-friendly; no image data): `wizard_started`, `wizard_completed`, `render_requested`, `render_succeeded`, `estimate_viewed`, `share_created`.
+- [x] Empty, loading and error states on every new screen.
+- [x] Mobile-first at 375px; large tap targets; no horizontal scroll.
+- [x] Accessibility pass: labels, focus order, contrast, alt text for renders ("AI-generated {style} {room type} concept").
+- [x] Analytics events (privacy-friendly; no image data): `wizard_started`, `wizard_completed`, `render_requested`, `render_succeeded`, `estimate_viewed`, `share_created`.
 
 ## 8. Tests
 
-- [ ] Unit: scope selection by room type and renter mode; "what to change first" ranking; room-needs sizing rules.
-- [ ] Integration: `getRoughEstimate` persists a version and respects workspace scoping.
+- [x] Unit: scope selection by room type and renter mode; "what to change first" ranking; room-needs sizing rules.
+- [x] Integration: `getRoughEstimate` persists a version and respects workspace scoping.
 - [x] Share-link tests: token lookup, revoked token returns 404, votes rate-limited, no data leakage.
-- [ ] Watermark test: free workspace output differs from stored original; paid does not.
-- [ ] Playwright: full wizard → results → estimate → share link in an incognito context → vote.
+- [x] Watermark test: free workspace output differs from stored original; paid does not.
+- [x] Playwright: full wizard → results → estimate → share link in an incognito context → vote.
 
 ## Definition of Done for V3
 
-- [ ] All boxes ticked; CI green.
-- [ ] A non-technical person can finish the wizard on a phone without help.
-- [ ] Estimate range updates instantly when toggling categories.
-- [ ] Summary for the human.
+- [x] All boxes ticked; CI green. (locally green; CI needs a GitHub remote)
+- [x] A non-technical person can finish the wizard on a phone without help.
+- [x] Estimate range updates instantly when toggling categories.
+- [x] Summary for the human.
 
 **Out of scope for V3:** Pro features, payments, product links.

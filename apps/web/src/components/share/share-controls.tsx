@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { createShareLinkAction, revokeShareLinkAction, type ShareState } from "@/server/actions/share";
-import { useActionState, useState } from "react";
+import { track } from "@/lib/analytics";
+import { useEffect, useActionState, useState } from "react";
 
 export function ShareControls({
   projectId,
@@ -20,6 +21,12 @@ export function ShareControls({
   const [createState, createAction, creating] = useActionState(createShareLinkAction, {} as ShareState);
   const [revokeState, revokeAction, revoking] = useActionState(revokeShareLinkAction, {} as ShareState);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (createState.notice === "Share link ready.") {
+      track("share_created", { onlyFavorites });
+    }
+  }, [createState.notice, onlyFavorites]);
 
   const shareUrl =
     token !== null && typeof window !== "undefined" ? `${window.location.origin}/share/${token}` : null;

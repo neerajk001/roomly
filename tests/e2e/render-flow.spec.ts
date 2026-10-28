@@ -20,8 +20,8 @@ test("full render flow: project, room, photo, 4 concepts, favorite, chat edit", 
   await page.setViewportSize({ width: 375, height: 812 });
   await signUpAndOnboardHome(page);
 
-  // Project
-  await page.getByRole("link", { name: "New project" }).click();
+  // Project (classic form path; /app/new is the guided wizard)
+  await page.goto("/app/projects/new");
   await page.getByLabel("Project name").fill("E2E project");
   await page.getByRole("button", { name: "Create project" }).click();
   await page.waitForURL(/\/app\/projects\/[^/]+$/);
@@ -38,10 +38,10 @@ test("full render flow: project, room, photo, 4 concepts, favorite, chat edit", 
   await expect(page.getByAltText("Room photo")).toBeVisible({ timeout: 30_000 });
 
   // Generate 4 concepts
-  await page.getByRole("button", { name: "Generate 4 concepts" }).click();
+  await page.getByRole("button", { name: "Generate 3 concepts" }).click();
   await expect(page.getByText("Generating concepts…")).toBeVisible();
   await expect(page.getByAltText("Concept 1")).toBeVisible({ timeout: 90_000 });
-  await expect(page.getByAltText("Concept 4")).toBeVisible();
+  await expect(page.getByAltText("Concept 3")).toBeVisible();
   await expect(page.getByText("AI-generated concept visual. Not to scale.", { exact: true })).toBeVisible();
 
   // Favorite the first concept

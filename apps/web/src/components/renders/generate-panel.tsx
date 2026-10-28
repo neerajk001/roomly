@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { STYLES, totalCreditCost } from "@roomdesigner/shared";
+import Link from "next/link";
 import { useState } from "react";
 
 export interface RestyleRequest {
@@ -27,6 +28,9 @@ export function GeneratePanel({
   const [quality, setQuality] = useState<"draft" | "final">("draft");
   const [variations, setVariations] = useState(3);
   const [notes, setNotes] = useState("");
+  const [dismissedFor, setDismissedFor] = useState<string | null>(null);
+  const creditsError = error !== null && /credit/i.test(error);
+  const showCreditsModal = creditsError && dismissedFor !== error;
 
   const cost = totalCreditCost(quality, variations);
 
@@ -116,14 +120,40 @@ export function GeneratePanel({
         />
       </div>
 
-      {error !== null && (
-        <div role="alert" className="space-y-1 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          <p>{error}</p>
-          {/credit/i.test(error) && (
-            <a href="/pricing" className="text-xs underline">
-              See ways to get more credits
-            </a>
-          )}
+      {error !== null && !creditsError && (
+        <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </p>
+      )}
+
+      {showCreditsModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Not enough credits"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+        >
+          <div className="w-full max-w-sm space-y-3 rounded-xl bg-background p-5 shadow-xl">
+            <h2 className="text-lg font-semibold text-foreground">Not enough credits</h2>
+            <p className="text-sm text-muted-foreground">{error}</p>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/pricing"
+                className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground"
+              >
+                Get more credits
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  setDismissedFor(error);
+                }}
+                className="rounded-md border border-border px-3 py-2 text-sm"
+              >
+                Not now
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

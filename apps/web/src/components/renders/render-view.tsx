@@ -1,6 +1,7 @@
 "use client";
 
 import { createRenderAction } from "@/server/actions/renders";
+import { track } from "@/lib/analytics";
 import { GeneratePanel, type RestyleRequest } from "@/components/renders/generate-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +11,7 @@ import type {
   RenderOutputView,
 } from "@/components/renders/types";
 import { isTerminal } from "@/components/renders/types";
+import { STYLES } from "@roomdesigner/shared";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 
@@ -40,9 +42,13 @@ export function RenderView({
   const [createPending, startCreate] = useTransition();
   const [editPending, startEdit] = useTransition();
   const [clip, setClip] = useState(50);
+  const [altStyle, setAltStyle] = useState("scandinavian");
+  const [compareOpen, setCompareOpen] = useState(false);
+  const trackedSuccess = useRef<Set<string>>(new Set());
   const attempts = useRef(0);
 
   const current = jobs.find((job) => job.id === currentId) ?? null;
+  const favorites = (current?.outputs ?? []).filter((output) => output.isFavorite);
   const status = current?.status ?? null;
 
   const upsertJob = useCallback((incoming: RenderJobStatusResponse, label: string) => {
@@ -101,6 +107,7 @@ export function RenderView({
           return;
         }
         if (result.jobId !== undefined) {
+          track("render_requested", { kind: "RESTYLE", variations: request.variations });
           startJob(result.jobId, "RESTYLE", "Base concept");
           router.refresh();
         }
@@ -127,6 +134,10 @@ export function RenderView({
                 : (jobs.find((job) => job.id === data.id)?.label ?? "Base concept");
             upsertJob(data, label);
             if (isTerminal(data.status)) {
+              if (data.status === "SUCCEEDED" && !trackedSuccess.current.has(data.id)) {
+                trackedSuccess.current.add(data.id);
+                track("render_succeeded", { kind: data.kind, images: data.outputs.length });
+              }
               router.refresh();
               return;
             }
@@ -187,6 +198,7 @@ export function RenderView({
         return;
       }
       if (result.jobId !== undefined) {
+        track("render_requested", { kind: "EDIT", variations: 1 });
         startJob(result.jobId, "EDIT", instruction.slice(0, 40));
         setInstruction("");
         setEditingOutputId(null);
@@ -222,6 +234,67 @@ export function RenderView({
             >
               {job.kind === "EDIT" ? `Edit: ${job.label}` : `Base set ${index + 1}`}
             </button>
+          ))}
+        </div>
+      )}
+
+      {current !== null && current.status === "SUCCEEDED" && (
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="space-y-1">
+            <label htmlFor="alt-style" className="block text-xs text-muted-foreground">
+              Try another style
+            </label>
+            <select
+              id="alt-style"
+              value={altStyle}
+              onChange={(event) => {
+                setAltStyle(event.target.value);
+              }}
+              className="h-8 rounded-md border border-input bg-transparent px-2 text-sm"
+            >
+              {STYLES.map((style) => (
+                <option key={style.key} value={style.key}>
+                  {style.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={createPending}
+            onClick={() => {
+              submitRestyle({ styleKey: altStyle, quality: "draft", variations: 3, notes: "" });
+            }}
+          >
+            Generate in this style (3 credits)
+          </Button>
+          {favorites.length >= 2 && (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setCompareOpen((open) => !open);
+              }}
+            >
+              {compareOpen ? "Hide comparison" : "Compare favorites"}
+            </Button>
+          )}
+        </div>
+      )}
+
+      {compareOpen && favorites.length >= 2 && (
+        <div className="grid grid-cols-2 gap-2">
+          {favorites.slice(0, 2).map((output, index) => (
+            <figure key={output.id} className="overflow-hidden rounded-lg border border-border">
+              {/* eslint-disable-next-line @next/next/no-img-element -- signed URL, no optimizer */}
+              <img src={output.url} alt={`Favorite ${String(index + 1)}`} className="block w-full" />
+              <figcaption className="border-t border-border px-2 py-1 text-xs text-muted-foreground">
+                Favorite {String(index + 1)}
+              </figcaption>
+            </figure>
           ))}
         </div>
       )}
@@ -390,6 +463,20 @@ export function RenderView({
             <CardDescription>Describe one change. Costs 1 credit per edit.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
+            <div className="flex flex-wrap gap-1.5">
+              {["warmer lighting", "add plants", "change rug", "lighter walls"].map((example) => (
+                <button
+                  key={example}
+                  type="button"
+                  onClick={() => {
+                    setInstruction(example);
+                  }}
+                  className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted/50"
+                >
+                  {example}
+                </button>
+              ))}
+            </div>
             {editError !== null && (
               <p
                 role="alert"

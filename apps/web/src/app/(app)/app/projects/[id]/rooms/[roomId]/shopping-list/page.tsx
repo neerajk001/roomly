@@ -1,4 +1,4 @@
-import { PrintButton } from "@/components/print-button";
+import { ShoppingList } from "@/components/estimates/shopping-list";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { prisma } from "@roomdesigner/db";
 import { formatMoney, roomNeeds, typicalSizeFor } from "@roomdesigner/shared";
@@ -29,23 +29,18 @@ export default async function ShoppingListPage({
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 print:max-w-none">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <Link
-            href={`/app/projects/${id}/rooms/${roomId}`}
-            className="text-xs text-muted-foreground underline print:hidden"
-          >
-            Back to the room
-          </Link>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">
-            Shopping list
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {detail.room.name} · item types and sizes, no product links.
-            {detail.room.widthMm === null ? " Sizes assume a typical room." : ""}
-          </p>
-        </div>
-        <PrintButton />
+      <div>
+        <Link
+          href={`/app/projects/${id}/rooms/${roomId}`}
+          className="text-xs text-muted-foreground underline print:hidden"
+        >
+          Back to the room
+        </Link>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">Shopping list</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {detail.room.name} · item types and sizes, no product links.
+          {detail.room.widthMm === null ? " Sizes assume a typical room." : ""}
+        </p>
       </div>
 
       <Card>
@@ -58,21 +53,18 @@ export default async function ShoppingListPage({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ul className="divide-y divide-border">
-            {needs.map((need) => (
-              <li key={need.key} className="flex items-start justify-between gap-4 py-3">
-                <div>
-                  <p className="text-sm font-medium text-foreground">{need.label}</p>
-                  <p className="text-xs text-muted-foreground">{need.sizeGuide}</p>
-                </div>
-                <p className="shrink-0 text-sm text-muted-foreground">
-                  {budget !== null
-                    ? formatMoney(Math.round((budget * need.budgetShareBps) / 10_000), workspace.currency)
-                    : `${String(Math.round(need.budgetShareBps / 100))}%`}
-                </p>
-              </li>
-            ))}
-          </ul>
+          <ShoppingList
+            currency={workspace.currency}
+            budgetMinor={budget}
+            items={needs.map((need) => ({
+              key: need.key,
+              label: need.label,
+              sizeGuide: need.sizeGuide,
+              amountMinor:
+                budget !== null ? Math.round((budget * need.budgetShareBps) / 10_000) : null,
+              sharePercent: Math.round(need.budgetShareBps / 100),
+            }))}
+          />
         </CardContent>
       </Card>
 

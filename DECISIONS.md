@@ -275,3 +275,7 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
 ## 2026-10-28 - V4.4 CSV and estimate builder
 - Rate-card CSV: export route (`/api/rate-cards/[id]/export`), header `key,label,category,unit,price`, prices in major units; import is all-or-nothing (row-level errors reject the file), then replaces items via the same validated update path.
 - Estimate builder (`/studio/.../rooms/:id/estimate`): auto-fills from the room scope + default rate card, editable lines recomputed client-side with `recompute`, markup/tax from the card, save creates a new versioned Estimate (history shown). Multi-room summary totals and read-only-after-send enforcement are still pending (they arrive with proposals).
+## 2026-10-28 - V4.5 proposals and public approval
+- Proposals: draft with title/intro/terms/expiry, pinned favorite renders (max 4) with `optionCaptions`, estimate version reference; send transitions DRAFT->SENT, sets sentAt, emails the client link when a client email exists. Public token is generated at creation (192-bit) and only exposed via the client link after send.
+- `/p/[token]`: branded page, options gallery, estimate accordion, terms, comments; first view marks VIEWED + viewedAt; approve records approvedAt/outputId/name; request changes records a client comment and CHANGES_REQUESTED; expired proposals are rejected (EXPIRED). noindex/no-referrer headers + IP/token rate limit.
+- PDF generation (worker + @react-pdf) and the designer pipeline dashboard are still pending; the client link works without a PDF.

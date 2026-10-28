@@ -1,5 +1,6 @@
 import { deleteProjectAction, deleteRoomAction } from "@/server/actions/projects";
 import { RoomForm } from "@/components/projects/room-form";
+import { ProposalsPanel } from "@/components/proposals/proposals-panel";
 import { SharePanel } from "@/components/share/share-panel";
 import { RoomPhotos } from "@/components/projects/room-photos";
 import { Button } from "@/components/ui/button";
@@ -126,6 +127,8 @@ export async function ProjectDetailView({
           ))}
         </ul>
       )}
+
+      {basePath === "/studio" && <ProposalsPanel projectId={projectId} />}
 
       <SharePanel projectId={projectId} />
 

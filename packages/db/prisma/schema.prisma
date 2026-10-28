@@ -463,6 +463,8 @@ model Proposal {
   intro            String?
   terms            String?
   renderOutputIds  String[] // ordered options shown to the client
+  optionCaptions   Json     @default("{}")
+  approvedByName   String?
   publicToken      String         @unique
   expiresAt        DateTime?
   sentAt           DateTime?

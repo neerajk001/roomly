@@ -80,6 +80,31 @@ Format: date, decision, reason.
 - Better Auth requires an `Origin` header on POST requests (`MISSING_OR_NULL_ORIGIN` otherwise):
   browser calls are fine, but scripts/tests must send it.
 
+## 2026-10-28 — AI/worker/credits design (V2.3–V2.4)
+- Provider: OpenAI SDK 7.45 `images.edit` with `gpt-image-2.5-sunburst` (default) or `-flare`;
+  pricing table in `packages/ai/src/pricing.ts` (2026-10-28 rates: $8/M image input tokens,
+  $30/M image output tokens, $5/M text input tokens) with a conservative per-image fallback when
+  usage is absent. Spending is computed from response `usage` when present.
+- Moderation is **not** run before queueing (the web app must not call providers); a moderation
+  rejection surfaces as a permanent provider error → FAILED + refund.
+- Credit ledger helpers (`getBalance`, `reserveCredits`, `refundCredits`) live in `packages/db`
+  because both the web service and the worker need them; authorization/validation stays in the web
+  service layer. Reserve locks the `Workspace` row (`SELECT … FOR UPDATE`) then inserts the
+  negative ledger row; refund uses `createMany({ skipDuplicates })` for idempotency.
+- Queue options are shared (`RENDER_QUEUE_OPTIONS`, retryLimit 2, exponential backoff) and both apps
+  call `createQueue` with them. `send` uses `singletonKey = jobId`.
+- Transient vs permanent errors: `ProviderError.errorClass`; transient errors rethrow inside the
+  pg-boss handler (retried), the final attempt is finalised in the handler (FAILED + refund) so no
+  job can stay RUNNING forever.
+- `RenderOutput.thumbAssetId` (+ `Asset.thumbFor`) added beyond the spec schema: the render grid
+  needs a per-output thumbnail and the spec model had no link. Recorded deviation.
+- Worker tests call `processRenderJob(deps, …)` with injected storage/provider instead of pg-boss;
+  the pg-boss wrapper stays thin.
+- Local dev: `SIGNUP_FREE_CREDITS` raised in the local `.env` only (default stays 3 per spec);
+  4-variation draft renders cost 4 credits, so 3 free credits cannot fund one render.
+- Live check: fake provider job QUEUED→SUCCEEDED in ~7 s (pg-boss poll + 4×sharp web/thumb),
+  4 outputs, charge 4 credits; status API, favorite PATCH and download redirect all verified.
+
 ---
 
 # V2 — Core Engine plan

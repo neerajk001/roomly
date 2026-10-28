@@ -54,8 +54,19 @@ export async function presignPut(input: {
 }
 
 /** Signed GET URLs are generated on demand and never stored. */
-export async function presignGet(key: string, expiresInSeconds = DOWNLOAD_EXPIRY_SECONDS): Promise<string> {
-  const command = new GetObjectCommand({ Bucket: bucket(), Key: key });
+export async function presignGet(
+  key: string,
+  expiresInSeconds = DOWNLOAD_EXPIRY_SECONDS,
+  options?: { downloadName?: string },
+): Promise<string> {
+  const safeName = options?.downloadName?.replace(/[^a-zA-Z0-9._-]/g, "");
+  const command = new GetObjectCommand({
+    Bucket: bucket(),
+    Key: key,
+    ...(safeName !== undefined && safeName !== ""
+      ? { ResponseContentDisposition: `attachment; filename="${safeName}"` }
+      : {}),
+  });
   return getSignedUrl(getS3Client(), command, { expiresIn: expiresInSeconds });
 }
 

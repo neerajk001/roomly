@@ -303,6 +303,7 @@ model Asset {
   createdAt   DateTime  @default(now())
 
   outputs   RenderOutput[]
+  thumbFor  RenderOutput[] @relation("RenderThumb")
   sourceFor RenderJob[]    @relation("RenderSource")
 
   @@index([workspaceId, kind])
@@ -342,15 +343,18 @@ model RenderJob {
 }
 
 model RenderOutput {
-  id         String    @id @default(cuid())
-  jobId      String
-  job        RenderJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  assetId    String
-  asset      Asset     @relation(fields: [assetId], references: [id])
-  index      Int
-  isFavorite Boolean   @default(false)
-  votes      Int       @default(0) // from share-link votes (V3)
-  createdAt  DateTime  @default(now())
+  id           String    @id @default(cuid())
+  jobId        String
+  job          RenderJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  assetId      String
+  asset        Asset     @relation(fields: [assetId], references: [id])
+  // V2 addition: the grid needs a small image per output.
+  thumbAssetId String?
+  thumbAsset   Asset?    @relation("RenderThumb", fields: [thumbAssetId], references: [id])
+  index        Int
+  isFavorite   Boolean   @default(false)
+  votes        Int       @default(0) // from share-link votes (V3)
+  createdAt    DateTime  @default(now())
 
   @@unique([jobId, index])
 }

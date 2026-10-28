@@ -20,5 +20,14 @@
     "typescript": "catalog:",
     "typescript-eslint": "catalog:",
     "vitest": "catalog:"
+  },
+  "dependencies": {
+    "@roomdesigner/ai": "workspace:*",
+    "@roomdesigner/config": "workspace:*",
+    "@roomdesigner/db": "workspace:*",
+    "@roomdesigner/shared": "workspace:*",
+    "@roomdesigner/storage": "workspace:*",
+    "pg-boss": "^12.38.0",
+    "zod": "catalog:"
   }
 }

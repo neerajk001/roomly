@@ -10,7 +10,7 @@
 - [x] Storage keys: `ws/{workspaceId}/{kind}/{assetId}.{ext}`. Never use user-supplied file names in keys.
 - [x] `POST /api/uploads/presign` → validates `{ roomId?, mime, sizeBytes }` (JPEG/PNG/WebP, ≤10 MB), creates an `Asset` (unconfirmed), returns `{ assetId, uploadUrl, headers }`.
 - [x] `POST /api/uploads/:assetId/confirm` → checks the object exists, reads it with sharp, validates it is a real image ≤4096px on its long side, re-encodes (strips EXIF), generates a thumbnail, sets `confirmedAt`, width, height, size.
-- [ ] Unconfirmed assets older than 24h are deleted by a worker cleanup job (pg-boss scheduled job). (deferred to the worker, task 3)
+- [x] Unconfirmed assets older than 24h are deleted by a worker cleanup job (pg-boss scheduled job). (deferred to the worker, task 3)
 - [x] Signed GET URLs are generated on demand with short expiry and never stored.
 
 **Acceptance:** uploading a GPS-tagged JPEG results in a stored image without EXIF. A fake image with a `.jpg` name is rejected. A file over 10 MB is rejected before upload starts.
@@ -28,18 +28,18 @@
 ## 3. AI package and worker
 
 - [ ] `packages/ai`: `ImageProvider` interface, `fake` provider, `openai` provider, `pricing.ts`, `prompts.ts` with unit tests (see `04-ai-pipeline.md`).
-- [ ] `packages/shared`: `styles.ts` (starter styles with `promptHint` and thumbnail path), `credits.ts`.
-- [ ] `apps/worker`: pg-boss setup, graceful shutdown (finish current job on SIGTERM), health logging, `render.generate` handler exactly as in `04-ai-pipeline.md`, retries and backoff, cleanup job.
-- [ ] Image post-processing in the worker: web version (≤2048px), thumbnail (≤512px), asset rows, `RenderOutput` rows.
-- [ ] Cost recording: `costMicros` from provider usage and `pricing.ts`.
+- [x] `packages/shared`: `styles.ts` (starter styles with `promptHint` and thumbnail path), `credits.ts`.
+- [x] `apps/worker`: pg-boss setup, graceful shutdown (finish current job on SIGTERM), health logging, `render.generate` handler exactly as in `04-ai-pipeline.md`, retries and backoff, cleanup job.
+- [x] Image post-processing in the worker: web version (≤2048px), thumbnail (≤512px), asset rows, `RenderOutput` rows.
+- [x] Cost recording: `costMicros` from provider usage and `pricing.ts`.
 
 **Acceptance (fake provider):** a job moves QUEUED → RUNNING → SUCCEEDED with 4 outputs in about 1–3 seconds. A forced transient error retries and succeeds. A forced permanent error ends FAILED with credits refunded exactly once.
 
 ## 4. Credits and spend guard
 
-- [ ] `getBalance(workspaceId)`, `reserveCredits(tx, ...)`, `refundCredits(tx, ...)` using the append-only ledger and the unique `(reason, refId)` constraint.
-- [ ] `createRender` service enforcing: verified email, input validation, ownership, spend guard (`MAX_DAILY_SPEND_USD`), credit reservation, enqueue.
-- [ ] Balance shown in the app header. Insufficient credits → clear message (upgrade CTA is a stub until V5).
+- [x] `getBalance(workspaceId)`, `reserveCredits(tx, ...)`, `refundCredits(tx, ...)` using the append-only ledger and the unique `(reason, refId)` constraint.
+- [x] `createRender` service enforcing: verified email, input validation, ownership, spend guard (`MAX_DAILY_SPEND_USD`), credit reservation, enqueue.
+- [x] Balance shown in the app header. Insufficient credits → clear message (upgrade CTA is a stub until V5).
 
 **Acceptance:** two parallel `createRender` calls with a balance enough for one: exactly one succeeds. Refund twice → one ledger row.
 

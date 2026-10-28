@@ -19,5 +19,11 @@
     "typescript": "catalog:",
     "typescript-eslint": "catalog:",
     "vitest": "catalog:"
+  },
+  "dependencies": {
+    "@roomdesigner/config": "workspace:*",
+    "@roomdesigner/shared": "workspace:*",
+    "openai": "^7.45.1",
+    "sharp": "^0.35.5"
   }
 }

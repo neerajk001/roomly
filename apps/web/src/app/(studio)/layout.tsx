@@ -1,6 +1,7 @@
 import { signOutAction } from "@/app/(auth)/actions";
 import { Button } from "@/components/ui/button";
 import { requireOnboarded, requireWorkspace } from "@/server/auth/session";
+import { getBalance, prisma } from "@roomdesigner/db";
 import Link from "next/link";
 
 const navItems = [
@@ -13,6 +14,7 @@ const navItems = [
 export default async function StudioLayout({ children }: { children: React.ReactNode }) {
   await requireOnboarded();
   const { workspace, user } = await requireWorkspace();
+  const credits = await getBalance(prisma, workspace.id);
 
   return (
     <div className="flex min-h-dvh bg-muted/30">
@@ -21,6 +23,7 @@ export default async function StudioLayout({ children }: { children: React.React
           RoomDesigner
         </Link>
         <p className="mt-1 truncate text-xs text-muted-foreground">{workspace.name}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{credits} credits</p>
         <nav aria-label="Studio" className="mt-6 flex-1 space-y-1 text-sm">
           {navItems.map((item) => (
             <Link

@@ -12,13 +12,15 @@ const dimension = z
   .number()
   .int("Measurements must be whole millimetres.")
   .min(MIN_DIMENSION_MM, "That measurement is too small (min 1 m).")
-  .max(MAX_DIMENSION_MM, "That measurement is too large (max 30 m).");
+  .max(MAX_DIMENSION_MM, "That measurement is too large (max 30 m).")
+  .optional();
 
 const height = z
   .number()
   .int("Measurements must be whole millimetres.")
   .min(MIN_HEIGHT_MM, "Ceiling height must be at least 2 m.")
-  .max(MAX_HEIGHT_MM, "Ceiling height must be at most 6 m.");
+  .max(MAX_HEIGHT_MM, "Ceiling height must be at most 6 m.")
+  .optional();
 
 export const openingSchema = z.object({
   type: z.enum(["DOOR", "WINDOW"]),
@@ -64,17 +66,30 @@ async function requireProject(db: Prisma, ctx: ServiceContext, projectId: string
   return project;
 }
 
+function validateRoomInput(input: RoomInput): RoomInput {
+  const parsed = roomInputSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new AppError(
+      "INVALID_INPUT",
+      parsed.error.issues[0]?.message ?? "Check the room details.",
+      400,
+    );
+  }
+  return parsed.data;
+}
+
 export async function createRoom(
   db: Prisma,
   ctx: ServiceContext,
   projectId: string,
   input: RoomInput,
 ): Promise<Room> {
+  const valid = validateRoomInput(input);
   await requireProject(db, ctx, projectId);
   return db.room.create({
     data: {
       projectId,
-      name: input.name,
+      name: valid.name,
       type: input.type,
       widthMm: input.widthMm,
       lengthMm: input.lengthMm,

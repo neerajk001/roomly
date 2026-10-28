@@ -272,9 +272,11 @@ model Room {
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   name      String
   type      RoomType @default(OTHER)
-  widthMm   Int
-  lengthMm  Int
-  heightMm  Int      @default(2700)
+  // Dimensions are optional: homeowners often don't know them, and AI renders
+  // never use them. They only improve estimates.
+  widthMm   Int?
+  lengthMm  Int?
+  heightMm  Int?
   // [{ "type": "DOOR"|"WINDOW", "widthMm": n, "heightMm": n, "qty": n }]
   openings  Json     @default("[]")
   createdAt DateTime @default(now())

@@ -27,6 +27,8 @@ export default defineConfig({
       APP_URL: baseURL,
       BETTER_AUTH_URL: baseURL,
       AUTH_REQUIRE_EMAIL_VERIFICATION: "false",
+      // Never inherit the local dev auth bypass: the E2E tests exercise real auth.
+      DEV_AUTH_BYPASS: "false",
     },
   },
 });

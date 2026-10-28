@@ -34,9 +34,9 @@ interface OpeningRow {
 const selectClass =
   "h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
 
-function toMm(value: string, unit: Unit): number {
+function toMm(value: string, unit: Unit): number | undefined {
   const parsed = Number.parseFloat(value);
-  if (!Number.isFinite(parsed)) return Number.NaN;
+  if (!Number.isFinite(parsed)) return undefined;
   return Math.round(unit === "metric" ? parsed * 1000 : parsed * 304.8);
 }
 
@@ -49,9 +49,9 @@ export function RoomForm({
 }) {
   const [state, formAction, pending] = useActionState(createRoomAction, initialState);
   const [unit, setUnit] = useState<Unit>("metric");
-  const [width, setWidth] = useState("4");
-  const [length, setLength] = useState("5");
-  const [height, setHeight] = useState("2.7");
+  const [width, setWidth] = useState("");
+  const [length, setLength] = useState("");
+  const [height, setHeight] = useState("");
   const [openings, setOpenings] = useState<OpeningRow[]>([]);
 
   const unitLabel = unit === "metric" ? "m" : "ft";
@@ -82,9 +82,9 @@ export function RoomForm({
     <form action={formAction} className="space-y-5">
       <input type="hidden" name="projectId" value={projectId} />
       <input type="hidden" name="basePath" value={basePath} />
-      <input type="hidden" name="widthMm" value={toMm(width, unit)} />
-      <input type="hidden" name="lengthMm" value={toMm(length, unit)} />
-      <input type="hidden" name="heightMm" value={toMm(height, unit)} />
+      <input type="hidden" name="widthMm" value={toMm(width, unit) ?? ""} />
+      <input type="hidden" name="lengthMm" value={toMm(length, unit) ?? ""} />
+      <input type="hidden" name="heightMm" value={toMm(height, unit) ?? ""} />
       <input type="hidden" name="openings" value={JSON.stringify(openingsPayload)} />
 
       {state.error !== undefined && (
@@ -117,7 +117,7 @@ export function RoomForm({
 
       <fieldset className="space-y-3">
         <legend className="flex flex-wrap items-center justify-between gap-2 text-sm font-medium text-foreground">
-          Floor plan
+          Measurements (optional)
           <span className="inline-flex rounded-md border border-input p-0.5" role="group" aria-label="Units">
             <button
               type="button"
@@ -151,7 +151,7 @@ export function RoomForm({
               onChange={(event) => {
                 setWidth(event.target.value);
               }}
-              required
+              placeholder="e.g. 4"
             />
           </div>
           <div className="space-y-2">
@@ -163,7 +163,7 @@ export function RoomForm({
               onChange={(event) => {
                 setLength(event.target.value);
               }}
-              required
+              placeholder="e.g. 5"
             />
           </div>
           <div className="space-y-2">
@@ -175,14 +175,17 @@ export function RoomForm({
               onChange={(event) => {
                 setHeight(event.target.value);
               }}
-              required
+              placeholder="e.g. 2.7"
             />
           </div>
         </div>
+        <p className="text-xs text-muted-foreground">
+          Skip if you don&apos;t know them — renders only use your photo. Sizes only improve estimates later.
+        </p>
       </fieldset>
 
       <fieldset className="space-y-3">
-        <legend className="text-sm font-medium text-foreground">Doors and windows</legend>
+        <legend className="text-sm font-medium text-foreground">Doors and windows (optional)</legend>
         {openings.length === 0 && (
           <p className="text-xs text-muted-foreground">None added. You can add them later.</p>
         )}

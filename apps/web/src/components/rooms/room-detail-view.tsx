@@ -8,7 +8,8 @@ import { requireWorkspace } from "@/server/auth/session";
 import { getRoom } from "@/server/services/rooms";
 import Link from "next/link";
 
-function formatLength(mm: number, unitSystem: string): string {
+function formatLength(mm: number | null, unitSystem: string): string {
+  if (mm === null) return "—";
   return unitSystem === "IMPERIAL" ? `${(mm / 304.8).toFixed(1)} ft` : `${(mm / 1000).toFixed(2)} m`;
 }
 
@@ -68,6 +69,18 @@ export async function RoomDetailView({
 
   const initialJob = jobViews.length > 0 ? (jobViews[jobViews.length - 1] ?? null) : null;
 
+  const sizeLine =
+    detail.room.widthMm !== null && detail.room.lengthMm !== null
+      ? `${formatLength(detail.room.widthMm, workspace.unitSystem)} × ${formatLength(
+          detail.room.lengthMm,
+          workspace.unitSystem,
+        )}`
+      : "Measurements not set";
+  const ceilingLine =
+    detail.room.heightMm !== null
+      ? ` · ceiling ${formatLength(detail.room.heightMm, workspace.unitSystem)}`
+      : "";
+
   return (
     <div className="space-y-6">
       <div>
@@ -81,9 +94,8 @@ export async function RoomDetailView({
           {detail.room.name}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {formatLength(detail.room.widthMm, workspace.unitSystem)} ×{" "}
-          {formatLength(detail.room.lengthMm, workspace.unitSystem)} · ceiling{" "}
-          {formatLength(detail.room.heightMm, workspace.unitSystem)}
+          {sizeLine}
+          {ceilingLine}
         </p>
       </div>
 

@@ -62,14 +62,20 @@ export async function deleteProjectAction(formData: FormData): Promise<void> {
   redirect(basePath);
 }
 
+const optionalMillimetres = z.preprocess((value) => {
+  if (value === null || value === undefined || value === "") return undefined;
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? value : parsed;
+}, z.number().int().optional());
+
 const createRoomFormSchema = z.object({
   projectId: z.string().min(1),
   basePath: basePathSchema,
   name: z.string(),
   type: roomTypeSchema,
-  widthMm: z.coerce.number().int(),
-  lengthMm: z.coerce.number().int(),
-  heightMm: z.coerce.number().int(),
+  widthMm: optionalMillimetres,
+  lengthMm: optionalMillimetres,
+  heightMm: optionalMillimetres,
   openings: z.string().optional(),
 });
 

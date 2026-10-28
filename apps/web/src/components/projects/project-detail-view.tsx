@@ -22,7 +22,8 @@ const ROOM_TYPE_LABELS: Record<string, string> = {
   OTHER: "Other",
 };
 
-function formatLength(mm: number, unitSystem: string): string {
+function formatLength(mm: number | null, unitSystem: string): string {
+  if (mm === null) return "—";
   if (unitSystem === "IMPERIAL") {
     return `${(mm / 304.8).toFixed(1)} ft`;
   }
@@ -90,10 +91,13 @@ export async function ProjectDetailView({
                     <div>
                       <CardTitle>{room.name}</CardTitle>
                       <CardDescription>
-                        {ROOM_TYPE_LABELS[room.type] ?? room.type} ·{" "}
-                        {formatLength(room.widthMm, workspace.unitSystem)} ×{" "}
-                        {formatLength(room.lengthMm, workspace.unitSystem)} · ceiling{" "}
-                        {formatLength(room.heightMm, workspace.unitSystem)}
+                        {ROOM_TYPE_LABELS[room.type] ?? room.type}
+                        {room.widthMm !== null && room.lengthMm !== null
+                          ? ` · ${formatLength(room.widthMm, workspace.unitSystem)} × ${formatLength(room.lengthMm, workspace.unitSystem)}`
+                          : ""}
+                        {room.heightMm !== null
+                          ? ` · ceiling ${formatLength(room.heightMm, workspace.unitSystem)}`
+                          : ""}
                       </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">

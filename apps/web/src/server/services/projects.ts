@@ -71,9 +71,9 @@ export interface ProjectDetail {
     id: string;
     name: string;
     type: string;
-    widthMm: number;
-    lengthMm: number;
-    heightMm: number;
+    widthMm: number | null;
+    lengthMm: number | null;
+    heightMm: number | null;
     photos: {
       id: string;
       width: number | null;

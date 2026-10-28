@@ -65,6 +65,12 @@ export const serverEnvSchema = z.object({
     .enum(["true", "false"])
     .default("true")
     .transform((v) => v === "true"),
+  // Dev-only convenience: signs every request in as a local dev user.
+  // Ignored unless NODE_ENV !== "production" (enforced in server code).
+  DEV_AUTH_BYPASS: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((v) => v === "true"),
 
   // storage
   S3_ENDPOINT: z.url().default("http://localhost:9000"),

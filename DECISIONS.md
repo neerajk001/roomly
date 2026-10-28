@@ -122,6 +122,19 @@ Format: date, decision, reason.
   `OPENAI_API_KEY` and five real photos in `fixtures/rooms/`. None of those are available, so the
   fidelity report and the provider/model/quality decision are deferred to the human.
 
+## 2026-10-28 — Dev auth bypass + optional room measurements
+- `DEV_AUTH_BYPASS=true` (local `.env` only; `.env.example` default `false`) makes `getSession()`
+  return a synthetic session for a `dev@roomdesigner.local` user. The workspace is created via
+  `bootstrapWorkspace` on first request and the user is marked onboarded. The flag is **ignored
+  whenever `NODE_ENV === "production"`**, and Playwright's webServer explicitly sets it to `false`.
+- The bypass replaces only the session lookup: services, tenant scoping, credit and verified-email
+  rules still run unchanged.
+- `Room.widthMm/lengthMm/heightMm` are now **nullable**. Homeowners usually don't know dimensions
+  and AI renders never use them; dimensions only feed estimates. Room form labels them optional,
+  the form no longer requires them, and displays show "Measurements not set". Estimate code in
+  V3/V4 must handle null dimensions. Service-level validation still enforces range limits when a
+  value is supplied.
+
 ---
 
 # V2 — Core Engine plan

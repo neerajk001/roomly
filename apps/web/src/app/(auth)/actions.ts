@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@roomdesigner/auth/server";
+import { isDevAuthBypassEnabled } from "@/server/auth/session";
 import { getServerEnv } from "@roomdesigner/config/env";
 import { isDisposableEmail } from "@roomdesigner/shared";
 import { headers } from "next/headers";
@@ -194,6 +195,8 @@ export async function resendVerificationAction(
 }
 
 export async function signOutAction(): Promise<void> {
-  await auth.api.signOut({ headers: await headers() });
+  if (!isDevAuthBypassEnabled()) {
+    await auth.api.signOut({ headers: await headers() });
+  }
   redirect("/");
 }

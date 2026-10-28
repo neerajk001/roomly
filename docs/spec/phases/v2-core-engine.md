@@ -17,11 +17,11 @@
 
 ## 2. Projects and rooms
 
-- [ ] Services: `createProject`, `listProjects`, `getProject`, `renameProject`, `softDeleteProject`; `createRoom`, `updateRoom`, `deleteRoom`. All scoped by `ctx.workspaceId`.
-- [ ] Project list page (grid, newest first, empty state with a clear CTA) in both `/app` and `/studio`.
-- [ ] Room form: name, room type, width/length/height with a unit toggle (metric ↔ imperial; stored in mm), openings editor (add door/window with width, height, qty).
-- [ ] Photo upload component: drag & drop + camera on mobile, progress, retry, preview. Supports 1–3 photos per room (first is the primary source).
-- [ ] Validation: dimension limits (e.g. 1000–30000 mm; height 2000–6000 mm). Friendly error messages.
+- [x] Services: `createProject`, `listProjects`, `getProject`, `renameProject`, `softDeleteProject`; `createRoom`, `updateRoom`, `deleteRoom`. All scoped by `ctx.workspaceId`.
+- [x] Project list page (grid, newest first, empty state with a clear CTA) in both `/app` and `/studio`.
+- [x] Room form: name, room type, width/length/height with a unit toggle (metric ↔ imperial; stored in mm), openings editor (add door/window with width, height, qty).
+- [x] Photo upload component: drag & drop + camera on mobile, progress, retry, preview. Supports 1–3 photos per room (first is the primary source).
+- [x] Validation: dimension limits (e.g. 1000–30000 mm; height 2000–6000 mm). Friendly error messages.
 
 **Acceptance:** all CRUD works; deleting a project hides it (soft) and its renders; data from another workspace is never reachable (isolation tests below).
 

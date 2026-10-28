@@ -36,6 +36,7 @@ export interface PresignResult {
 }
 
 const UPLOAD_EXPIRY_SECONDS = 600;
+const MAX_PHOTOS_PER_ROOM = 3;
 
 /** Creates an unconfirmed Asset and a presigned PUT URL for the browser. */
 export async function createUploadPresign(
@@ -53,6 +54,19 @@ export async function createUploadPresign(
       throw new AppError("NOT_FOUND", "Room not found.", 404);
     }
     roomId = room.id;
+    const existing = await db.asset.count({
+      where: {
+        roomId: room.id,
+        kind: "ORIGINAL_PHOTO",
+        OR: [
+          { confirmedAt: { not: null } },
+          { createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
+        ],
+      },
+    });
+    if (existing >= MAX_PHOTOS_PER_ROOM) {
+      throw new AppError("PHOTO_LIMIT", "Each room supports up to 3 photos.", 400);
+    }
   }
 
   // The key embeds the database id, so the row is created first with a unique

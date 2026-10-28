@@ -1,9 +1,14 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { NewProjectButton, ProjectGrid } from "@/components/projects/project-grid";
+import { prisma } from "@roomdesigner/db";
+import { requireWorkspace } from "@/server/auth/session";
+import { listProjects } from "@/server/services/projects";
 
 export const metadata = { title: "My rooms" };
 
-export default function AppHomePage() {
+export default async function AppHomePage() {
+  const { user, workspace } = await requireWorkspace();
+  const projects = await listProjects(prisma, { userId: user.id, workspaceId: workspace.id });
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -13,24 +18,14 @@ export default function AppHomePage() {
             Concept visuals and rough budgets for your home.
           </p>
         </div>
-        <Button disabled title="Project creation arrives with uploads (V2)">
-          New project
-        </Button>
+        <NewProjectButton basePath="/app" />
       </div>
-      <Card className="border-dashed">
-        <CardHeader>
-          <CardTitle>No projects yet</CardTitle>
-          <CardDescription>
-            Start with a photo of the room you want to redesign. You will get concept visuals and a
-            rough budget.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-xs text-muted-foreground">
-            Upload and render arrive in V2. Nothing you add here will be a binding quote.
-          </p>
-        </CardContent>
-      </Card>
+      <ProjectGrid
+        projects={projects}
+        basePath="/app"
+        emptyTitle="No projects yet"
+        emptyBody="Create a project, add a room with its measurements and a photo, then generate concept visuals."
+      />
     </div>
   );
 }

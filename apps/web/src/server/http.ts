@@ -27,7 +27,6 @@ export function errorResponse(error: unknown): NextResponse {
       { status: 400 },
     );
   }
-  // eslint-disable-next-line no-console -- last-resort server log; structured logger lands in V6
   console.error("Unhandled server error:", error instanceof Error ? error.message : "unknown");
   return NextResponse.json(
     { error: { code: "INTERNAL", message: "Something went wrong. Try again." } },

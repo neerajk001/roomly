@@ -3,7 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { saveRateCardAction, type RateCardState } from "@/server/actions/rate-cards";
+import {
+  importRateCardCsvAction,
+  saveRateCardAction,
+  type RateCardState,
+} from "@/server/actions/rate-cards";
 import { useActionState, useState } from "react";
 
 interface Row {
@@ -30,6 +34,11 @@ export function RateCardEditor({
   currency: string;
 }) {
   const [state, formAction, pending] = useActionState(saveRateCardAction, {} as RateCardState);
+  const [csvState, csvAction, csvPending] = useActionState(
+    importRateCardCsvAction,
+    {} as RateCardState,
+  );
+  const [csvText, setCsvText] = useState("");
   const [rows, setRows] = useState<Row[]>(() =>
     items.map((item) => ({
       key: item.key,
@@ -190,6 +199,49 @@ export function RateCardEditor({
         Prices are stored per m² / m / unit in your workspace currency. Imperial display is coming
         with the estimate builder.
       </p>
+
+      <div className="space-y-2 border-t border-border pt-4">
+        <Label htmlFor="rate-csv">CSV import / export</Label>
+        <p className="text-xs text-muted-foreground">
+          Header: key,label,category,unit,price. Any invalid row rejects the whole file.
+        </p>
+        <textarea
+          id="rate-csv"
+          rows={4}
+          value={csvText}
+          onChange={(event) => {
+            setCsvText(event.target.value);
+          }}
+          placeholder="key,label,category,unit,price"
+          className="w-full rounded-md border border-input bg-transparent px-3 py-2 font-mono text-xs"
+        />
+        <div className="flex flex-wrap gap-2">
+          <a
+            href={`/api/rate-cards/${rateCardId}/export`}
+            className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted/50"
+          >
+            Export CSV
+          </a>
+        </div>
+      </div>
+
+      {csvState.error !== undefined && (
+        <p role="alert" className="text-sm text-destructive">
+          {csvState.error}
+        </p>
+      )}
+      {csvState.notice !== undefined && (
+        <p role="status" className="text-sm text-muted-foreground">
+          {csvState.notice}
+        </p>
+      )}
+      <Button type="submit" formAction={csvAction} disabled={csvPending || csvText.trim() === ""}>
+        {csvPending ? "Importing..." : "Import CSV"}
+      </Button>
+      <input type="hidden" name="csv" value={csvText} />
+      <input type="hidden" name="name" value={name} />
+      <input type="hidden" name="markupPercent" value={markupBps / 100} />
+      <input type="hidden" name="taxPercent" value={taxBps / 100} />
     </form>
   );
 }

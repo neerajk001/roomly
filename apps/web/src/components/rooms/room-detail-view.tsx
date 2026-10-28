@@ -2,6 +2,7 @@ import { EstimateSection } from "@/components/estimates/estimate-section";
 import { RoomPhotos } from "@/components/projects/room-photos";
 import { RenderView } from "@/components/renders/render-view";
 import type { RenderJobView } from "@/components/renders/types";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { prisma } from "@roomdesigner/db";
 import { presignGet } from "@roomdesigner/storage";
@@ -115,6 +116,24 @@ export async function RoomDetailView({
       </section>
 
       <EstimateSection projectId={projectId} roomId={detail.room.id} />
+
+      {basePath === "/studio" && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Estimate</CardTitle>
+            <CardDescription>
+              Build an editable estimate from your rate card. Each save creates a version.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild size="sm">
+              <Link href={`/studio/projects/${projectId}/rooms/${detail.room.id}/estimate`}>
+                Build estimate
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

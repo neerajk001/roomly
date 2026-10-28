@@ -4,11 +4,20 @@ import { z } from "zod";
 import { AppError } from "../app-error";
 import type { ServiceContext } from "./context";
 
+export const RATE_UNITS = [
+  "AREA_FLOOR",
+  "AREA_CEILING",
+  "AREA_WALL",
+  "LENGTH_PERIMETER",
+  "PER_UNIT",
+  "LUMP_SUM",
+] as const;
+
 export const rateItemSchema = z.object({
   key: z.string().trim().min(1).max(64),
   label: z.string().trim().min(1).max(120),
   category: z.string().trim().min(1).max(40),
-  unit: z.enum(["AREA_FLOOR", "AREA_CEILING", "AREA_WALL", "LENGTH_PERIMETER", "PER_UNIT", "LUMP_SUM"]),
+  unit: z.enum(RATE_UNITS),
   unitPriceMinor: z.number().int().min(0).max(1_000_000_000),
 });
 

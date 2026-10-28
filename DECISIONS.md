@@ -272,3 +272,6 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
 ## 2026-10-28 - V4.3 studio profile and rate cards (partial)
 - Workspace gained contactEmail, contactPhone and defaultTerms. `/studio/settings` edits studio name/brand colour/currency/units/contact/terms and uploads a logo through the normal presign/confirm pipeline with kind=LOGO (2 MB cap; SVG is rejected for now, record for V4 polish).
 - Pro rate cards: a "Starter rates (edit me)" card is seeded on first visit using the illustrative defaults; editor supports name, markup/tax percent, per-item label/category/unit/price, add and remove with all-or-nothing validation. CSV import/export and imperial display are still pending.
+## 2026-10-28 - V4.4 CSV and estimate builder
+- Rate-card CSV: export route (`/api/rate-cards/[id]/export`), header `key,label,category,unit,price`, prices in major units; import is all-or-nothing (row-level errors reject the file), then replaces items via the same validated update path.
+- Estimate builder (`/studio/.../rooms/:id/estimate`): auto-fills from the room scope + default rate card, editable lines recomputed client-side with `recompute`, markup/tax from the card, save creates a new versioned Estimate (history shown). Multi-room summary totals and read-only-after-send enforcement are still pending (they arrive with proposals).

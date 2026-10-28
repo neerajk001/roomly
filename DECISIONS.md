@@ -135,6 +135,17 @@ Format: date, decision, reason.
   V3/V4 must handle null dimensions. Service-level validation still enforces range limits when a
   value is supplied.
 
+## 2026-10-28 — Render quality tuning (pre-G2)
+- Dev now runs `IMAGE_PROVIDER=openai` with `gpt-image-2.5-sunburst` (editing precision model) and
+  **high** quality for both tiers; the tier only changes the output size (draft 1024×1024 or
+  1024×1536 for portrait photos; final 1536×1024 / 1024×1536). UI defaults to Final.
+- RESTYLE prompt extended beyond the 04-ai-pipeline template: fully furnished/move-in-ready,
+  explicit removal of boxes/clutter, material and texture language, no people. Requested after
+  comparing with a competitor's staging results; prompt snapshot tests updated.
+- Web render JPEG quality raised to 91; thumbnails unchanged.
+- Local dev credit balance topped up via an `ADJUSTMENT` ledger row so quality testing doesn't hit
+  the 12-credit signup grant.
+
 ---
 
 # V2 — Core Engine plan

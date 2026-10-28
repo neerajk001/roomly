@@ -100,7 +100,7 @@ export async function normalizeUpload(
 
 /** Web version served in the UI (max 2048 px, JPEG). */
 export async function makeWebVersion(buffer: Buffer): Promise<{ data: Buffer; mime: string }> {
-  const result = await encode(buffer, "image/jpeg", WEB_LONG_SIDE, 86);
+  const result = await encode(buffer, "image/jpeg", WEB_LONG_SIDE, 91);
   return { data: result.data, mime: result.mime };
 }
 

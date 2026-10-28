@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { buildEditPrompt, buildRestylePrompt, sanitizeInstruction } from "./prompts";
 
+const STAGING_LINE =
+  "Photorealistic interior photograph, professional staging, realistic materials and surface textures (fabric, wood grain, stone, paint finish), soft natural daylight and believable shadows. No people, no text, logos or watermarks.";
+
 describe("buildRestylePrompt", () => {
-  it("matches the spec template without a renter clause", () => {
+  it("matches the staging template without a renter clause", () => {
     const prompt = buildRestylePrompt({
       roomTypeLabel: "living room",
       styleLabel: "Scandinavian",
@@ -11,10 +14,11 @@ describe("buildRestylePrompt", () => {
     });
     expect(prompt).toBe(
       [
-        "Redesign this living room in a Scandinavian interior design style.",
-        "Keep the room's structure exactly as in the photo: walls, windows, doors, ceiling, camera angle and perspective.",
+        "Redesign this living room in a Scandinavian interior design style as a fully furnished, move-in-ready room.",
+        "Keep the room's structure exactly as in the photo: walls, windows, doors, ceiling, camera angle, perspective and dimensions.",
+        "Remove moving boxes, trash, construction debris and clutter; replace them with furniture, rugs, lighting and decor that fit the space.",
         "Keep these items unchanged: none.",
-        "Photorealistic interior photograph with natural lighting. No text, logos or watermarks.",
+        STAGING_LINE,
       ].join("\n"),
     );
   });
@@ -37,6 +41,7 @@ describe("buildEditPrompt", () => {
       [
         "Apply only this change: replace the sofa.",
         "Keep everything else in the image identical, including the room structure, camera angle and all other objects.",
+        "Photorealistic result with consistent lighting and materials.",
       ].join("\n"),
     );
   });

@@ -32,10 +32,19 @@ export interface CreateRenderContext extends ServiceContext {
   emailVerified: boolean;
 }
 
-const PROVIDER_PARAMS = {
-  draft: { providerQuality: "medium", size: "1024x1024" },
-  final: { providerQuality: "high", size: "1536x1024" },
-} as const;
+// Best available texture quality for both tiers; the tier only changes the
+// output size (and therefore the credit price).
+function pickRenderParams(
+  quality: "draft" | "final",
+  width: number | null,
+  height: number | null,
+): { providerQuality: "high"; size: "1024x1024" | "1536x1024" | "1024x1536" } {
+  const portrait = width !== null && height !== null && height > width;
+  if (quality === "final") {
+    return { providerQuality: "high", size: portrait ? "1024x1536" : "1536x1024" };
+  }
+  return { providerQuality: "high", size: portrait ? "1024x1536" : "1024x1024" };
+}
 
 async function assertDailySpendOk(db: Prisma, costMicrosToAdd: number): Promise<void> {
   const env = getServerEnv();
@@ -86,6 +95,8 @@ export async function createRender(
   }
 
   let sourceAssetId: string;
+  let sourceWidth: number | null = null;
+  let sourceHeight: number | null = null;
   let styleKey: string | null = null;
   let instruction: string | null = null;
   let notes: string | null = null;
@@ -99,12 +110,14 @@ export async function createRender(
     const photo = await db.asset.findFirst({
       where: { roomId: room.id, kind: "ORIGINAL_PHOTO", confirmedAt: { not: null } },
       orderBy: { createdAt: "asc" },
-      select: { id: true },
+      select: { id: true, width: true, height: true },
     });
     if (photo === null) {
       throw new AppError("NO_PHOTO", "Add a photo of the room first.", 400);
     }
     sourceAssetId = photo.id;
+    sourceWidth = photo.width;
+    sourceHeight = photo.height;
     notes = sanitizeInstruction(input.notes ?? '').slice(0, 300);
     if (notes === '') notes = null;
   } else {
@@ -120,13 +133,15 @@ export async function createRender(
         id: input.sourceOutputId,
         job: { workspaceId: ctx.workspaceId, roomId: room.id, status: "SUCCEEDED" },
       },
-      select: { assetId: true, jobId: true },
+      select: { assetId: true, jobId: true, asset: { select: { width: true, height: true } } },
     });
     if (output === null) {
       throw new AppError("NOT_FOUND", "Image not found.", 404);
     }
     sourceAssetId = output.assetId;
     parentJobId = output.jobId;
+    sourceWidth = output.asset.width;
+    sourceHeight = output.asset.height;
     instruction = cleaned;
   }
 
@@ -147,7 +162,7 @@ export async function createRender(
           styleKey,
           instruction,
           params: {
-            ...PROVIDER_PARAMS[input.quality],
+            ...pickRenderParams(input.quality, sourceWidth, sourceHeight),
             ...(notes !== null ? { notes } : {}),
           },
           sourceAssetId,

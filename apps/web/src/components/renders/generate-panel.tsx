@@ -24,7 +24,7 @@ export function GeneratePanel({
   onCreate: (request: RestyleRequest) => void;
 }) {
   const [styleKey, setStyleKey] = useState("modern");
-  const [quality, setQuality] = useState<"draft" | "final">("draft");
+  const [quality, setQuality] = useState<"draft" | "final">("final");
   const [variations, setVariations] = useState(4);
   const [notes, setNotes] = useState("");
 
@@ -96,7 +96,7 @@ export function GeneratePanel({
             }}
           >
             <option value="draft">Draft (faster, cheaper)</option>
-            <option value="final">Final (higher detail)</option>
+            <option value="final">Final (best quality — recommended)</option>
           </select>
         </div>
       </div>

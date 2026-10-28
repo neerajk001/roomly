@@ -1,5 +1,6 @@
 import { deleteClientAction } from "@/server/actions/clients";
 import { ClientForm } from "@/components/studio/client-form";
+import { BriefLinksPanel } from "@/components/studio/brief-links";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { prisma } from "@roomdesigner/db";
@@ -65,6 +66,8 @@ export default async function StudioClientPage({ params }: { params: Promise<{ i
           )}
         </CardContent>
       </Card>
+
+      <BriefLinksPanel clientId={detail.client.id} />
 
       <Card>
         <CardHeader>

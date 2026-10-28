@@ -12,19 +12,19 @@
 
 ## 2. Clients
 
-- [ ] CRUD (`name`, `email`, `phone`, `notes`), soft delete, search by name/email.
-- [ ] Client detail page: list of projects, brief links, proposals and statuses.
-- [ ] Attach a project to a client at creation or later.
+- [x] CRUD (`name`, `email`, `phone`, `notes`), soft delete, search by name/email.
+- [x] Client detail page: list of projects, brief links, proposals and statuses.
+- [x] Attach a project to a client at creation or later.
 
 ## 3. Brief links (public intake)
 
-- [ ] Designer creates a brief link for a client (optional expiry). Copy link and "send by email" action.
-- [ ] `/brief/[token]` public page (branded with the studio logo and color):
+- [x] Designer creates a brief link for a client (optional expiry). Copy link and "send by email" action.
+- [x] `/brief/[token]` public page (branded with the studio logo and color):
   - Questions: room type(s), goals, style likes (pick from style images), budget range, timeline, must-keep items, notes.
   - Photo upload (up to 8 photos, same validation as V2) using token-scoped presigned uploads.
   - Honeypot field + IP and token rate limits. No account needed.
-- [ ] On submit: create `BriefSubmission`, a draft `Project` linked to the client, `Room` records (name from the answers; dimensions left blank to complete), `Asset` rows (`BRIEF_UPLOAD`) attached to rooms. Mark the link `SUBMITTED` (or allow multiple submissions if the designer chooses).
-- [ ] Email notification to the designer.
+- [x] On submit: create `BriefSubmission`, a draft `Project` linked to the client, `Room` records (name from the answers; dimensions left blank to complete), `Asset` rows (`BRIEF_UPLOAD`) attached to rooms. Mark the link `SUBMITTED` (or allow multiple submissions if the designer chooses).
+- [x] Email notification to the designer.
 
 **Acceptance:** a client can complete the brief on a phone without an account; the designer sees a ready draft project with photos and answers.
 

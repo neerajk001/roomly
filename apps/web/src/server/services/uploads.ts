@@ -19,6 +19,7 @@ export interface UploadContext {
 }
 
 export const presignInputSchema = z.object({
+  kind: z.enum(["ORIGINAL_PHOTO", "BRIEF_UPLOAD"]).default("ORIGINAL_PHOTO"),
   roomId: z.string().min(1).max(64).optional(),
   mime: z.enum(["image/jpeg", "image/png", "image/webp"]),
   sizeBytes: z
@@ -44,6 +45,38 @@ export async function createUploadPresign(
   ctx: UploadContext,
   input: z.infer<typeof presignInputSchema>,
 ): Promise<PresignResult> {
+  if (input.kind === "BRIEF_UPLOAD") {
+    const asset = await db.asset.create({
+      data: {
+        workspaceId: ctx.workspaceId,
+        roomId: null,
+        kind: "BRIEF_UPLOAD",
+        storageKey: `pending/${randomUUID()}`,
+        mime: input.mime,
+        sizeBytes: input.sizeBytes,
+      },
+    });
+    const storageKey = buildStorageKey({
+      workspaceId: ctx.workspaceId,
+      kind: "BRIEF_UPLOAD",
+      assetId: asset.id,
+      mime: input.mime,
+    });
+    await db.asset.update({ where: { id: asset.id }, data: { storageKey } });
+    const uploadUrl = await presignPut({
+      key: storageKey,
+      contentType: input.mime,
+      contentLength: input.sizeBytes,
+      expiresInSeconds: UPLOAD_EXPIRY_SECONDS,
+    });
+    return {
+      assetId: asset.id,
+      uploadUrl,
+      headers: { "content-type": input.mime },
+      expiresInSeconds: UPLOAD_EXPIRY_SECONDS,
+    };
+  }
+
   let roomId: string | null = null;
   if (input.roomId !== undefined) {
     const room = await db.room.findFirst({
@@ -122,11 +155,15 @@ export async function confirmUpload(
   db: Prisma,
   ctx: UploadContext,
   assetId: string,
+  expectedKind?: "ORIGINAL_PHOTO" | "BRIEF_UPLOAD",
 ): Promise<ConfirmedAsset> {
   const asset = await db.asset.findFirst({
     where: { id: assetId, workspaceId: ctx.workspaceId },
   });
   if (asset === null) {
+    throw new AppError("NOT_FOUND", "Upload not found.", 404);
+  }
+  if (expectedKind !== undefined && asset.kind !== expectedKind) {
     throw new AppError("NOT_FOUND", "Upload not found.", 404);
   }
   if (asset.confirmedAt !== null) {

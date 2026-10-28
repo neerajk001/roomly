@@ -59,6 +59,12 @@ Format: date, decision, reason.
 - Settings "mode" also flips `Workspace.type` between PERSONAL and STUDIO so the Pro shells stay consistent. Mode never deletes data.
 - Marketing copy is a placeholder pending decision gate G1 (product name).
 
+## 2026-10-28 — Test stack (V1.5)
+- Vitest 5 in every workspace package (`test: vitest run`, `passWithNoTests` for still-empty packages). Playwright at the repo root (`tests/e2e`), Chromium only.
+- Integration/unit tests use the **real local Postgres** from docker-compose (no testcontainers dependency); they create uniquely named users/workspaces and clean up. CI runs the same tests against a `postgres:16` service after `prisma migrate deploy`.
+- Playwright starts its own Next dev server on port 3100 with `AUTH_REQUIRE_EMAIL_VERIFICATION=false`; Next 16 refuses two dev servers for the same project, so a running `pnpm dev` must be stopped before `pnpm test:e2e` locally.
+- CI gained: Postgres service, migrate deploy, `playwright install --with-deps chromium`, E2E step. Untested on GitHub until a remote exists.
+
 ---
 
 # V1 — Foundation plan

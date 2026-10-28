@@ -1,65 +1,61 @@
-# RoomDesigner — Build Spec (V1 → Production)
+# RoomDesigner
 
-Working title: **RoomDesigner** (decision gate G1 — rename any time).
+AI room redesign for homeowners (Home mode) and design studios (Pro mode).
+Working title — decision gate G1 may rename it.
 
-One product, two modes:
-- **Home mode** — homeowners and renters redesign a room from a photo, stay within a budget, and share results.
-- **Pro mode** — interior designers and remodelers run client work: brief → renders → estimate from their own rate card → branded proposal → client approval.
+The full product spec lives in [`docs/spec/`](docs/spec/README.md). The current
+implementation covers **V1 — Foundation**: monorepo, database, auth, onboarding,
+shells and CI.
 
-Both modes share one engine (upload, room dimensions, AI renders, credits).
+## Requirements
 
-## How to use this with an AI coding agent
+- Node.js 22 (see `.nvmrc`)
+- pnpm 10
+- Docker Desktop (local Postgres, S3-compatible storage, Mailpit)
 
-1. Create the repo `room-designer`.
-2. Copy this folder to `docs/spec/` in the repo.
-3. Copy `AGENT.md` to the repo root as `AGENTS.md` (also as `CLAUDE.md` if you use Claude Code).
-4. Start the agent with:
+## Local setup (6 commands)
 
-   > Read `AGENTS.md` and `docs/spec/README.md`. Then execute phase V1 from `docs/spec/phases/v1-foundation.md`. Follow the execution protocol in `AGENTS.md`. Stop at the end of the phase and wait for my review.
+```bash
+cp .env.example .env       # then set BETTER_AUTH_SECRET (openssl rand -base64 32)
+pnpm install
+docker compose up -d       # Postgres 16 on :5434, MinIO :9000/:9001, Mailpit :8025
+pnpm db:migrate
+pnpm db:generate
+pnpm dev                   # web on http://localhost:3001 (3000 is often taken), worker alongside
+```
 
-5. Review, run, and commit after each phase. Then tell the agent to start the next phase.
+Notes:
 
-## Files
+- The dev Postgres is published on **5434** because 5432/5433 are commonly
+  occupied on dev machines. CI uses a normal 5432 service.
+- `APP_URL` and `BETTER_AUTH_URL` in `.env` must match the port Next.js picks.
+- `EMAIL_PROVIDER=console` prints verification and password-reset links to the
+  dev server log (Mailpit is available for SMTP experiments).
+- Seed a demo workspace (user `demo@roomdesigner.local`): `pnpm db:seed -- --demo`.
 
-| File | Purpose |
+## Checks
+
+```bash
+pnpm typecheck && pnpm lint && pnpm test   # unit + integration (needs Postgres)
+pnpm test:e2e                              # Playwright, starts its own server on :3100
+pnpm build
+```
+
+## Workspace layout
+
+| Path | Purpose |
 |---|---|
-| `AGENT.md` | Rules the agent must follow (protocol, hard rules, definition of done) |
-| `00-product.md` | Users, modes, feature matrix, principles, non-goals |
-| `01-architecture.md` | Stack, monorepo layout, package boundaries, env vars, local dev |
-| `02-database.md` | Full Prisma schema and data rules |
-| `03-auth-and-workspaces.md` | Better Auth setup, workspaces, authorization, public token links |
-| `04-ai-pipeline.md` | Image provider abstraction, prompts, render job lifecycle, credits, spend guard |
-| `05-estimate-engine.md` | Pure estimate logic, formulas, golden test cases |
-| `phases/v1-foundation.md` | Repo, tooling, DB, auth, onboarding, CI |
-| `phases/v2-core-engine.md` | Uploads, projects/rooms, render pipeline, credits, chat edit |
-| `phases/v3-home-mode.md` | Style quiz, budget, renter mode, cost range, sharing, free tier |
-| `phases/v4-pro-mode.md` | Clients, brief links, rate cards, estimates, proposals, approval |
-| `phases/v5-billing.md` | Plans, checkout, webhooks, credit grants, gating |
-| `phases/v6-production.md` | Security, reliability, observability, legal, SEO, deploy, launch |
+| `apps/web` | Next.js app (App Router, Tailwind 4, shadcn/ui) |
+| `apps/worker` | Background worker placeholder (render jobs land in V2) |
+| `packages/config` | zod env schema, tsconfig/ESLint base |
+| `packages/db` | Prisma 7 schema, migrations, client, seed |
+| `packages/auth` | Better Auth server/client, workspace bootstrap |
+| `packages/shared` | Pure shared constants/schemas (client-safe barrel) |
+| `packages/{estimate,ai,storage,pdf,billing}` | Skeletons for V2–V6 |
 
-## Phase overview (rough, solo, part-time)
+## Product rules that are easy to break
 
-| Phase | Outcome | Time |
-|---|---|---|
-| V1 | Sign up, choose mode, land on the right dashboard; CI green | ~1 week |
-| V2 | Upload a room photo, get AI renders, edit by chat, credits work | ~2 weeks |
-| V3 | Complete Home-mode experience with free tier and sharing | ~1 week |
-| V4 | Complete Pro-mode workflow, proposal PDF, client approval page | ~2–3 weeks |
-| V5 | Paid plans, webhooks, credit grants | ~1 week |
-| V6 | Hardened, observable, legal-ready, deployed, launch checklist | ~1–2 weeks |
-
-## Decision gates (the agent must stop and ask)
-
-| Gate | Decision | When |
-|---|---|---|
-| G1 | Product name and domain | Before V3 marketing copy |
-| G2 | Image provider and model (after fidelity test on real room photos) | During V2 |
-| G3 | Hosting target (Vercel + worker on your server, or all Docker) | Before V6 |
-| G4 | Billing provider (Stripe or a merchant of record like Paddle) | Start of V5 |
-| G5 | Final plan prices and credit grants (from measured cost per render) | During V5 |
-
-## Conventions used in these docs
-
-- `- [ ]` is a task. The agent changes it to `- [x]` when done.
-- "MUST" and "NEVER" are hard rules. "SHOULD" is a default the agent may change if it records why in `DECISIONS.md`.
-- Code snippets are guides. Always check the current official docs of a library before using it.
+- Renders are **concept visuals** — never promise exact dimensions or binding prices from AI output.
+- Every tenant query is scoped by `workspaceId`; never trust a client-sent workspace id.
+- Money is integer minor units; lengths are integer millimetres; percentages are basis points.
+- Tests never call paid APIs (`IMAGE_PROVIDER=fake`).

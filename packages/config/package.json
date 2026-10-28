@@ -1,24 +1,26 @@
 {
-    "name":  "@roomdesigner/config",
-    "version":  "0.1.0",
-    "private":  true,
-    "type":  "module",
-    "exports":  {
-                    "./env":  "./src/env.ts",
-                    "./tsconfig.base.json":  "./tsconfig.base.json",
-                    "./eslint/base.mjs":  "./eslint/base.mjs"
-                },
-    "scripts":  {
-                    "typecheck":  "tsc --noEmit",
-                    "lint":  "eslint"
-                },
-    "dependencies":  {
-                         "zod":  "^4.6.7"
-                     },
+  "name": "@roomdesigner/config",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./env": "./src/env.ts",
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./eslint/base.mjs": "./eslint/base.mjs"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  },
   "devDependencies": {
-    "typescript": "catalog:",
     "eslint": "catalog:",
+    "eslint-config-prettier": "catalog:",
+    "typescript": "catalog:",
     "typescript-eslint": "catalog:",
-    "eslint-config-prettier": "catalog:"
+    "vitest": "catalog:"
   }
 }

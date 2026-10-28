@@ -54,18 +54,19 @@
 
 ## 5. Tests
 
-- [ ] Vitest set up in each package; `turbo test` runs all.
-- [ ] Unit: env schema (valid, missing, malformed).
-- [ ] Integration (real Postgres via docker or testcontainers): `bootstrapWorkspace` idempotency and credit grant.
-- [ ] Playwright: sign up (with `AUTH_REQUIRE_EMAIL_VERIFICATION=false` in the test env) → onboarding as Home → `/app`; and as Pro → `/studio`.
-- [ ] Tenant-isolation test scaffold exists (can be minimal now).
+- [x] Vitest set up in each package; `turbo test` runs all.
+- [x] Unit: env schema (valid, missing, malformed).
+- [x] Integration (real Postgres via docker or testcontainers): `bootstrapWorkspace` idempotency and credit grant.
+- [x] Playwright: sign up (with `AUTH_REQUIRE_EMAIL_VERIFICATION=false` in the test env) → onboarding as Home → `/app`; and as Pro → `/studio`.
+- [x] Tenant-isolation test scaffold exists (can be minimal now).
 
 ## Definition of Done for V1
 
-- [ ] All boxes above ticked.
-- [ ] CI green on the main branch.
-- [ ] `README.md` at repo root explains setup in under 10 commands.
-- [ ] `DECISIONS.md` lists every deviation from the spec.
-- [ ] Short summary written for the human: what works, what was skipped, open questions.
+- [x] All boxes above ticked.
+- [ ] CI green on the main branch. (workflow written and verified locally; needs a GitHub remote — CI also needs the Playwright browser download step, included)
+> Summary for review: `docs/v1-summary.md`. V1 stopped here per the execution protocol.
+- [x] `README.md` at repo root explains setup in under 10 commands.
+- [x] `DECISIONS.md` lists every deviation from the spec.
+- [x] Short summary written for the human: what works, what was skipped, open questions.
 
 **Out of scope for V1:** uploads, renders, billing, proposals.

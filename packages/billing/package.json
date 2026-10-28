@@ -1,21 +1,23 @@
 {
-    "version":  "0.1.0",
-    "name":  "@roomdesigner/billing",
-    "scripts":  {
-                    "lint":  "eslint",
-                    "typecheck":  "tsc --noEmit"
-                },
-    "exports":  {
-                    ".":  "./src/index.ts"
-                },
-    "type":  "module",
-    "private":  true,
-    "devDependencies":  {
-                            "@types/node":  "catalog:",
-                            "typescript":  "catalog:",
-                            "eslint":  "catalog:",
-                            "typescript-eslint":  "catalog:",
-                            "eslint-config-prettier":  "catalog:",
-                            "@roomdesigner/config":  "workspace:*"
-                        }
+  "version": "0.1.0",
+  "name": "@roomdesigner/billing",
+  "scripts": {
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@roomdesigner/config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "eslint-config-prettier": "catalog:",
+    "typescript": "catalog:",
+    "typescript-eslint": "catalog:",
+    "vitest": "catalog:"
+  }
 }

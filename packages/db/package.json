@@ -1,31 +1,33 @@
 {
-    "name":  "@roomdesigner/db",
-    "version":  "0.1.0",
-    "private":  true,
-    "type":  "module",
-    "exports":  {
-                    ".":  "./src/index.ts"
-                },
-    "scripts":  {
-                    "migrate":  "prisma migrate dev",
-                    "generate":  "prisma generate",
-                    "seed":  "tsx prisma/seed.ts",
-                    "studio":  "prisma studio",
-                    "typecheck":  "tsc --noEmit",
-                    "lint":  "eslint"
-                },
-    "dependencies":  {
-                        "@prisma/adapter-pg":  "7.10.1",
-                        "@prisma/client":  "7.10.1"
-                    },
-    "devDependencies":  {
-                            "@types/node":  "catalog:",
-                            "prisma":  "7.10.1",
-                            "tsx":  "catalog:",
-                            "typescript":  "catalog:",
-                            "eslint":  "catalog:",
-                            "typescript-eslint":  "catalog:",
-                            "eslint-config-prettier":  "catalog:",
-                            "@roomdesigner/config":  "workspace:*"
-                        }
+  "name": "@roomdesigner/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "migrate": "prisma migrate dev",
+    "generate": "prisma generate",
+    "seed": "tsx prisma/seed.ts",
+    "studio": "prisma studio",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1"
+  },
+  "devDependencies": {
+    "@roomdesigner/config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "eslint-config-prettier": "catalog:",
+    "prisma": "7.10.1",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "typescript-eslint": "catalog:",
+    "vitest": "catalog:"
+  }
 }

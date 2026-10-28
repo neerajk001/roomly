@@ -160,7 +160,7 @@ Format: date, decision, reason.
 - Product rule: the room architecture must never change (windows, doors, walls, floor layout/material,
   dimensions, camera). The RESTYLE prompt now embeds a STRICT STRUCTURAL CONSTRAINTS block and the
   EDIT prompt re-states it; variation emphases are limited to furniture/textiles/decor.
-- OpenAI provider sends `input_fidelity: "high"` on every edit to bias toward preserving the input.
+- `input_fidelity` is NOT supported by `gpt-image-2.5` (API returns 400 invalid_input_fidelity_model); it was removed after a failed render. Structure is enforced by the prompt only until G2 picks a model that supports it.
 - Residual drift is a model limitation; the next lever (not built yet) is an automatic edge-map
   structure check that rejects/refunds outputs whose geometry diverges.
 # V2 — Core Engine plan

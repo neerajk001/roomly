@@ -18,7 +18,8 @@
     "eslint-config-prettier": "catalog:",
     "typescript": "catalog:",
     "typescript-eslint": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "tsx": "catalog:"
   },
   "dependencies": {
     "@roomdesigner/config": "workspace:*",

@@ -69,8 +69,8 @@ export function createOpenAIProvider(options: OpenAIProviderOptions): ImageProvi
             n: input.n,
             size: input.size,
             quality: input.quality,
-            // Bias the model to preserve the input photo details and geometry.
-            input_fidelity: "high",
+            // NOTE: gpt-image-2.5 rejects `input_fidelity` (400). Structure is
+            // enforced through the prompt instead.
           },
           input.signal !== undefined ? { signal: input.signal } : undefined,
         );

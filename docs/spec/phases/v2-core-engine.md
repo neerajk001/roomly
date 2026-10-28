@@ -45,11 +45,11 @@
 
 ## 5. Render UI
 
-- [ ] "Generate" panel: style picker (grid of styles), optional notes, variations count (default 4), quality (draft/final). Shows credit cost before confirming.
-- [ ] Progress state with polling `GET /api/renders/:id` (2s, with backoff). Handles FAILED with a friendly message and a retry button (refund already given).
-- [ ] Result grid: 4 outputs, click to enlarge, favorite (heart), download, "Edit this" opens the chat-edit box.
-- [ ] Chat edit: text box (max 300 chars) creates an `EDIT` job from the chosen output. Shows the chain as a simple history strip.
-- [ ] Disclaimer: "AI-generated concept visual. Not to scale."
+- [x] "Generate" panel: style picker (grid of styles), optional notes, variations count (default 4), quality (draft/final). Shows credit cost before confirming.
+- [x] Progress state with polling `GET /api/renders/:id` (2s, with backoff). Handles FAILED with a friendly message and a retry button (refund already given).
+- [x] Result grid: 4 outputs, click to enlarge, favorite (heart), download, "Edit this" opens the chat-edit box.
+- [x] Chat edit: text box (max 300 chars) creates an `EDIT` job from the chosen output. Shows the chain as a simple history strip.
+- [x] Disclaimer: "AI-generated concept visual. Not to scale."
 - [ ] Mobile layout works at 375px. Images lazy-load with thumbnails first.
 
 ## 6. Real provider check (decision gate G2)

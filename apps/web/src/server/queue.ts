@@ -11,7 +11,6 @@ async function startBoss(): Promise<PgBoss> {
   const env = getServerEnv();
   const boss = new PgBoss({ connectionString: env.DATABASE_URL, schema: "pgboss" });
   boss.on("error", (error) => {
-    // eslint-disable-next-line no-console -- structured queue error log
     console.error(JSON.stringify({ channel: "queue", event: "error", message: error.message }));
   });
   await boss.start();

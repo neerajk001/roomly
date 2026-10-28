@@ -26,6 +26,7 @@ const ROOM_TYPE_LABELS: Record<string, string> = {
 export const renderParamsSchema = z.object({
   providerQuality: z.enum(["low", "medium", "high"]),
   size: z.enum(["1024x1024", "1536x1024", "1024x1536", "auto"]),
+  notes: z.string().max(300).optional(),
 });
 
 export type RenderParams = z.infer<typeof renderParamsSchema>;
@@ -106,7 +107,7 @@ export async function processRenderJob(
       return "ok";
     }
 
-    const prompt = buildPromptForJob(job);
+    const prompt = buildPromptForJob(job, params.data);
     const source = await deps.download(job.sourceAsset.storageKey);
 
     const result = await deps.provider.edit({
@@ -188,22 +189,28 @@ export async function processRenderJob(
   }
 }
 
-function buildPromptForJob(job: {
-  kind: "RESTYLE" | "EDIT";
-  styleKey: string | null;
-  instruction: string | null;
-  room: { type: string; project: { keepList: string[]; renterMode: boolean } };
-}): string {
+function buildPromptForJob(
+  job: {
+    kind: "RESTYLE" | "EDIT";
+    styleKey: string | null;
+    instruction: string | null;
+    room: { type: string; project: { keepList: string[]; renterMode: boolean } };
+  },
+  params: RenderParams,
+): string {
   if (job.kind === "EDIT") {
     return buildEditPrompt(job.instruction ?? "");
   }
   const style = job.styleKey !== null ? getStyle(job.styleKey) : undefined;
-  return buildRestylePrompt({
+  const base = buildRestylePrompt({
     roomTypeLabel: ROOM_TYPE_LABELS[job.room.type] ?? "room",
     styleLabel: style?.label ?? "modern",
     keepList: job.room.project.keepList,
     renterMode: job.room.project.renterMode,
   });
+  return params.notes !== undefined && params.notes !== ""
+    ? `${base}\nAdditional notes: ${params.notes}`
+    : base;
 }
 
 async function finalizeFailure(

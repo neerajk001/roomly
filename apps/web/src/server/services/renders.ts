@@ -1,6 +1,5 @@
 import { getServerEnv } from "@roomdesigner/config/env";
 import {
-  prisma,
   refundCredits,
   reserveCredits,
   InsufficientCreditsError,
@@ -21,6 +20,8 @@ export const createRenderSchema = z.object({
   instruction: z.string().max(600).optional(),
   variations: z.number().int().min(1).max(4).default(4),
   quality: z.enum(["draft", "final"]).default("draft"),
+  /** RESTYLE only: optional extra direction from the user. */
+  notes: z.string().max(600).optional(),
   /** EDIT only: the render output the user wants to change. */
   sourceOutputId: z.string().min(1).optional(),
 });
@@ -87,6 +88,7 @@ export async function createRender(
   let sourceAssetId: string;
   let styleKey: string | null = null;
   let instruction: string | null = null;
+  let notes: string | null = null;
   let parentJobId: string | null = null;
 
   if (input.kind === "RESTYLE") {
@@ -103,6 +105,8 @@ export async function createRender(
       throw new AppError("NO_PHOTO", "Add a photo of the room first.", 400);
     }
     sourceAssetId = photo.id;
+    notes = sanitizeInstruction(input.notes ?? '').slice(0, 300);
+    if (notes === '') notes = null;
   } else {
     const cleaned = sanitizeInstruction(input.instruction ?? "");
     if (cleaned.length < 3) {
@@ -142,7 +146,10 @@ export async function createRender(
           status: "QUEUED",
           styleKey,
           instruction,
-          params: PROVIDER_PARAMS[input.quality],
+          params: {
+            ...PROVIDER_PARAMS[input.quality],
+            ...(notes !== null ? { notes } : {}),
+          },
           sourceAssetId,
           parentJobId,
           variations: input.variations,

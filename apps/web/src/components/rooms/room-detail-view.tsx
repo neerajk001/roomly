@@ -1,4 +1,6 @@
 import { RoomPhotos } from "@/components/projects/room-photos";
+import { RenderView } from "@/components/renders/render-view";
+import type { RenderJobView } from "@/components/renders/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { prisma } from "@roomdesigner/db";
 import { presignGet } from "@roomdesigner/storage";
@@ -21,12 +23,50 @@ export async function RoomDetailView({
 }) {
   const { user, workspace } = await requireWorkspace();
   const detail = await getRoom(prisma, { userId: user.id, workspaceId: workspace.id }, roomId);
+
   const photos = await Promise.all(
     detail.photos.map(async (photo) => ({
       id: photo.id,
       url: await presignGet(photo.storageKey),
     })),
   );
+
+  const jobsRaw = await prisma.renderJob.findMany({
+    where: { roomId: detail.room.id, workspaceId: workspace.id },
+    orderBy: { createdAt: "asc" },
+    take: 10,
+    include: {
+      outputs: {
+        orderBy: { index: "asc" },
+        include: {
+          asset: { select: { storageKey: true } },
+          thumbAsset: { select: { storageKey: true } },
+        },
+      },
+    },
+  });
+
+  const jobViews: RenderJobView[] = await Promise.all(
+    jobsRaw.map(async (job) => ({
+      id: job.id,
+      kind: job.kind,
+      status: job.status,
+      errorMessage: job.errorMessage,
+      creditsCharged: job.creditsCharged,
+      label: job.kind === "EDIT" ? (job.instruction ?? "Edit") : "Base concept",
+      outputs: await Promise.all(
+        job.outputs.map(async (output) => ({
+          id: output.id,
+          index: output.index,
+          isFavorite: output.isFavorite,
+          url: await presignGet(output.asset.storageKey),
+          thumbUrl: await presignGet(output.thumbAsset?.storageKey ?? output.asset.storageKey),
+        })),
+      ),
+    })),
+  );
+
+  const initialJob = jobViews.length > 0 ? (jobViews[jobViews.length - 1] ?? null) : null;
 
   return (
     <div className="space-y-6">
@@ -46,6 +86,19 @@ export async function RoomDetailView({
           {formatLength(detail.room.heightMm, workspace.unitSystem)}
         </p>
       </div>
+
+      <section aria-labelledby="generate-heading">
+        <h2 id="generate-heading" className="sr-only">
+          Generate concepts
+        </h2>
+        <RenderView
+          roomId={detail.room.id}
+          projectId={projectId}
+          hasPhoto={photos.length > 0}
+          initialJob={initialJob}
+          history={jobViews}
+        />
+      </section>
 
       <Card>
         <CardHeader>

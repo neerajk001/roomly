@@ -33,6 +33,20 @@ Format: date, decision, reason.
 ## 2026-10-28 — Root `.env` loading without a new dependency (V1.1)
 - Next.js only reads `.env` from the app directory, but the spec keeps one `.env` at the repo root. `packages/config/env.ts` walks up from `process.cwd()` (max 4 levels) and loads the first `.env` with Node's built-in `process.loadEnvFile` before validating. No `dotenv` dependency added. Existing variables are never overridden; in production the platform provides env vars directly.
 
+## 2026-10-28 — Dev Postgres port moved to 5434 (V1.2)
+- A native PostgreSQL install on this machine also listens on 5432 (Windows allows both to bind), so connections randomly hit the wrong server and failed auth. docker-compose publishes dev Postgres on 5434 (5433 is another local project); `.env.example` updated. CI keeps its own 5432 container.
+- Better Auth CLI (`auth generate`) **replaces** `prisma/schema.prisma` with only its own tables. Workflow: keep app models in the file, run the CLI, then re-merge app models + `User` back-relations (`ownedWorkspaces`, `workspaceMemberships`). `mode` was added via `additionalFields` and appears in the generated `User`.
+
+## 2026-10-28 — Prisma 7 config, env and client wiring (V1.2)
+- `packages/db/prisma.config.ts` loads the repo-root `.env` with `process.loadEnvFile` (no `dotenv` dependency) and supplies `datasource.url`; Prisma 7 rejects `url` in the schema datasource block. `migrations.seed` points at `tsx prisma/seed.ts`.
+- The db client singleton calls `loadRootEnvFile()` before reading `DATABASE_URL`, so scripts (seed, future worker jobs) work outside the Prisma CLI. The client is cached on `globalThis` for Next.js hot reload.
+
+## 2026-10-28 — Resend without the SDK (V1.3 groundwork)
+- `EmailSender` (console + Resend) lives in `packages/shared/src/email.ts`; Resend is called via `fetch` to `https://api.resend.com/emails` instead of adding the `resend` SDK (one HTTP call, no dependency). Dev uses the console implementation (`EMAIL_PROVIDER=console`).
+- `packages/config` exports `./env` (not `.`), so imports are `@roomdesigner/config/env`.
+- Better Auth imports: `better-auth`, adapter from `better-auth/adapters/prisma` (docs) with `@better-auth/prisma-adapter` installed as documented; `nextCookies()` is the last plugin. Google provider is only registered when both `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` are set, so email auth works in dev without OAuth credentials.
+- Generated Prisma client stays gitignored; CI runs `prisma validate` then `pnpm db:generate` before typecheck/build.
+
 ---
 
 # V1 — Foundation plan

@@ -20,12 +20,14 @@
 
 ## 2. Database
 
-- [ ] `packages/db`: add Prisma, schema from `02-database.md`, Prisma client singleton (safe for Next.js hot reload).
-- [ ] Generate the Better Auth models with the Better Auth CLI and merge into the schema. Add the `User` back-relations and the `mode` additional field.
-- [ ] Create the initial migration. `pnpm db:migrate` and `pnpm db:generate` work.
-- [ ] Seed script: creates nothing by default; `--demo` flag creates a demo workspace.
+- [x] `packages/db`: add Prisma, schema from `02-database.md`, Prisma client singleton (safe for Next.js hot reload).
+- [x] Generate the Better Auth models with the Better Auth CLI and merge into the schema. Add the `User` back-relations and the `mode` additional field.
+- [x] Create the initial migration. `pnpm db:migrate` and `pnpm db:generate` work.
+- [x] Seed script: creates nothing by default; `--demo` flag creates a demo workspace.
 
 **Acceptance:** `prisma migrate reset` + migrate works on a clean DB; `prisma validate` passes.
+
+> Note: dev Postgres is published on 5434 (5432 is held by a native PostgreSQL install on this machine, 5433 by another project). Verified: `prisma validate`, `migrate reset --force` + re-apply, seed (no-op and `--demo`, idempotent). `EmailSender` (console + Resend), `bootstrapWorkspace` and the Better Auth server config also landed here because the auth-table generation needs them; their verification is task 3/5.
 
 ## 3. Auth
 

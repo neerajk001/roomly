@@ -26,6 +26,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Prisma validate
+        run: pnpm --filter @roomdesigner/db exec prisma validate
+
+      - name: Prisma generate
+        run: pnpm db:generate
+
       - name: Typecheck
         run: pnpm typecheck
 

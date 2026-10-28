@@ -11,12 +11,18 @@
                     "typecheck":  "tsc --noEmit",
                     "lint":  "eslint"
                 },
+    "dependencies":  {
+                        "@better-auth/prisma-adapter":  "1.7.14",
+                        "@roomdesigner/config":  "workspace:*",
+                        "@roomdesigner/db":  "workspace:*",
+                        "@roomdesigner/shared":  "workspace:*",
+                        "better-auth":  "1.7.14"
+                    },
     "devDependencies":  {
                             "@types/node":  "catalog:",
                             "typescript":  "catalog:",
                             "eslint":  "catalog:",
                             "typescript-eslint":  "catalog:",
-                            "eslint-config-prettier":  "catalog:",
-                            "@roomdesigner/config":  "workspace:*"
+                            "eslint-config-prettier":  "catalog:"
                         }
 }

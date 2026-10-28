@@ -22,7 +22,7 @@ let rootEnvLoaded = false;
  * keeps a single `.env` at the repo root for web and worker. Never overrides
  * variables that are already set.
  */
-function loadRootEnvFile(): void {
+export function loadRootEnvFile(): void {
   if (rootEnvLoaded) return;
   rootEnvLoaded = true;
   let dir = process.cwd();

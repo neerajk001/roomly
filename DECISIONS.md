@@ -65,6 +65,53 @@ Format: date, decision, reason.
 - Playwright starts its own Next dev server on port 3100 with `AUTH_REQUIRE_EMAIL_VERIFICATION=false`; Next 16 refuses two dev servers for the same project, so a running `pnpm dev` must be stopped before `pnpm test:e2e` locally.
 - CI gained: Postgres service, migrate deploy, `playwright install --with-deps chromium`, E2E step. Untested on GitHub until a remote exists.
 
+## 2026-10-28 — Upload/storage design (V2.1)
+- Storage keys are built from the DB asset id: the Asset row is inserted first with a unique
+  `pending/<uuid>` key, then updated to `ws/{workspaceId}/{kind}/{assetId}.{ext}` before presigning.
+- Presigned PUTs bind `ContentLength` (and `Content-Type`) to the requested size, so a mismatched
+  upload is rejected by S3/MinIO before it can be confirmed.
+- `packages/storage` does not import Prisma (dependency rule): it exports its own
+  `StorageAssetKind` union kept in sync with the Prisma enum.
+- Uploaded files are re-encoded with sharp (`.rotate()` + re-encode drops EXIF/GPS), stored back
+  under the same key; a JPEG thumbnail (≤512 px) is stored as a separate `THUMBNAIL` asset.
+- `sharp`, `@prisma/client`, `@prisma/adapter-pg` added to `serverExternalPackages`.
+- Verified live: presign → PUT → confirm returns 800×600; stored object has no EXIF/GPS; >10 MB
+  rejected at presign; corrupt upload rejected at confirm.
+- Better Auth requires an `Origin` header on POST requests (`MISSING_OR_NULL_ORIGIN` otherwise):
+  browser calls are fine, but scripts/tests must send it.
+
+---
+
+# V2 — Core Engine plan
+
+Goal: project/room CRUD, photo upload with EXIF-stripping + thumbnails, fake/openai render
+pipeline (QUEUED→RUNNING→SUCCEEDED/FAILED), credit reserve/refund, spend guard, render UI with
+favorites/download/chat-edit, fidelity script, tests.
+
+## Order of tasks
+1. **Storage**: S3 client (AWS SDK v3), presign/head/get/put/delete; sharp pipeline (validate,
+   re-encode, thumbnail); upload presign + confirm route handlers; unconfirmed-asset cleanup job
+   (lands with the worker in task 3).
+2. **Projects/rooms**: services (`(db, ctx, input)`), project grid pages for `/app` and `/studio`,
+   room form (mm storage, unit toggle, openings), photo upload component (1–3 photos).
+3. **AI + worker**: `packages/ai` (ImageProvider, fake, openai, pricing, prompts), `shared` styles +
+   credit costs; worker with pg-boss, `render.generate`, post-processing, cost recording, retries.
+4. **Credits**: `getBalance`, reserve/refund helpers, `createRender` (verified email, ownership,
+   spend guard), balance in header, `/api/renders/:id` status handler.
+5. **Render UI**: generate panel, polling, result grid, favorite/download, chat edit, disclaimers.
+6. **Fidelity script** (`pnpm ai:fidelity`): gated by `IMAGE_PROVIDER=openai` + `--budget-usd`; stops
+   at budget; report to human and **stop for G2** (needs a real API key, cannot run without one).
+7. **Tests**: isolation (projects/rooms/assets/jobs/credits), credits concurrency + idempotent
+   refund, worker retry/permanent failure with the fake provider, spend guard, upload validation
+   (type/size/corrupt/EXIF), Playwright full flow with the fake provider.
+
+## V2 risks / open points
+- pg-boss and OpenAI Images APIs change: verify current docs before implementing; record versions.
+- Web enqueues jobs too: pg-boss is initialised in both apps (shared payload types live in
+  `packages/shared`), no new package.
+- Google OAuth and G2 (provider/model quality tiers) still need human input; fidelity run needs an API key.
+- Worker needs real bundling for production (V6); V2 keeps `tsx` for dev and runs the worker via tsx.
+
 ---
 
 # V1 — Foundation plan

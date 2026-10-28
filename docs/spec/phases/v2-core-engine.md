@@ -6,12 +6,12 @@
 
 ## 1. Storage
 
-- [ ] `packages/storage`: S3 client (AWS SDK v3, works with R2 and MinIO), `presignPut`, `presignGet`, `headObject`, `getObject`, `putObject`, `deleteObject`.
-- [ ] Storage keys: `ws/{workspaceId}/{kind}/{assetId}.{ext}`. Never use user-supplied file names in keys.
-- [ ] `POST /api/uploads/presign` → validates `{ roomId?, mime, sizeBytes }` (JPEG/PNG/WebP, ≤10 MB), creates an `Asset` (unconfirmed), returns `{ assetId, uploadUrl, headers }`.
-- [ ] `POST /api/uploads/:assetId/confirm` → checks the object exists, reads it with sharp, validates it is a real image ≤4096px on its long side, re-encodes (strips EXIF), generates a thumbnail, sets `confirmedAt`, width, height, size.
-- [ ] Unconfirmed assets older than 24h are deleted by a worker cleanup job (pg-boss scheduled job).
-- [ ] Signed GET URLs are generated on demand with short expiry and never stored.
+- [x] `packages/storage`: S3 client (AWS SDK v3, works with R2 and MinIO), `presignPut`, `presignGet`, `headObject`, `getObject`, `putObject`, `deleteObject`.
+- [x] Storage keys: `ws/{workspaceId}/{kind}/{assetId}.{ext}`. Never use user-supplied file names in keys.
+- [x] `POST /api/uploads/presign` → validates `{ roomId?, mime, sizeBytes }` (JPEG/PNG/WebP, ≤10 MB), creates an `Asset` (unconfirmed), returns `{ assetId, uploadUrl, headers }`.
+- [x] `POST /api/uploads/:assetId/confirm` → checks the object exists, reads it with sharp, validates it is a real image ≤4096px on its long side, re-encodes (strips EXIF), generates a thumbnail, sets `confirmedAt`, width, height, size.
+- [ ] Unconfirmed assets older than 24h are deleted by a worker cleanup job (pg-boss scheduled job). (deferred to the worker, task 3)
+- [x] Signed GET URLs are generated on demand with short expiry and never stored.
 
 **Acceptance:** uploading a GPS-tagged JPEG results in a stored image without EXIF. A fake image with a `.jpg` name is rejected. A file over 10 MB is rejected before upload starts.
 

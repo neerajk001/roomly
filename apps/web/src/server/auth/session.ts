@@ -27,19 +27,40 @@ export interface WorkspaceContext {
   role: WorkspaceRole;
 }
 
+async function resolveMembership(session: Session) {
+  return prisma.workspaceMember.findFirst({
+    where: { userId: session.user.id },
+    include: { workspace: true },
+    orderBy: { createdAt: "asc" },
+  });
+}
+
 /**
  * Resolves the caller's workspace from their membership. The workspace id is
  * never taken from the client. V1: exactly one workspace per user.
  */
 export async function requireWorkspace(): Promise<WorkspaceContext> {
   const session = await requireSession();
-  const membership = await prisma.workspaceMember.findFirst({
-    where: { userId: session.user.id },
-    include: { workspace: true },
-    orderBy: { createdAt: "asc" },
-  });
+  const membership = await resolveMembership(session);
   if (membership === null) {
     redirect("/onboarding");
+  }
+  return {
+    user: session.user,
+    workspace: membership.workspace,
+    role: membership.role,
+  };
+}
+
+/** API variant: throws 401/403 instead of redirecting. */
+export async function requireApiWorkspace(): Promise<WorkspaceContext> {
+  const session = await getSession();
+  if (session === null) {
+    throw new AppError("UNAUTHORIZED", "Sign in required.", 401);
+  }
+  const membership = await resolveMembership(session);
+  if (membership === null) {
+    throw new AppError("NO_WORKSPACE", "Finish onboarding first.", 403);
   }
   return {
     user: session.user,

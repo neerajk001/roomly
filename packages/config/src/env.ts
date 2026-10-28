@@ -80,6 +80,9 @@ export const serverEnvSchema = z.object({
   S3_SECRET_ACCESS_KEY: z.string().default(""),
   S3_PUBLIC_BASE_URL: optionalUrl,
 
+  // rendered image previews (lower in dev to save bandwidth/time)
+  WEB_RENDER_MAX_PX: z.coerce.number().int().positive().max(4096).default(2048),
+
   // ai
   IMAGE_PROVIDER: z.enum(["fake", "openai"]).default("fake"),
   OPENAI_API_KEY: optionalString,

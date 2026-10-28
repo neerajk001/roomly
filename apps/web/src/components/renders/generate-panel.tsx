@@ -24,8 +24,8 @@ export function GeneratePanel({
   onCreate: (request: RestyleRequest) => void;
 }) {
   const [styleKey, setStyleKey] = useState("modern");
-  const [quality, setQuality] = useState<"draft" | "final">("final");
-  const [variations, setVariations] = useState(4);
+  const [quality, setQuality] = useState<"draft" | "final">("draft");
+  const [variations, setVariations] = useState(3);
   const [notes, setNotes] = useState("");
 
   const cost = totalCreditCost(quality, variations);

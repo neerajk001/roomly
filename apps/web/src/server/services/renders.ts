@@ -32,18 +32,18 @@ export interface CreateRenderContext extends ServiceContext {
   emailVerified: boolean;
 }
 
-// Best available texture quality for both tiers; the tier only changes the
-// output size (and therefore the credit price).
+// Draft is cheap/low quality (dev + quick iteration); final is the best
+// available texture quality at a larger size.
 function pickRenderParams(
   quality: "draft" | "final",
   width: number | null,
   height: number | null,
-): { providerQuality: "high"; size: "1024x1024" | "1536x1024" | "1024x1536" } {
+): { providerQuality: "low" | "high"; size: "1024x1024" | "1536x1024" | "1024x1536" } {
   const portrait = width !== null && height !== null && height > width;
   if (quality === "final") {
     return { providerQuality: "high", size: portrait ? "1024x1536" : "1536x1024" };
   }
-  return { providerQuality: "high", size: portrait ? "1024x1536" : "1024x1024" };
+  return { providerQuality: "low", size: portrait ? "1024x1536" : "1024x1024" };
 }
 
 async function assertDailySpendOk(db: Prisma, costMicrosToAdd: number): Promise<void> {

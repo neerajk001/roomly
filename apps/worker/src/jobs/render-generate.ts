@@ -10,6 +10,7 @@ import {
 } from "@roomdesigner/ai";
 import { refundCredits, type Prisma } from "@roomdesigner/db";
 import { makeThumbnail, makeWebVersion, buildStorageKey } from "@roomdesigner/storage";
+import { getServerEnv } from "@roomdesigner/config/env";
 import { getStyle } from "@roomdesigner/shared";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
@@ -54,6 +55,11 @@ interface ProcessJobInput {
 }
 
 const PROVIDER_TIMEOUT_MS = 120_000;
+
+/** Preview size for stored renders; lower in dev via WEB_RENDER_MAX_PX. */
+function webPreviewMaxPx(): number {
+  return getServerEnv().WEB_RENDER_MAX_PX;
+}
 
 function safeMessage(error: unknown): string {
   if (error instanceof ProviderError) return error.message;
@@ -140,7 +146,7 @@ export async function processRenderJob(
 
     let index = 0;
     for (const image of result.images) {
-      const web = await makeWebVersion(image.data);
+      const web = await makeWebVersion(image.data, webPreviewMaxPx());
       const webAsset = await createAsset(db, {
         workspaceId: job.workspaceId,
         roomId: job.roomId,

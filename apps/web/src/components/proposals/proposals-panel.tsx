@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { getServerEnv } from "@roomdesigner/config/env";
 import { prisma } from "@roomdesigner/db";
 import { formatMoney } from "@roomdesigner/shared";
-import { sendProposalAction } from "@/server/actions/proposals";
+import { generateProposalPdfAction, sendProposalAction } from "@/server/actions/proposals";
 import { requireWorkspace } from "@/server/auth/session";
 import { listProposals } from "@/server/services/proposals";
 import Link from "next/link";
@@ -60,6 +60,16 @@ export async function ProposalsPanel({ projectId }: { projectId: string }) {
                   )}
                   {proposal.status !== "DRAFT" && (
                     <CopyLinkButton url={`${base}/p/${proposal.publicToken}`} label="Copy client link" />
+                  )}
+                  <form action={generateProposalPdfAction}>
+                    <input type="hidden" name="proposalId" value={proposal.id} />
+                    <input type="hidden" name="projectId" value={projectId} />
+                    <Button type="submit" size="sm" variant="outline">
+                      Generate PDF
+                    </Button>
+                  </form>
+                  {proposal.pdfStorageKey !== null && (
+                    <span className="text-xs text-muted-foreground">PDF ready (client link)</span>
                   )}
                 </div>
               </li>

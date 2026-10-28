@@ -126,6 +126,7 @@ export async function listProposals(db: Prisma, ctx: ServiceContext, projectId: 
       viewedAt: true,
       approvedAt: true,
       approvedByName: true,
+      pdfStorageKey: true,
       expiresAt: true,
       createdAt: true,
       _count: { select: { comments: true } },
@@ -139,6 +140,7 @@ export interface PublicProposal {
   intro: string | null;
   terms: string | null;
   status: string;
+  pdfUrl: string | null;
   expiresAt: Date | null;
   approvedByName: string | null;
   approvedOutputId: string | null;
@@ -221,6 +223,7 @@ export async function getPublicProposal(
     intro: proposal.intro,
     terms: proposal.terms,
     status,
+    pdfUrl: proposal.pdfStorageKey !== null ? await sign(proposal.pdfStorageKey) : null,
     expiresAt: proposal.expiresAt,
     approvedByName: proposal.approvedByName,
     approvedOutputId: proposal.approvedOutputId,

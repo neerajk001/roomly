@@ -1,6 +1,9 @@
 {
-    "include":  [
-                    "src/**/*.ts"
-                ],
-    "extends":  "@roomdesigner/config/tsconfig.base.json"
+  "include": [
+    "src/**/*.ts"
+  ],
+  "extends": "@roomdesigner/config/tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx"
+  }
 }

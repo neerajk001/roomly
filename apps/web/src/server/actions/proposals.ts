@@ -9,6 +9,8 @@ import { z } from "zod";
 import { requireWorkspace } from "../auth/session";
 import { AppError } from "../app-error";
 import { createProposal, proposalInputSchema, sendProposal } from "../services/proposals";
+import { renderProposalPdf } from "@roomdesigner/pdf";
+import { putObject } from "@roomdesigner/storage";
 
 export interface ProposalFormState {
   error?: string;
@@ -76,4 +78,48 @@ export async function sendProposalAction(formData: FormData): Promise<void> {
   }
 
   revalidatePath(`/studio/projects/${projectId}`);
+}
+/** Generates the proposal PDF on demand and stores it in S3. */
+export async function generateProposalPdfAction(formData: FormData): Promise<void> {
+  const id = z.string().min(1).parse(formData.get("proposalId"));
+  const projectId = z.string().min(1).parse(formData.get("projectId"));
+  const { user, workspace } = await requireWorkspace();
+  const proposal = await prisma.proposal.findFirst({
+    where: { id, project: { workspaceId: workspace.id } },
+    include: {
+      estimate: { include: { lines: { orderBy: { sortOrder: "asc" } } } },
+      project: { select: { name: true, client: { select: { name: true } } } },
+    },
+  });
+  if (proposal === null) throw new AppError("NOT_FOUND", "Proposal not found.", 404);
+
+  const captions = (proposal.optionCaptions ?? {}) as Record<string, string>;
+  const buffer = await renderProposalPdf({
+    brandName: workspace.brandName ?? workspace.name,
+    title: proposal.title,
+    projectName: proposal.project.name,
+    clientName: proposal.project.client?.name ?? null,
+    intro: proposal.intro,
+    terms: proposal.terms,
+    currency: proposal.estimate.currency,
+    estimateVersion: proposal.estimate.version,
+    lines: proposal.estimate.lines.map((line) => ({
+      label: line.label,
+      quantity: line.quantity.toNumber(),
+      totalMinor: line.totalMinor,
+    })),
+    subtotalMinor: proposal.estimate.subtotalMinor,
+    markupMinor: proposal.estimate.markupMinor,
+    taxMinor: proposal.estimate.taxMinor,
+    totalMinor: proposal.estimate.totalMinor,
+    options: proposal.renderOutputIds.map((outputId) => ({
+      caption: captions[outputId] ?? "",
+    })),
+  });
+
+  const key = `ws/${workspace.id}/pdf/${proposal.id}.pdf`;
+  await putObject({ key, body: buffer, contentType: "application/pdf" });
+  await prisma.proposal.update({ where: { id: proposal.id }, data: { pdfStorageKey: key } });
+  revalidatePath(`/studio/projects/${projectId}`);
+  void user;
 }

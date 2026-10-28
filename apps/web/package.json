@@ -29,7 +29,8 @@
     "@roomdesigner/storage": "workspace:*",
     "pg-boss": "^12.38.0",
     "@roomdesigner/ai": "workspace:*",
-    "@roomdesigner/estimate": "workspace:*"
+    "@roomdesigner/estimate": "workspace:*",
+    "@roomdesigner/pdf": "workspace:*"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",

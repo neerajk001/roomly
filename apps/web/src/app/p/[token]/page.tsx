@@ -46,6 +46,14 @@ export default async function PublicProposalPage({
           )}
         </header>
 
+        {proposal.pdfUrl !== null && (
+          <p>
+            <a href={proposal.pdfUrl} className="text-sm underline">
+              Download PDF
+            </a>
+          </p>
+        )}
+
         {proposal.intro !== null && (
           <p className="whitespace-pre-line text-sm text-foreground">{proposal.intro}</p>
         )}

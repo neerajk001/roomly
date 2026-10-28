@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // sharp and the Prisma runtime are native/server modules: keep them out of
   // the client/server bundle graph.
-  serverExternalPackages: ["sharp", "@prisma/client", "@prisma/adapter-pg"],
+  serverExternalPackages: ["sharp", "@prisma/client", "@prisma/adapter-pg", "@react-pdf/renderer"],
   turbopack: {
     rules: {
       "*.css": {

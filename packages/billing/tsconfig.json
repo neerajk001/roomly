@@ -1,0 +1,6 @@
+{
+    "include":  [
+                    "src/**/*.ts"
+                ],
+    "extends":  "@roomdesigner/config/tsconfig.base.json"
+}

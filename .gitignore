@@ -1,0 +1,33 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build outputs
+dist/
+.next/
+out/
+build/
+*.tsbuildinfo
+
+# generated prisma client
+packages/db/src/generated/
+
+# env
+.env
+.env.*
+!.env.example
+
+# testing
+coverage/
+playwright-report/
+test-results/
+
+# misc
+.DS_Store
+*.log
+tmp/
+.turbo/
+
+# original spec delivery artifacts (content lives in docs/spec)
+room-designer-spec/
+room-designer-spec.zip

@@ -23,8 +23,10 @@ export { classifyProviderError, createOpenAIProvider } from "./openai";
 export { PRICING, computeCostMicros, pricingForModel } from "./pricing";
 export {
   MAX_INSTRUCTION_LENGTH,
+  VARIATION_EMPHASES,
   buildEditPrompt,
   buildRestylePrompt,
   sanitizeInstruction,
+  variationPrompt,
 } from "./prompts";
 export { ProviderError, type EditInput, type EditResult, type ImageProvider, type ImageQuality, type ImageSize } from "./types";

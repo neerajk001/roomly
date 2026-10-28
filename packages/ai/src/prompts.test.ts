@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildEditPrompt, buildRestylePrompt, sanitizeInstruction } from "./prompts";
+import {
+  buildEditPrompt,
+  buildRestylePrompt,
+  sanitizeInstruction,
+  variationPrompt,
+} from "./prompts";
 
 const STAGING_LINE =
   "Photorealistic interior photograph, professional staging, realistic materials and surface textures (fabric, wood grain, stone, paint finish), soft natural daylight and believable shadows. No people, no text, logos or watermarks.";
@@ -9,12 +14,14 @@ describe("buildRestylePrompt", () => {
     const prompt = buildRestylePrompt({
       roomTypeLabel: "living room",
       styleLabel: "Scandinavian",
+      styleHint: "light woods, white walls, hygge textiles",
       keepList: [],
       renterMode: false,
     });
     expect(prompt).toBe(
       [
-        "Redesign this living room in a Scandinavian interior design style as a fully furnished, move-in-ready room.",
+"Redesign this living room in a Scandinavian interior design style as a fully furnished, move-in-ready room.",
+        "Style direction — light woods, white walls, hygge textiles. Interpret this style faithfully and distinctly; do not default to a generic neutral staging.",
         "Keep the room's structure exactly as in the photo: walls, windows, doors, ceiling, camera angle, perspective and dimensions.",
         "Remove moving boxes, trash, construction debris and clutter; replace them with furniture, rugs, lighting and decor that fit the space.",
         "Keep these items unchanged: none.",
@@ -23,10 +30,30 @@ describe("buildRestylePrompt", () => {
     );
   });
 
+  it("sends the style hint so styles do not converge", () => {
+    const modern = buildRestylePrompt({
+      roomTypeLabel: "living room",
+      styleLabel: "Modern",
+      styleHint: "clean lines, neutral palette, integrated lighting",
+      keepList: [],
+      renterMode: false,
+    });
+    const scandi = buildRestylePrompt({
+      roomTypeLabel: "living room",
+      styleLabel: "Scandinavian",
+      styleHint: "light woods, white walls, hygge textiles",
+      keepList: [],
+      renterMode: false,
+    });
+    expect(modern).not.toBe(scandi);
+    expect(modern).toContain("clean lines, neutral palette, integrated lighting");
+  });
+
   it("adds the renter clause and the keep list", () => {
     const prompt = buildRestylePrompt({
       roomTypeLabel: "bedroom",
       styleLabel: "Japandi",
+      styleHint: "natural textures, low furniture, decluttered",
       keepList: ["the rug", "the bookshelf"],
       renterMode: true,
     });
@@ -58,5 +85,16 @@ describe("sanitizeInstruction", () => {
 
   it("trims", () => {
     expect(sanitizeInstruction("   paint the walls   ")).toBe("paint the walls");
+  });
+});
+describe("variationPrompt", () => {
+  it("gives each variation a distinct emphasis while keeping the base", () => {
+    const base = "Redesign this living room.";
+    const prompts = [0, 1, 2, 3].map((index) => variationPrompt(base, index));
+    expect(new Set(prompts).size).toBe(4);
+    for (const prompt of prompts) {
+      expect(prompt.startsWith(base)).toBe(true);
+      expect(prompt).toContain("Variation emphasis");
+    }
   });
 });

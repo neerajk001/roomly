@@ -2,7 +2,11 @@ import {
   buildEditPrompt,
   buildRestylePrompt,
   ProviderError,
+  variationPrompt,
+  type EditResult,
+  type ImageQuality,
   type ImageProvider,
+  type ImageSize,
 } from "@roomdesigner/ai";
 import { refundCredits, type Prisma } from "@roomdesigner/db";
 import { makeThumbnail, makeWebVersion, buildStorageKey } from "@roomdesigner/storage";
@@ -110,15 +114,27 @@ export async function processRenderJob(
     const prompt = buildPromptForJob(job, params.data);
     const source = await deps.download(job.sourceAsset.storageKey);
 
-    const result = await deps.provider.edit({
-      image: source,
-      mime: job.sourceAsset.mime,
-      prompt,
-      n: job.variations,
-      size: params.data.size,
-      quality: params.data.providerQuality,
-      signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
-    });
+    // One call per variation with a distinct emphasis: a single n=4 call
+    // returns four near-identical images. EDIT jobs stay a single image.
+    const result =
+      job.kind === "RESTYLE" && job.variations > 1
+        ? await editVariations(deps, {
+            source,
+            mime: job.sourceAsset.mime,
+            basePrompt: prompt,
+            variations: job.variations,
+            size: params.data.size,
+            quality: params.data.providerQuality,
+          })
+        : await deps.provider.edit({
+            image: source,
+            mime: job.sourceAsset.mime,
+            prompt,
+            n: job.variations,
+            size: params.data.size,
+            quality: params.data.providerQuality,
+            signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
+          });
 
     await db.renderOutput.deleteMany({ where: { jobId: job.id } });
 
@@ -204,7 +220,8 @@ function buildPromptForJob(
   const style = job.styleKey !== null ? getStyle(job.styleKey) : undefined;
   const base = buildRestylePrompt({
     roomTypeLabel: ROOM_TYPE_LABELS[job.room.type] ?? "room",
-    styleLabel: style?.label ?? "modern",
+    styleLabel: style?.label ?? "Modern",
+    styleHint: style?.promptHint ?? "clean lines and a coherent palette",
     keepList: job.room.project.keepList,
     renterMode: job.room.project.renterMode,
   });
@@ -268,4 +285,35 @@ async function createAsset(
   });
   await db.asset.update({ where: { id: asset.id }, data: { storageKey } });
   return { id: asset.id, storageKey };
+}
+async function editVariations(
+  deps: RenderJobDeps,
+  input: {
+    source: Buffer;
+    mime: string;
+    basePrompt: string;
+    variations: number;
+    size: ImageSize;
+    quality: ImageQuality;
+  },
+): Promise<EditResult> {
+  const results = await Promise.all(
+    Array.from({ length: input.variations }, (_, index) =>
+      deps.provider.edit({
+        image: input.source,
+        mime: input.mime,
+        prompt: variationPrompt(input.basePrompt, index),
+        n: 1,
+        size: input.size,
+        quality: input.quality,
+        signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
+      }),
+    ),
+  );
+
+  return {
+    images: results.flatMap((result) => result.images),
+    costMicros: results.reduce((sum, result) => sum + result.costMicros, 0),
+    model: results[0]?.model ?? deps.provider.name,
+  };
 }

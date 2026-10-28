@@ -148,6 +148,14 @@ Format: date, decision, reason.
 
 ---
 
+## 2026-10-28 — Style differentiation and variation diversity
+- Bug: the RESTYLE prompt only received the style *label*, never the style `promptHint`, so Modern and
+  Scandinavian converged on the same warm-neutral staging. The hint is now part of the prompt
+  ("Style direction — … Interpret this style faithfully and distinctly").
+- `n = 4` in one provider call returned four near-identical images. RESTYLE jobs now make one call
+  per variation in parallel with a deterministic per-variation emphasis (calm/less clutter,
+  layered decor, lighter palette, moodier accents). EDIT stays a single image. Cost is summed across
+  calls; credits unchanged.
 # V2 — Core Engine plan
 
 Goal: project/room CRUD, photo upload with EXIF-stripping + thumbnails, fake/openai render

@@ -17,7 +17,8 @@
     "db:seed": "pnpm --filter @roomdesigner/db seed",
     "db:studio": "pnpm --filter @roomdesigner/db studio",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "ai:fidelity": "pnpm --filter @roomdesigner/ai exec tsx scripts/fidelity.mts"
   },
   "devDependencies": {
     "prettier": "^3.8.1",

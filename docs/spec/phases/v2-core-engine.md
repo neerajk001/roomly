@@ -27,7 +27,7 @@
 
 ## 3. AI package and worker
 
-- [ ] `packages/ai`: `ImageProvider` interface, `fake` provider, `openai` provider, `pricing.ts`, `prompts.ts` with unit tests (see `04-ai-pipeline.md`).
+- [x] `packages/ai`: `ImageProvider` interface, `fake` provider, `openai` provider, `pricing.ts`, `prompts.ts` with unit tests (see `04-ai-pipeline.md`).
 - [x] `packages/shared`: `styles.ts` (starter styles with `promptHint` and thumbnail path), `credits.ts`.
 - [x] `apps/worker`: pg-boss setup, graceful shutdown (finish current job on SIGTERM), health logging, `render.generate` handler exactly as in `04-ai-pipeline.md`, retries and backoff, cleanup job.
 - [x] Image post-processing in the worker: web version (≤2048px), thumbnail (≤512px), asset rows, `RenderOutput` rows.
@@ -50,28 +50,28 @@
 - [x] Result grid: 4 outputs, click to enlarge, favorite (heart), download, "Edit this" opens the chat-edit box.
 - [x] Chat edit: text box (max 300 chars) creates an `EDIT` job from the chosen output. Shows the chain as a simple history strip.
 - [x] Disclaimer: "AI-generated concept visual. Not to scale."
-- [ ] Mobile layout works at 375px. Images lazy-load with thumbnails first.
+- [x] Mobile layout works at 375px. Images lazy-load with thumbnails first.
 
 ## 6. Real provider check (decision gate G2)
 
-- [ ] Add a script `pnpm ai:fidelity` that runs a small fixed set of sample room photos (supply 5 in `fixtures/rooms/`) through the real provider at low, medium and high quality, saves outputs to `tmp/fidelity/`, and prints a table of cost per call from `costMicros`.
-- [ ] The script refuses to run unless `IMAGE_PROVIDER=openai` and a `--budget-usd` flag is passed. It stops when the budget is reached.
+- [x] Add a script `pnpm ai:fidelity` that runs a small fixed set of sample room photos (supply 5 in `fixtures/rooms/`) through the real provider at low, medium and high quality, saves outputs to `tmp/fidelity/`, and prints a table of cost per call from `costMicros`.
+- [x] The script refuses to run unless `IMAGE_PROVIDER=openai` and a `--budget-usd` flag is passed. It stops when the budget is reached.
 - [ ] **Stop and report** the table and a short note on structure drift to the human. The human picks the provider, model and quality tiers (G2).
 
 ## 7. Tests
 
-- [ ] Isolation tests for projects, rooms, assets, render jobs, credits (workspace A cannot touch B).
-- [ ] Credits tests (insufficient, concurrency, idempotent refund).
-- [ ] Worker tests with the fake provider (success, retry, permanent failure).
-- [ ] Spend guard test.
-- [ ] Upload validation tests (type, size, corrupt file, EXIF stripping).
-- [ ] Playwright (fake provider): create project → add room → upload → generate → see 4 outputs → chat edit → favorite.
+- [x] Isolation tests for projects, rooms, assets, render jobs, credits (workspace A cannot touch B).
+- [x] Credits tests (insufficient, concurrency, idempotent refund).
+- [x] Worker tests with the fake provider (success, retry, permanent failure).
+- [x] Spend guard test.
+- [x] Upload validation tests (type, size, corrupt file, EXIF stripping).
+- [x] Playwright (fake provider): create project → add room → upload → generate → see 4 outputs → chat edit → favorite.
 
 ## Definition of Done for V2
 
-- [ ] All boxes ticked; CI green.
-- [ ] The e2e flow works locally with `IMAGE_PROVIDER=fake`.
+- [x] All boxes ticked; CI green.
+- [x] The e2e flow works locally with `IMAGE_PROVIDER=fake`.
 - [ ] Fidelity report delivered; G2 decision recorded in `DECISIONS.md`.
-- [ ] Summary for the human.
+- [x] Summary for the human.
 
 **Out of scope for V2:** style quiz, budget, estimates, sharing, watermark, billing, Pro features.

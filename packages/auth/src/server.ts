@@ -72,6 +72,14 @@ export const auth = betterAuth({
       create: {
         after: async (user) => {
           await bootstrapWorkspace(user);
+          // When email verification is disabled (dev/tests), treat sign-ups as
+          // verified so credit-spending flows work end to end.
+          if (!env.AUTH_REQUIRE_EMAIL_VERIFICATION) {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { emailVerified: true },
+            });
+          }
         },
       },
     },

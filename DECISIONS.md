@@ -105,6 +105,23 @@ Format: date, decision, reason.
 - Live check: fake provider job QUEUED→SUCCEEDED in ~7 s (pg-boss poll + 4×sharp web/thumb),
   4 outputs, charge 4 credits; status API, favorite PATCH and download redirect all verified.
 
+## 2026-10-28 — V2 tests, E2E and G2 status (V2.7)
+- Playwright's `globalSetup` starts the worker with `IMAGE_PROVIDER=fake` for the E2E run and stops it
+  (`taskkill /T` on Windows). This avoids needing the worker in Playwright's webServer list.
+- When `AUTH_REQUIRE_EMAIL_VERIFICATION=false` (dev/tests), the Better Auth `user.create.after` hook
+  also marks the user's email as verified. Without that, sign-up works but every credit-spending
+  action is blocked by `requireVerifiedEmail` — there is no email to click in tests.
+- Renders are visible to the worker only if it runs: `pnpm dev` starts web + worker; `pnpm test:e2e`
+  starts its own worker. Stop any manual dev server before E2E (Next refuses two dev servers for the
+  same project directory).
+- Test coverage added: prompts/pricing units, storage image pipeline (EXIF, corrupt, size, dimensions,
+  derivatives), credits (balance, overspend, concurrent reserve, idempotent refund), worker
+  (success/retry/final-transient/permanent failure), web tenant isolation + spend guard + unverified
+  block, and the full Playwright render flow at 375 px.
+- **G2 is not decided yet**: `pnpm ai:fidelity --budget-usd 3` requires `IMAGE_PROVIDER=openai`,
+  `OPENAI_API_KEY` and five real photos in `fixtures/rooms/`. None of those are available, so the
+  fidelity report and the provider/model/quality decision are deferred to the human.
+
 ---
 
 # V2 — Core Engine plan

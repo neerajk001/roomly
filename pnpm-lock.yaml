@@ -59,6 +59,9 @@ importers:
       '@roomdesigner/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@roomdesigner/estimate':
+        specifier: workspace:*
+        version: link:../../packages/estimate
       '@roomdesigner/shared':
         specifier: workspace:*
         version: link:../../packages/shared

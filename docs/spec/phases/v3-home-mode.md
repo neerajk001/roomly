@@ -21,25 +21,25 @@ A step-by-step wizard, one question per screen, progress indicator, back button,
 ## 2. Results screen
 
 - [ ] 4 variations in a grid with favorite and download.
-- [ ] **Before/after slider** (accessible: keyboard and touch; labels "Before" and "After").
+- [x] **Before/after slider** (accessible: keyboard and touch; labels "Before" and "After").
 - [ ] Chat edit (from V2) with example chips: "warmer lighting", "add plants", "change rug", "lighter walls".
 - [ ] "Try another style" button reusing the same room (new job, credits shown).
 - [ ] Compare two favorites side by side.
 
 ## 3. Cost range and what-to-change-first
 
-- [ ] Seed default rate cards per currency (USD, EUR, GBP, INR, AED, AUD, CAD) with clearly labelled **illustrative** numbers (see `05-estimate-engine.md`).
-- [ ] `packages/shared/src/default-scope.ts`: scope per room type and per renter mode.
-- [ ] Server service `getRoughEstimate(ctx, roomId, selectedStyle?)` uses `computeEstimate` with `rangeBps = 2000` and persists an `Estimate` (version 1) for the project.
-- [ ] UI: "Estimated cost range: X – Y" with a short breakdown by category (paint, flooring, lighting, furniture…) and the note "Rough range. Actual prices vary by location and provider."
-- [ ] **What to change first:** if a budget is set, rank scope categories by impact-per-cost using a static impact weight table (config), and show the top 3 that fit the budget. Show "over budget" clearly with a suggestion to switch to renter mode or reduce scope.
-- [ ] Let the user toggle categories on or off and see the range update instantly (client calls the same pure `computeEstimate` via a shared import; no duplicated logic).
+- [x] Seed default rate cards per currency (USD, EUR, GBP, INR, AED, AUD, CAD) with clearly labelled **illustrative** numbers (see `05-estimate-engine.md`).
+- [x] `packages/shared/src/default-scope.ts`: scope per room type and per renter mode.
+- [x] Server service `getRoughEstimate(ctx, roomId, selectedStyle?)` uses `computeEstimate` with `rangeBps = 2000` and persists an `Estimate` (version 1) for the project.
+- [x] UI: "Estimated cost range: X – Y" with a short breakdown by category (paint, flooring, lighting, furniture…) and the note "Rough range. Actual prices vary by location and provider."
+- [x] **What to change first:** if a budget is set, rank scope categories by impact-per-cost using a static impact weight table (config), and show the top 3 that fit the budget. Show "over budget" clearly with a suggestion to switch to renter mode or reduce scope.
+- [x] Let the user toggle categories on or off and see the range update instantly (client calls the same pure `computeEstimate` via a shared import; no duplicated logic).
 
 ## 4. Shopping list (item types and sizes, no product links)
 
-- [ ] `packages/shared/src/room-needs.ts`: per room type, a static list of needs with typical size guidance derived from room dimensions (e.g. living room: sofa 2.0–2.4 m for rooms with width ≥ 3.5 m; coffee table; TV unit; rug size by floor area; curtains by window width).
+- [x] `packages/shared/src/room-needs.ts`: per room type, a static list of needs with typical size guidance derived from room dimensions (e.g. living room: sofa 2.0–2.4 m for rooms with width ≥ 3.5 m; coffee table; TV unit; rug size by floor area; curtains by window width).
 - [ ] Shopping list screen: checkable items with size guidance and a suggested budget share. "Copy list" and "Print/save as PDF" via the browser print stylesheet.
-- [ ] No retailer links or scraping (see non-goals).
+- [x] No retailer links or scraping (see non-goals).
 
 ## 5. Share link with votes
 

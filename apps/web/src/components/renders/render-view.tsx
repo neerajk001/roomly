@@ -19,12 +19,14 @@ export function RenderView({
   hasPhoto,
   initialJob,
   history,
+  sourceUrl,
 }: {
   roomId: string;
   projectId: string;
   hasPhoto: boolean;
   initialJob: RenderJobView | null;
   history: RenderJobView[];
+  sourceUrl?: string | null;
 }) {
   const router = useRouter();
   const [jobs, setJobs] = useState<RenderJobView[]>(history);
@@ -37,6 +39,7 @@ export function RenderView({
   const [lastRestyle, setLastRestyle] = useState<RestyleRequest | null>(null);
   const [createPending, startCreate] = useTransition();
   const [editPending, startEdit] = useTransition();
+  const [clip, setClip] = useState(50);
   const attempts = useRef(0);
 
   const current = jobs.find((job) => job.id === currentId) ?? null;
@@ -335,6 +338,48 @@ export function RenderView({
             ))}
           </ul>
           <p className="text-xs text-muted-foreground">AI-generated concept visual. Not to scale.</p>
+
+          {sourceUrl !== undefined && sourceUrl !== null && current.outputs[0] !== undefined && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Before / after</p>
+              <div className="relative overflow-hidden rounded-lg border border-border">
+                {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
+                <img src={sourceUrl} alt="Before" className="block w-full" />
+                <div
+                  className="absolute inset-0 overflow-hidden"
+                  style={{ width: `${String(clip)}%` }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
+                  <img
+                    src={current.outputs[0].url}
+                    alt="After"
+                    className="block h-full w-full object-cover"
+                    style={{ width: `${String(10000 / Math.max(clip, 1))}%`, maxWidth: "none" }}
+                  />
+                </div>
+                <span className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-0.5 text-xs text-white">
+                  Before
+                </span>
+                <span className="absolute bottom-2 right-2 rounded bg-black/60 px-2 py-0.5 text-xs text-white">
+                  After
+                </span>
+              </div>
+              <label className="block text-xs text-muted-foreground">
+                Drag to compare
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={clip}
+                  aria-label="Before and after slider"
+                  onChange={(event) => {
+                    setClip(Number(event.target.value));
+                  }}
+                  className="mt-1 w-full"
+                />
+              </label>
+            </div>
+          )}
         </div>
       )}
 

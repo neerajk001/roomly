@@ -231,3 +231,10 @@ G2 provisional (human-approved): gpt-image-2.5-sunburst, draft = low/1024, final
 3. **Results & cost UI**: before/after slider (keyboard/touch), try another style, compare favorites, cost range panel with category toggles (client uses the same pure engine), what-to-change-first, shopping list + print.
 4. **Share & free tier**: share token create/revoke, public /share/[token] gallery with votes (cookie + IP rate limit, noindex), watermark at delivery for free workspaces, getPlanState, "get more credits" stub.
 5. **Polish & tests**: empty/loading/error states at 375 px, a11y pass, analytics events, unit + integration + share/watermark tests, Playwright wizard -> results -> estimate -> share -> vote.
+## 2026-10-28 - V3 progress (Home mode core)
+- Estimate engine is pure and integer-exact; golden test (87110 / 100612) and edge cases pass.
+- `/app/new` wizard: photo(s), room + typical-size helper, keep-list chips, renter mode, budget, 6-pair style quiz (palette swatches; artwork pending) with tag-based recommendations, confirm. Draft survives refresh via localStorage (files cannot be persisted; noted in UI).
+- Wizard creates project/room, seeds an illustrative default rate card per currency, persists a versioned Estimate, uploads photos and starts a 3-concept draft render.
+- Room page now shows a cost range panel (client recomputes with the same pure engine when toggling categories), what-to-change-first ranking, and a shopping list (print-friendly).
+- Before/after comparison slider added to the results section.
+- Still open in V3: try-another-style and compare-favorites actions, checkable shopping list + copy, share links/votes, free-tier watermark/plan state, analytics events, and the V3 test suite/Playwright flow.

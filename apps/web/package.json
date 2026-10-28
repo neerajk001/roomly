@@ -28,7 +28,8 @@
     "zod": "catalog:",
     "@roomdesigner/storage": "workspace:*",
     "pg-boss": "^12.38.0",
-    "@roomdesigner/ai": "workspace:*"
+    "@roomdesigner/ai": "workspace:*",
+    "@roomdesigner/estimate": "workspace:*"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",

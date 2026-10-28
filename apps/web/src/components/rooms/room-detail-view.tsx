@@ -1,3 +1,4 @@
+import { EstimateSection } from "@/components/estimates/estimate-section";
 import { RoomPhotos } from "@/components/projects/room-photos";
 import { RenderView } from "@/components/renders/render-view";
 import type { RenderJobView } from "@/components/renders/types";
@@ -109,8 +110,11 @@ export async function RoomDetailView({
           hasPhoto={photos.length > 0}
           initialJob={initialJob}
           history={jobViews}
+          sourceUrl={photos[0]?.url ?? null}
         />
       </section>
+
+      <EstimateSection projectId={projectId} roomId={detail.room.id} />
 
       <Card>
         <CardHeader>

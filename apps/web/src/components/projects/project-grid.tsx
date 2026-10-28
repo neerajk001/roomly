@@ -48,9 +48,10 @@ export function ProjectGrid({
 }
 
 export function NewProjectButton({ basePath }: { basePath: "/app" | "/studio" }) {
+  const href = basePath === "/app" ? "/app/new" : "/studio/projects/new";
   return (
     <Button asChild>
-      <Link href={`${basePath}/projects/new`}>New project</Link>
+      <Link href={href}>{basePath === "/app" ? "New design" : "New project"}</Link>
     </Button>
   );
 }

@@ -217,3 +217,17 @@ Goal: user can sign up, verify email, pick Home/Pro, land on the right dashboard
 
 ## V1 Definition of Done
 All phase checkboxes ticked, CI green, README setup < 10 commands, this file lists every deviation, summary written for the human.
+---
+
+# V3 - Home Mode plan
+
+Goal: guided homeowner/renter wizard, before/after results, rough cost range + shopping list, share link with votes, free-tier watermark.
+
+G2 provisional (human-approved): gpt-image-2.5-sunburst, draft = low/1024, final = high/1536; revisit after the fidelity run when photos are available.
+
+## Order of tasks
+1. **Estimate engine** (pure): computeEstimate + recompute, exact rounding, golden test (87110 / 100612) and edge cases. Shared helpers: formatLength/formatArea, default-scope.ts, room-needs.ts, style palettes/tags, impact weights, default rate-card seed data.
+2. **Guided wizard** /app/new: photo -> room (+typical-size helper) -> keep list -> renter mode -> optional budget -> style quiz -> confirm; state survives refresh; creates project, room, assets, render with keepList/renter/style and persists a rough estimate.
+3. **Results & cost UI**: before/after slider (keyboard/touch), try another style, compare favorites, cost range panel with category toggles (client uses the same pure engine), what-to-change-first, shopping list + print.
+4. **Share & free tier**: share token create/revoke, public /share/[token] gallery with votes (cookie + IP rate limit, noindex), watermark at delivery for free workspaces, getPlanState, "get more credits" stub.
+5. **Polish & tests**: empty/loading/error states at 375 px, a11y pass, analytics events, unit + integration + share/watermark tests, Playwright wizard -> results -> estimate -> share -> vote.

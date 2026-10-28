@@ -386,6 +386,9 @@ importers:
       '@roomdesigner/config':
         specifier: workspace:*
         version: link:../config
+      '@roomdesigner/estimate':
+        specifier: workspace:*
+        version: link:../estimate
       zod:
         specifier: 'catalog:'
         version: 4.6.7

@@ -14,7 +14,8 @@
   "private": true,
   "dependencies": {
     "@roomdesigner/config": "workspace:*",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "@roomdesigner/estimate": "workspace:*"
   },
   "devDependencies": {
     "@roomdesigner/config": "workspace:*",

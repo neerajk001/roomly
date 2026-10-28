@@ -69,6 +69,8 @@ export function createOpenAIProvider(options: OpenAIProviderOptions): ImageProvi
             n: input.n,
             size: input.size,
             quality: input.quality,
+            // Bias the model to preserve the input photo details and geometry.
+            input_fidelity: "high",
           },
           input.signal !== undefined ? { signal: input.signal } : undefined,
         );

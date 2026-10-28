@@ -156,6 +156,13 @@ Format: date, decision, reason.
   per variation in parallel with a deterministic per-variation emphasis (calm/less clutter,
   layered decor, lighter palette, moodier accents). EDIT stays a single image. Cost is summed across
   calls; credits unchanged.
+## 2026-10-28 — Hard structure lock for renders
+- Product rule: the room architecture must never change (windows, doors, walls, floor layout/material,
+  dimensions, camera). The RESTYLE prompt now embeds a STRICT STRUCTURAL CONSTRAINTS block and the
+  EDIT prompt re-states it; variation emphases are limited to furniture/textiles/decor.
+- OpenAI provider sends `input_fidelity: "high"` on every edit to bias toward preserving the input.
+- Residual drift is a model limitation; the next lever (not built yet) is an automatic edge-map
+  structure check that rejects/refunds outputs whose geometry diverges.
 # V2 — Core Engine plan
 
 Goal: project/room CRUD, photo upload with EXIF-stripping + thumbnails, fake/openai render

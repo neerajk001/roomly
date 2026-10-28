@@ -123,6 +123,8 @@ model User {
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
   mode                 String            @default("HOME")
+  // Set once the /onboarding wizard completes; guards redirect when null.
+  onboardedAt          DateTime?
   sessions             Session[]
   accounts             Account[]
   ownedWorkspaces      Workspace[]       @relation("WorkspaceOwner")

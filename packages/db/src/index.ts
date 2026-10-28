@@ -1,6 +1,6 @@
 import { loadRootEnvFile } from "@roomdesigner/config/env";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "./generated/prisma/client.js";
+import { PrismaClient } from "./generated/prisma/client";
 
 const createClient = () => {
   loadRootEnvFile();
@@ -23,4 +23,5 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export type Prisma = PrismaClient;
-export * from "./generated/prisma/enums.js";
+export type * from "./generated/prisma/client";
+export * from "./generated/prisma/enums";

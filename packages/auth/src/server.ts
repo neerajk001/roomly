@@ -4,7 +4,7 @@ import { getEmailSender } from "@roomdesigner/shared";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
-import { bootstrapWorkspace } from "./workspace.js";
+import { bootstrapWorkspace } from "./workspace";
 
 const env = getServerEnv();
 const emailSender = getEmailSender();
@@ -59,6 +59,11 @@ export const auth = betterAuth({
       mode: {
         type: "string",
         defaultValue: "HOME",
+      },
+      onboardedAt: {
+        type: "date",
+        required: false,
+        input: false,
       },
     },
   },

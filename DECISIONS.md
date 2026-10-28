@@ -47,6 +47,12 @@ Format: date, decision, reason.
 - Better Auth imports: `better-auth`, adapter from `better-auth/adapters/prisma` (docs) with `@better-auth/prisma-adapter` installed as documented; `nextCookies()` is the last plugin. Google provider is only registered when both `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` are set, so email auth works in dev without OAuth credentials.
 - Generated Prisma client stays gitignored; CI runs `prisma validate` then `pnpm db:generate` before typecheck/build.
 
+## 2026-10-28 — Auth wiring and Next/Turbopack import rules (V1.3)
+- Relay import style: relative imports inside workspace packages are **extensionless** (`"./workspace"`), not `"./workspace.js"`. TypeScript resolves both, but Turbopack does not map `.js` → `.ts`, so `.js` specifiers broke `next build`. Generated Prisma files (`.ts` specifiers) are left as Prisma emits them.
+- Added `User.onboardedAt DateTime?` (also a Better Auth `additionalFields` entry, `input: false`) beyond the spec's allowed manual edits. Reason: "signed-in users without onboarding are sent to `/onboarding`" is not distinguishable from the `mode` default alone. Deviation from `02-database.md`, logged here.
+- Local `.env` now uses `APP_URL`/`BETTER_AUTH_URL = http://localhost:3001` because port 3000 is occupied on this machine by an unrelated process. `.env.example` keeps 3000.
+- Reset-password links are path-based (`/api/auth/reset-password/<token>?callbackURL=…`) and redirect to `/reset-password?token=…`; the page reads the query token. Verified the whole loop (sign-up → console verification email → verify → auto sign-in → guards, password reset → sign-in) against the running dev server.
+
 ---
 
 # V1 — Foundation plan

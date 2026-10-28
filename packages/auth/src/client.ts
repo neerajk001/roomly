@@ -1,2 +1,7 @@
-// Better Auth client is implemented in V1 task 3.
-export {};
+import { inferAdditionalFields } from "better-auth/client/plugins";
+import { createAuthClient } from "better-auth/react";
+import type { auth } from "./server";
+
+export const authClient = createAuthClient({
+  plugins: [inferAdditionalFields<typeof auth>()],
+});

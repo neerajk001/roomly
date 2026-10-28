@@ -31,13 +31,13 @@
 
 ## 3. Auth
 
-- [ ] `packages/auth`: Better Auth server config (Prisma adapter, email/password with verification, Google, `mode` field, rate limits on).
-- [ ] `EmailSender` interface in `packages/shared` with `console` and `resend` implementations. Dev uses Mailpit via SMTP or the console implementation.
-- [ ] `bootstrapWorkspace(user)` from `03-auth-and-workspaces.md`, wired through the Better Auth database hook. Idempotent. Grants `SIGNUP_FREE_CREDITS` once.
-- [ ] Next.js route `app/api/auth/[...all]/route.ts` and the auth client.
-- [ ] Helpers: `requireSession`, `requireWorkspace`, `requireVerifiedEmail`.
-- [ ] Pages: sign-in, sign-up, verify-email, forgot-password, reset-password. Include Google button. Clear error messages.
-- [ ] Route-group layouts with guards: `(marketing)`, `(auth)`, `(app)`, `(studio)`.
+- [x] `packages/auth`: Better Auth server config (Prisma adapter, email/password with verification, Google, `mode` field, rate limits on).
+- [x] `EmailSender` interface in `packages/shared` with `console` and `resend` implementations. Dev uses Mailpit via SMTP or the console implementation.
+- [x] `bootstrapWorkspace(user)` from `03-auth-and-workspaces.md`, wired through the Better Auth database hook. Idempotent. Grants `SIGNUP_FREE_CREDITS` once.
+- [x] Next.js route `app/api/auth/[...all]/route.ts` and the auth client.
+- [x] Helpers: `requireSession`, `requireWorkspace`, `requireVerifiedEmail`.
+- [x] Pages: sign-in, sign-up, verify-email, forgot-password, reset-password. Include Google button. Clear error messages.
+- [x] Route-group layouts with guards: `(marketing)`, `(auth)`, `(app)`, `(studio)`.
 
 **Acceptance:** sign up with email → verification mail arrives → verify → signed in. Google sign-in works with real credentials. A new user has exactly one workspace and one `SIGNUP_GRANT` ledger row. Running bootstrap twice changes nothing.
 

@@ -2,4 +2,5 @@
 // This barrel must stay free of side effects and secrets: it is imported by
 // client code too. Server-only modules (email) live in their own files and
 // must be imported directly.
-export { getEmailSender, type EmailSender, type SendEmailInput } from "./email.js";
+export { getEmailSender, type EmailSender, type SendEmailInput } from "./email";
+export { DISPOSABLE_EMAIL_DOMAINS, isDisposableEmail } from "./disposable-email";

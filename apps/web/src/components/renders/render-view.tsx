@@ -203,7 +203,7 @@ export function RenderView({
 
       {jobs.length > 1 && (
         <div className="flex flex-wrap gap-1.5" aria-label="Render history">
-          {jobs.map((job) => (
+          {jobs.map((job, index) => (
             <button
               key={job.id}
               type="button"
@@ -217,7 +217,7 @@ export function RenderView({
                   : "border-border text-muted-foreground hover:bg-muted/50"
               }`}
             >
-              {job.kind === "EDIT" ? `Edit: ${job.label}` : "Base concept"}
+              {job.kind === "EDIT" ? `Edit: ${job.label}` : `Base set ${index + 1}`}
             </button>
           ))}
         </div>

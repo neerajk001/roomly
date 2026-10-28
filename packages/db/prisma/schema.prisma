@@ -255,6 +255,8 @@ model Project {
   styleKey    String?
   notes       String?
   shareToken  String?   @unique
+  // Share gallery mode: true = only favorited renders, false = all renders.
+  shareShowFavorites Boolean @default(true)
   deletedAt   DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

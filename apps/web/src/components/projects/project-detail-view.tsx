@@ -1,5 +1,6 @@
 import { deleteProjectAction, deleteRoomAction } from "@/server/actions/projects";
 import { RoomForm } from "@/components/projects/room-form";
+import { SharePanel } from "@/components/share/share-panel";
 import { RoomPhotos } from "@/components/projects/room-photos";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -125,6 +126,8 @@ export async function ProjectDetailView({
           ))}
         </ul>
       )}
+
+      <SharePanel projectId={projectId} />
 
       <Card>
         <CardHeader>

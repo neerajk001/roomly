@@ -43,15 +43,15 @@ A step-by-step wizard, one question per screen, progress indicator, back button,
 
 ## 5. Share link with votes
 
-- [ ] Owner can create a share link for a project (`shareToken`, 192-bit). Revoke and regenerate supported.
-- [ ] `/share/[token]`: read-only gallery of favorited renders (or all, owner's choice), before/after, optional display name for voters, one vote per option per browser (cookie) plus IP rate limit. No session needed.
-- [ ] Votes increment `RenderOutput.votes`. Owner sees vote counts.
-- [ ] Page is `noindex`, no workspace details, no listing of other projects.
+- [x] Owner can create a share link for a project (`shareToken`, 192-bit). Revoke and regenerate supported.
+- [x] `/share/[token]`: read-only gallery of favorited renders (or all, owner's choice), before/after, optional display name for voters, one vote per option per browser (cookie) plus IP rate limit. No session needed.
+- [x] Votes increment `RenderOutput.votes`. Owner sees vote counts.
+- [x] Page is `noindex`, no workspace details, no listing of other projects.
 
 ## 6. Free tier and watermark
 
-- [ ] Workspaces with no active paid plan are "free". Renders served to free workspaces (preview and download) get a visible watermark applied by sharp at delivery time. Originals stay clean in storage.
-- [ ] `getPlanState(ctx)` helper (returns `FREE` until V5 plans exist).
+- [x] Workspaces with no active paid plan are "free". Renders served to free workspaces (preview and download) get a visible watermark applied by sharp at delivery time. Originals stay clean in storage.
+- [x] `getPlanState(ctx)` helper (returns `FREE` until V5 plans exist).
 - [ ] Out of credits → modal "Get more credits" (stub link to `/pricing` until V5).
 
 ## 7. Polish
@@ -65,7 +65,7 @@ A step-by-step wizard, one question per screen, progress indicator, back button,
 
 - [ ] Unit: scope selection by room type and renter mode; "what to change first" ranking; room-needs sizing rules.
 - [ ] Integration: `getRoughEstimate` persists a version and respects workspace scoping.
-- [ ] Share-link tests: token lookup, revoked token returns 404, votes rate-limited, no data leakage.
+- [x] Share-link tests: token lookup, revoked token returns 404, votes rate-limited, no data leakage.
 - [ ] Watermark test: free workspace output differs from stored original; paid does not.
 - [ ] Playwright: full wizard → results → estimate → share link in an incognito context → vote.
 

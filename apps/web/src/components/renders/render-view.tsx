@@ -289,7 +289,7 @@ export function RenderView({
                   type="button"
                   className="block w-full"
                   onClick={() => {
-                    setLightbox(output.url);
+                    setLightbox(`/api/render-outputs/${output.id}/file`);
                   }}
                   aria-label={`Enlarge concept ${String(output.index + 1)}`}
                 >
@@ -315,7 +315,7 @@ export function RenderView({
                   </button>
                   <div className="flex items-center gap-1">
                     <a
-                      href={`/api/render-outputs/${output.id}/download`}
+                      href={`/api/render-outputs/${output.id}/file?variant=download`}
                       className="rounded p-1 text-xs text-muted-foreground hover:text-foreground"
                       aria-label="Download"
                     >

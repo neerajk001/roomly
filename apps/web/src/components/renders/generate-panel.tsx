@@ -117,9 +117,14 @@ export function GeneratePanel({
       </div>
 
       {error !== null && (
-        <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error}
-        </p>
+        <div role="alert" className="space-y-1 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <p>{error}</p>
+          {/credit/i.test(error) && (
+            <a href="/pricing" className="text-xs underline">
+              See ways to get more credits
+            </a>
+          )}
+        </div>
       )}
 
       <div className="flex flex-wrap items-center gap-3">

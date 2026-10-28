@@ -23,6 +23,17 @@ const nextConfig: NextConfig = {
     "@roomdesigner/pdf",
     "@roomdesigner/billing",
   ],
+  async headers() {
+    return [
+      {
+        source: "/share/:path*",
+        headers: [
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+          { key: "Referrer-Policy", value: "no-referrer" },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -238,3 +238,14 @@ G2 provisional (human-approved): gpt-image-2.5-sunburst, draft = low/1024, final
 - Room page now shows a cost range panel (client recomputes with the same pure engine when toggling categories), what-to-change-first ranking, and a shopping list (print-friendly).
 - Before/after comparison slider added to the results section.
 - Still open in V3: try-another-style and compare-favorites actions, checkable shopping list + copy, share links/votes, free-tier watermark/plan state, analytics events, and the V3 test suite/Playwright flow.
+## 2026-10-28 - Share gallery, votes and free-tier delivery
+- Project gained `shareShowFavorites` (favorited-only gallery vs all renders). Tokens are 192-bit
+  base64url; updating settings keeps the token unless regenerate is requested; revoke clears it.
+- `/share/[token]` is a public page (no session) that only reveals project name, one room and chosen
+  renders; noindex + no-referrer headers added in next.config.
+- Votes: one per image per browser via an httpOnly cookie (`share_votes_<token>`) plus an in-memory
+  IP+token rate limit (single-process; move to Postgres in V6). Votes increment `RenderOutput.votes`.
+- Free-tier watermark is applied at delivery by a new route `/api/render-outputs/[id]/file`
+  (sharp overlay); stored originals and signed URLs stay clean. Paid workspaces redirect to signed
+  URLs. Plan state is `getPlanState` (FREE until V5 subscriptions exist).
+- Added a `/pricing` stub and a "get more credits" link on insufficient-credit errors.

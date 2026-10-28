@@ -15,6 +15,7 @@ export {
   type ImageInfo,
 } from "./images";
 export { buildStorageKey, extensionForMime } from "./keys";
+export { applyWatermark } from "./watermark";
 export {
   deleteObject,
   getObject,

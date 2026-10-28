@@ -1,25 +1,33 @@
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
 export const metadata = { title: "Studio projects" };
 
 export default function StudioHomePage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Projects</h1>
-        <button
-          type="button"
-          disabled
-          title="Project creation arrives with uploads (V2)"
-          className="cursor-not-allowed rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white opacity-60"
-        >
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Projects</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Client projects and their renders.</p>
+        </div>
+        <Button disabled title="Project creation arrives with uploads (V2)">
           New project
-        </button>
+        </Button>
       </div>
-      <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
-        <h2 className="text-base font-medium text-slate-900">No projects yet</h2>
-        <p className="mx-auto mt-2 max-w-sm text-sm text-slate-600">
-          Create a project for a client, upload room photos and generate concept visuals.
-        </p>
-      </div>
+      <Card className="border-dashed">
+        <CardHeader>
+          <CardTitle>No projects yet</CardTitle>
+          <CardDescription>
+            Create a project for a client, upload room photos and generate concept visuals.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-xs text-muted-foreground">
+            Upload, estimates and proposals arrive in V2–V4.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -43,12 +43,12 @@
 
 ## 4. Onboarding and shells
 
-- [ ] `/onboarding`: choose mode; PRO also asks studio name, currency, units and converts the workspace to `STUDIO`.
-- [ ] Redirects: HOME → `/app`, PRO → `/studio`. Signed-in users without onboarding are sent to `/onboarding`.
-- [ ] Tailwind + shadcn/ui setup. Design tokens (colors, radius, fonts). Light theme first, dark-mode-ready variables.
-- [ ] App shell for `/app` (top bar, "New project" empty state) and `/studio` (sidebar: Projects, Clients, Rate cards, Settings; empty states).
-- [ ] `/settings`: change mode, currency, units, display name. Sign out.
-- [ ] Marketing landing page: placeholder hero + CTA (final copy after decision gate G1).
+- [x] `/onboarding`: choose mode; PRO also asks studio name, currency, units and converts the workspace to `STUDIO`.
+- [x] Redirects: HOME → `/app`, PRO → `/studio`. Signed-in users without onboarding are sent to `/onboarding`.
+- [x] Tailwind + shadcn/ui setup. Design tokens (colors, radius, fonts). Light theme first, dark-mode-ready variables.
+- [x] App shell for `/app` (top bar, "New project" empty state) and `/studio` (sidebar: Projects, Clients, Rate cards, Settings; empty states).
+- [x] `/settings`: change mode, currency, units, display name. Sign out.
+- [x] Marketing landing page: placeholder hero + CTA (final copy after decision gate G1).
 
 **Acceptance:** both onboarding paths work on a 375px viewport and on desktop, with keyboard only.
 

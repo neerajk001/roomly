@@ -1,4 +1,8 @@
 import { signOutAction } from "@/app/(auth)/actions";
+import { ProfileForm } from "@/components/settings/profile-form";
+import { WorkspacePreferencesForm } from "@/components/settings/workspace-preferences-form";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireOnboarded, requireWorkspace } from "@/server/auth/session";
 
 export const metadata = { title: "Settings" };
@@ -8,65 +12,42 @@ export default async function SettingsPage() {
   const { workspace, user, role } = await requireWorkspace();
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8">
+    <div className="mx-auto max-w-2xl space-y-6 py-2">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Settings</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Account and workspace preferences will be editable here.
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Settings</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Account and workspace preferences.</p>
       </div>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="text-base font-medium text-slate-900">Account</h2>
-        <dl className="mt-4 space-y-3 text-sm">
-          <div className="flex justify-between gap-4">
-            <dt className="text-slate-500">Name</dt>
-            <dd className="text-slate-900">{user.name}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-slate-500">Email</dt>
-            <dd className="break-all text-slate-900">{user.email}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-slate-500">Mode</dt>
-            <dd className="text-slate-900">{user.mode === "PRO" ? "Professional" : "Home"}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-slate-500">Role</dt>
-            <dd className="text-slate-900">{role}</dd>
-          </div>
-        </dl>
-      </section>
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile</CardTitle>
+          <CardDescription>
+            Signed in as {user.email} · role {role}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ProfileForm defaultName={user.name} />
+        </CardContent>
+      </Card>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="text-base font-medium text-slate-900">Workspace</h2>
-        <dl className="mt-4 space-y-3 text-sm">
-          <div className="flex justify-between gap-4">
-            <dt className="text-slate-500">Name</dt>
-            <dd className="text-slate-900">{workspace.name}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-slate-500">Type</dt>
-            <dd className="text-slate-900">{workspace.type}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-slate-500">Currency</dt>
-            <dd className="text-slate-900">{workspace.currency}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-slate-500">Units</dt>
-            <dd className="text-slate-900">{workspace.unitSystem}</dd>
-          </div>
-        </dl>
-      </section>
+      <Card>
+        <CardHeader>
+          <CardTitle>Workspace</CardTitle>
+          <CardDescription>{workspace.name}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <WorkspacePreferencesForm
+            mode={user.mode}
+            currency={workspace.currency}
+            unitSystem={workspace.unitSystem}
+          />
+        </CardContent>
+      </Card>
 
       <form action={signOutAction}>
-        <button
-          type="submit"
-          className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50"
-        >
+        <Button type="submit" variant="outline">
           Sign out
-        </button>
+        </Button>
       </form>
     </div>
   );

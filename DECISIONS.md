@@ -53,6 +53,12 @@ Format: date, decision, reason.
 - Local `.env` now uses `APP_URL`/`BETTER_AUTH_URL = http://localhost:3001` because port 3000 is occupied on this machine by an unrelated process. `.env.example` keeps 3000.
 - Reset-password links are path-based (`/api/auth/reset-password/<token>?callbackURL=…`) and redirect to `/reset-password?token=…`; the page reads the query token. Verified the whole loop (sign-up → console verification email → verify → auto sign-in → guards, password reset → sign-in) against the running dev server.
 
+## 2026-10-28 — shadcn/ui, shared barrel and onboarding (V1.4)
+- shadcn CLI v4 (`--base radix --preset nova`) generated `components.json`, `src/lib/utils.ts`, tokenised `globals.css` and the `button/input/label/card/select/separator` components. It adds `class-variance-authority`, `radix-ui`, `lucide-react`, `tw-animate-css`, `cn` and **`shadcn` itself as a runtime dependency** because `globals.css` imports `shadcn/tailwind.css`. Recorded here since these are not in `01-architecture.md`'s dependency list (the stack only names shadcn/ui).
+- `@roomdesigner/shared`'s barrel must stay client-safe. The email sender moved to the `@roomdesigner/shared/email` subpath: re-exporting it from `.` dragged `node:fs` (via env loading) into client chunks and Turbopack dev failed with "chunking context does not support external modules (node:fs)".
+- Settings "mode" also flips `Workspace.type` between PERSONAL and STUDIO so the Pro shells stay consistent. Mode never deletes data.
+- Marketing copy is a placeholder pending decision gate G1 (product name).
+
 ---
 
 # V1 — Foundation plan

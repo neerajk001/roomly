@@ -1,6 +1,6 @@
 import { getServerEnv } from "@roomdesigner/config/env";
 import { prisma } from "@roomdesigner/db";
-import { getEmailSender } from "@roomdesigner/shared";
+import { getEmailSender } from "@roomdesigner/shared/email";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";

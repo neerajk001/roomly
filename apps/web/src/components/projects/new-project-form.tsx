@@ -8,7 +8,13 @@ import { useActionState } from "react";
 
 const initialState: ProjectFormState = {};
 
-export function NewProjectForm({ basePath }: { basePath: "/app" | "/studio" }) {
+export function NewProjectForm({
+  basePath,
+  clients,
+}: {
+  basePath: "/app" | "/studio";
+  clients?: { id: string; name: string }[];
+}) {
   const [state, formAction, pending] = useActionState(createProjectAction, initialState);
 
   return (
@@ -36,6 +42,24 @@ export function NewProjectForm({ basePath }: { basePath: "/app" | "/studio" }) {
           </p>
         ))}
       </div>
+      {clients !== undefined && clients.length > 0 && (
+        <div className="space-y-2">
+          <Label htmlFor="clientId">Client (optional)</Label>
+          <select
+            id="clientId"
+            name="clientId"
+            defaultValue=""
+            className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+          >
+            <option value="">No client</option>
+            {clients.map((client) => (
+              <option key={client.id} value={client.id}>
+                {client.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <Button type="submit" disabled={pending} aria-busy={pending}>
         {pending ? "Creating…" : "Create project"}
       </Button>

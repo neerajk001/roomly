@@ -19,6 +19,7 @@ const basePathSchema = z.enum(["/app", "/studio"]);
 const createProjectFormSchema = z.object({
   name: z.string(),
   basePath: basePathSchema,
+  clientId: z.string().min(1).optional(),
 });
 
 export async function createProjectAction(
@@ -28,6 +29,7 @@ export async function createProjectAction(
   const parsed = createProjectFormSchema.safeParse({
     name: formData.get("name"),
     basePath: formData.get("basePath"),
+    clientId: formData.get("clientId") ?? undefined,
   });
   if (!parsed.success) {
     return { error: "Check the project name." };
@@ -39,7 +41,7 @@ export async function createProjectAction(
     const project = await createProject(
       prisma,
       { userId: user.id, workspaceId: workspace.id },
-      { name: parsed.data.name },
+      { name: parsed.data.name, ...(parsed.data.clientId !== undefined ? { clientId: parsed.data.clientId } : {}) },
     );
     projectId = project.id;
   } catch (error) {

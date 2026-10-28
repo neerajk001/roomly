@@ -249,3 +249,23 @@ G2 provisional (human-approved): gpt-image-2.5-sunburst, draft = low/1024, final
   (sharp overlay); stored originals and signed URLs stay clean. Paid workspaces redirect to signed
   URLs. Plan state is `getPlanState` (FREE until V5 subscriptions exist).
 - Added a `/pricing` stub and a "get more credits" link on insufficient-credit errors.
+---
+
+# V4 - Pro Mode plan
+
+Goal: designer workflow: studio profile, clients, brief links, own rate cards, editable estimates, proposals with PDF and public approval.
+
+Provisional decisions: no new dependencies beyond the stack; logo uploads reuse the existing presign/confirm pipeline with kind=LOGO (added later in the phase); PDF via @react-pdf/renderer in a worker job; proposal immutability via version rows plus a freeze flag.
+
+## Order of tasks
+1. **Studio profile + clients**: workspace contact/terms fields, `/studio/settings`, client CRUD with search and soft delete, client detail page, attach client when creating a studio project.
+2. **Brief links**: create link per client (expiry), public `/brief/[token]` (branded, honeypot, rate limits), token-scoped photo uploads, submission creates draft project/rooms/assets, email to designer.
+3. **Rate cards**: default Pro card on first onboarding, list/editor (categories, units, markup/tax, multiple cards), CSV import/export with row errors and all-or-nothing apply, imperial display.
+4. **Estimate builder**: auto-fill from room scope, editable lines with `recompute`, multi-room summary, version history, read-only when referenced by a sent proposal.
+5. **Pro renders + proposals**: pin outputs with captions, proposal builder (text, options, estimate version, terms, expiry), PDF via worker, send freezes snapshot + token + email, status timeline.
+6. **Client approval `/p/[token]`**: gallery, estimate accordion, approve/request changes with name, view tracking, emails, noindex + rate limits.
+7. **Dashboard + tests**: pipeline columns, project tabs, isolation/CSV/state-machine/PDF tests, Playwright full workflow, summary.
+
+---
+
+# V3 - Home Mode plan

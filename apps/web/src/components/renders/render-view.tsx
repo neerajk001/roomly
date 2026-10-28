@@ -101,6 +101,9 @@ export function RenderView({
         formData.set("quality", request.quality);
         formData.set("variations", String(request.variations));
         if (request.notes.trim() !== "") formData.set("notes", request.notes);
+        if (request.stagingItems.length > 0) {
+          formData.set("stagingItems", JSON.stringify(request.stagingItems));
+        }
         const result = await createRenderAction({}, formData);
         if (result.error !== undefined) {
           setPanelError(result.error);
@@ -265,7 +268,13 @@ export function RenderView({
             variant="outline"
             disabled={createPending}
             onClick={() => {
-              submitRestyle({ styleKey: altStyle, quality: "draft", variations: 3, notes: "" });
+              submitRestyle({
+                styleKey: altStyle,
+                quality: "draft",
+                variations: 3,
+                notes: "",
+                stagingItems: [],
+              });
             }}
           >
             Generate in this style (3 credits)

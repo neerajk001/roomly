@@ -19,6 +19,7 @@ const formSchema = z.object({
   styleKey: z.string().optional(),
   instruction: z.string().optional(),
   notes: z.string().optional(),
+  stagingItems: z.string().optional(),
   variations: z.coerce.number().int().min(1).max(4).default(4),
   quality: z.enum(["draft", "final"]).default("draft"),
   sourceOutputId: z.string().optional(),
@@ -34,6 +35,7 @@ export async function createRenderAction(
     styleKey: formData.get("styleKey") ?? undefined,
     instruction: formData.get("instruction") ?? undefined,
     notes: formData.get("notes") ?? undefined,
+    stagingItems: formData.get("stagingItems") ?? undefined,
     variations: formData.get("variations") ?? undefined,
     quality: formData.get("quality") ?? undefined,
     sourceOutputId: formData.get("sourceOutputId") ?? undefined,
@@ -41,7 +43,18 @@ export async function createRenderAction(
   if (!parsed.success) {
     return { error: "Check the render options." };
   }
-  const input = createRenderSchema.safeParse(parsed.data);
+  let stagingItems: unknown = undefined;
+  if (parsed.data.stagingItems !== undefined && parsed.data.stagingItems !== "") {
+    try {
+      stagingItems = JSON.parse(parsed.data.stagingItems);
+    } catch {
+      return { error: "Check the staging options." };
+    }
+  }
+  const input = createRenderSchema.safeParse({
+    ...parsed.data,
+    stagingItems: stagingItems,
+  });
   if (!input.success) {
     return { error: input.error.issues[0]?.message ?? "Check the render options." };
   }

@@ -79,6 +79,7 @@ describe("buildEditPrompt", () => {
         "Apply only this change: replace the sofa.",
         "Keep everything else in the image identical, including the room structure, camera angle and all other objects.",
         "Never move, add, remove or resize windows, doors, walls, the floor or built-in features.",
+        "The requested change must be clearly visible in the result.",
         "Photorealistic result with consistent lighting and materials.",
       ].join("\n"),
     );

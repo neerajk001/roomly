@@ -22,6 +22,23 @@ export const createRenderSchema = z.object({
   quality: z.enum(["draft", "final"]).default("draft"),
   /** RESTYLE only: optional extra direction from the user. */
   notes: z.string().max(600).optional(),
+  /** Optional staging picks (e.g. "sofa", "flooring"). */
+  stagingItems: z
+    .array(
+      z.enum([
+        "sofa",
+        "dining-table",
+        "rug",
+        "flooring",
+        "curtains",
+        "plants",
+        "art",
+        "lighting",
+        "storage",
+      ]),
+    )
+    .max(9)
+    .optional(),
   /** EDIT only: the render output the user wants to change. */
   sourceOutputId: z.string().min(1).optional(),
 });
@@ -164,6 +181,9 @@ export async function createRender(
           params: {
             ...pickRenderParams(input.quality, sourceWidth, sourceHeight),
             ...(notes !== null ? { notes } : {}),
+            ...(input.stagingItems !== undefined && input.stagingItems.length > 0
+              ? { stagingItems: input.stagingItems }
+              : {}),
           },
           sourceAssetId,
           parentJobId,

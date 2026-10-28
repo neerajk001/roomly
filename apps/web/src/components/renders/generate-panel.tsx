@@ -11,6 +11,7 @@ export interface RestyleRequest {
   quality: "draft" | "final";
   variations: number;
   notes: string;
+  stagingItems: string[];
 }
 
 export function GeneratePanel({
@@ -28,6 +29,7 @@ export function GeneratePanel({
   const [quality, setQuality] = useState<"draft" | "final">("draft");
   const [variations, setVariations] = useState(3);
   const [notes, setNotes] = useState("");
+  const [staging, setStaging] = useState<string[]>([]);
   const [dismissedFor, setDismissedFor] = useState<string | null>(null);
   const creditsError = error !== null && /credit/i.test(error);
   const showCreditsModal = creditsError && dismissedFor !== error;
@@ -105,6 +107,52 @@ export function GeneratePanel({
         </div>
       </div>
 
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium text-foreground">
+          Stage this room (optional)
+        </legend>
+        <p className="text-xs text-muted-foreground">
+          Empty room? Pick what to add. Existing items that already fit are kept.
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {[
+            ["sofa", "Sofa"],
+            ["dining-table", "Dining table"],
+            ["rug", "Rug"],
+            ["flooring", "Flooring"],
+            ["curtains", "Curtains"],
+            ["plants", "Plants"],
+            ["art", "Art"],
+            ["lighting", "Lighting"],
+            ["storage", "Storage"],
+          ].map(([key, label]) => {
+            const active = staging.includes(key ?? "");
+            return (
+              <button
+                key={key}
+                type="button"
+                aria-pressed={active}
+                onClick={() => {
+                  const value = key ?? "";
+                  setStaging((current) =>
+                    current.includes(value)
+                      ? current.filter((item) => item !== value)
+                      : [...current, value],
+                  );
+                }}
+                className={`rounded-full border px-2.5 py-1 text-xs ${
+                  active
+                    ? "border-primary bg-primary/10 text-foreground"
+                    : "border-border text-muted-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
+
       <div className="space-y-2">
         <Label htmlFor="notes">Notes (optional)</Label>
         <textarea
@@ -163,7 +211,7 @@ export function GeneratePanel({
           disabled={!hasPhoto || pending}
           aria-busy={pending}
           onClick={() => {
-            onCreate({ styleKey, quality, variations, notes });
+            onCreate({ styleKey, quality, variations, notes, stagingItems: staging });
           }}
         >
           {pending ? "Starting…" : `Generate ${variations} concept${variations === 1 ? "" : "s"}`}

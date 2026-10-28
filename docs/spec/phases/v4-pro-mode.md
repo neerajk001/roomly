@@ -6,8 +6,8 @@
 
 ## 1. Studio profile
 
-- [ ] `/studio/settings`: studio name, logo upload, brand color, currency, unit system, contact email/phone, default proposal terms text.
-- [ ] Logo stored as an `Asset` (`LOGO`) and referenced by `Workspace.logoStorageKey`. Validate type and size (PNG/JPEG/SVG sanitized or rasterized; ≤2 MB).
+- [x] `/studio/settings`: studio name (logo, brand colour, currency, units, contact, default terms), logo upload, brand color, currency, unit system, contact email/phone, default proposal terms text.
+- [x] Logo stored as an `Asset` (PNG/JPEG/WebP ≤2 MB; SVG not accepted yet) (`LOGO`) and referenced by `Workspace.logoStorageKey`. Validate type and size (PNG/JPEG/SVG sanitized or rasterized; ≤2 MB).
 - [ ] Pro workspaces never get the platform watermark on renders.
 
 ## 2. Clients
@@ -30,9 +30,9 @@
 
 ## 4. Rate cards
 
-- [ ] On first Pro onboarding, create a default rate card with a starter set of items (paint walls, paint ceiling, flooring, skirting, lighting point, false ceiling, wardrobe per running metre, curtains, furniture package) at **placeholder prices clearly marked "edit me"**.
+- [x] On first Pro onboarding, create a default rate card with a starter set of items (paint walls, paint ceiling, flooring, skirting, lighting point, false ceiling, wardrobe per running metre, curtains, furniture package) at **placeholder prices clearly marked "edit me"**.
 - [ ] Rate card list and editor: items grouped by category, unit (area floor/ceiling/wall, perimeter length, per unit, lump sum), unit price, sort order, markup %, tax %.
-- [ ] Multiple rate cards (e.g. "Standard", "Premium"); one default.
+- [x] Multiple rate cards (e.g. "Standard", "Premium"); one default.
 - [ ] CSV import and export (validate headers, show row-level errors before applying; never partially apply).
 - [ ] Imperial workspaces: show price per sq ft/ft, store per m²/m (see `05-estimate-engine.md`).
 

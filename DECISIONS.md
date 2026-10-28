@@ -269,3 +269,6 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
 ---
 
 # V3 - Home Mode plan
+## 2026-10-28 - V4.3 studio profile and rate cards (partial)
+- Workspace gained contactEmail, contactPhone and defaultTerms. `/studio/settings` edits studio name/brand colour/currency/units/contact/terms and uploads a logo through the normal presign/confirm pipeline with kind=LOGO (2 MB cap; SVG is rejected for now, record for V4 polish).
+- Pro rate cards: a "Starter rates (edit me)" card is seeded on first visit using the illustrative defaults; editor supports name, markup/tax percent, per-item label/category/unit/price, add and remove with all-or-nothing validation. CSV import/export and imperial display are still pending.

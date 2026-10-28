@@ -19,7 +19,7 @@ export interface UploadContext {
 }
 
 export const presignInputSchema = z.object({
-  kind: z.enum(["ORIGINAL_PHOTO", "BRIEF_UPLOAD"]).default("ORIGINAL_PHOTO"),
+  kind: z.enum(["ORIGINAL_PHOTO", "BRIEF_UPLOAD", "LOGO"]).default("ORIGINAL_PHOTO"),
   roomId: z.string().min(1).max(64).optional(),
   mime: z.enum(["image/jpeg", "image/png", "image/webp"]),
   sizeBytes: z
@@ -45,12 +45,12 @@ export async function createUploadPresign(
   ctx: UploadContext,
   input: z.infer<typeof presignInputSchema>,
 ): Promise<PresignResult> {
-  if (input.kind === "BRIEF_UPLOAD") {
+  if (input.kind !== "ORIGINAL_PHOTO") {
     const asset = await db.asset.create({
       data: {
         workspaceId: ctx.workspaceId,
         roomId: null,
-        kind: "BRIEF_UPLOAD",
+        kind: input.kind,
         storageKey: `pending/${randomUUID()}`,
         mime: input.mime,
         sizeBytes: input.sizeBytes,
@@ -58,7 +58,7 @@ export async function createUploadPresign(
     });
     const storageKey = buildStorageKey({
       workspaceId: ctx.workspaceId,
-      kind: "BRIEF_UPLOAD",
+      kind: input.kind,
       assetId: asset.id,
       mime: input.mime,
     });
@@ -155,7 +155,7 @@ export async function confirmUpload(
   db: Prisma,
   ctx: UploadContext,
   assetId: string,
-  expectedKind?: "ORIGINAL_PHOTO" | "BRIEF_UPLOAD",
+  expectedKind?: "ORIGINAL_PHOTO" | "BRIEF_UPLOAD" | "LOGO",
 ): Promise<ConfirmedAsset> {
   const asset = await db.asset.findFirst({
     where: { id: assetId, workspaceId: ctx.workspaceId },

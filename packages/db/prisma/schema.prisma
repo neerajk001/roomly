@@ -195,6 +195,9 @@ model Workspace {
   brandName      String?
   brandColor     String?
   logoStorageKey String?
+  contactEmail   String?
+  contactPhone   String?
+  defaultTerms   String?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 

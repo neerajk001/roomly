@@ -193,7 +193,7 @@ export function RenderView({
       formData.set("kind", "EDIT");
       formData.set("sourceOutputId", editingOutputId);
       formData.set("instruction", instruction);
-      formData.set("quality", "draft");
+      formData.set("quality", "final");
       formData.set("variations", "1");
       const result = await createRenderAction({}, formData);
       if (result.error !== undefined) {
@@ -469,7 +469,7 @@ export function RenderView({
         <Card>
           <CardHeader>
             <CardTitle>Edit this concept</CardTitle>
-            <CardDescription>Describe one change. Costs 1 credit per edit.</CardDescription>
+            <CardDescription>Describe one change. Edits run at best quality (3 credits).</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex flex-wrap gap-1.5">

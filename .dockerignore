@@ -1,0 +1,14 @@
+node_modules
+**/node_modules
+**/.next
+**/dist
+tmp
+.git
+.github
+docs/spec
+fixtures
+tests
+playwright-report
+test-results
+*.md
+!apps/worker/Dockerfile

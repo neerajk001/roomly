@@ -1,0 +1,40 @@
+# Security audit (V6.1 snapshot)
+
+Every mutation goes through a server action or a route handler. Tenant data is resolved from the
+session (`requireWorkspace`/`requireApiWorkspace`) and scoped by `workspaceId`; public pages use
+tokens only. Cross-workspace access returns 404.
+
+## Server actions
+| Action | Auth | Scoping |
+|---|---|---|
+| `signUpAction`, `signInAction`, password reset/verify | public (rate limited by Better Auth) | n/a |
+| `createProjectAction`, `deleteProjectAction`, `createRoomAction`, `deleteRoomAction` | `requireWorkspace` | project/room `workspaceId` |
+| `createRenderAction` | `requireWorkspace` + verified email + credits + spend guard | room → project workspace |
+| `createShareLinkAction`, `revokeShareLinkAction` | `requireWorkspace` | project workspace |
+| `createBriefLinkAction` | `requireWorkspace` | client workspace |
+| `updateStudioAction`, `setLogoAction` | `requireWorkspace` | own workspace |
+| `createClientAction`, `updateClientAction`, `deleteClientAction` | `requireWorkspace` | client workspace |
+| `saveRateCardAction`, `importRateCardCsvAction` | `requireWorkspace` | rate card workspace |
+| `saveEstimateAction` | `requireWorkspace` | room → project workspace |
+| `createProposalAction`, `sendProposalAction`, `generateProposalPdfAction` | `requireWorkspace` | project workspace |
+| `completeOnboardingAction`, `updateProfileAction`, `updateWorkspaceAction` | session | own user/workspace |
+
+## Route handlers
+| Route | Auth | Notes |
+|---|---|---|
+| `POST /api/uploads/presign`, `/api/uploads/[id]/confirm` | session | mime/size limits, kind checks, workspace-scoped assets |
+| `GET/PATCH /api/renders/[id]`, `/api/render-outputs/[id]` | session | workspace-scoped jobs/outputs |
+| `GET /api/render-outputs/[id]/file` | session | watermark for FREE; signed URL for PAID |
+| `POST /api/brief/[token]/upload`, `/confirm/[assetId]` | token | OPEN + unexpired, 8 photos max, rate limited |
+| `POST /api/brief/[token]/submit` | token | honeypot + rate limit, one submission per link |
+| `POST /api/share/[token]/vote` | token | rate limit, one vote/image/browser, favorites-only respected |
+| `POST /api/p/[token]/actions` | token | rate limit, state machine + expiry checks |
+| `GET /api/rate-cards/[id]/export` | session | workspace-scoped |
+| `POST /api/analytics` | public | event allowlist, no identifiers |
+| `GET /api/health` | public | DB probe only |
+
+## Open items
+- Full script CSP (needs nonces) and CI secret scanning.
+- Postgres-backed rate limits are in place; quotas per plan (uploads/hour, storage) pending.
+- Public PDF URLs are short-lived signed links (1 hour) — verify on the managed bucket.
+- Add automated isolation tests for every new Pro service (clients, rate cards, proposals).

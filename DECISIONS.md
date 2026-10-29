@@ -287,3 +287,9 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
 - `/api/health` uptime probe (DB round-trip, no-store).
 - Global security headers: nosniff, DENY framing, Permissions-Policy (camera self only), HSTS, and a CSP limited to frame-ancestors/object-src/base-uri (full script CSP pending a nonce strategy).
 - G3 hosting decision is still open; no deployment files were written.
+## 2026-10-29 - G3 hosting decision
+- Human chose: **web on Vercel + worker on a VPS + managed Postgres with backups**. Added a worker
+  Dockerfile (multi-stage, non-root), `.dockerignore`, `docs/runbook.md` (env matrix, deploy,
+  rollback, restore drill, worker ops) and `docs/security-audit.md` (action/route auth table).
+- No vercel.json is needed; the Vercel project should use the repo root with the filtered build
+  command documented in the runbook.

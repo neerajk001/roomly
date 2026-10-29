@@ -280,7 +280,7 @@ async function requireActionable(db: Prisma, token: string) {
     select: { id: true, status: true, expiresAt: true, renderOutputIds: true },
   });
   if (proposal === null) throw new AppError("NOT_FOUND", "Proposal not found.", 404);
-  let status = effectiveStatus(proposal.status, proposal.expiresAt);
+  const status = effectiveStatus(proposal.status, proposal.expiresAt);
   if (status === "EXPIRED") throw new AppError("EXPIRED", "This proposal has expired.", 410);
   if (status === "APPROVED" || status === "CHANGES_REQUESTED") {
     throw new AppError("INVALID_STATE", "This proposal is already closed.", 409);

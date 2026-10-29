@@ -22,6 +22,16 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
         </div>
       </header>
       <main className="flex-1">{children}</main>
+      <footer className="border-t border-border">
+        <div className="mx-auto flex max-w-5xl flex-wrap gap-4 px-4 py-6 text-xs text-muted-foreground">
+          <Link href="/legal/terms">Terms</Link>
+          <Link href="/legal/privacy">Privacy</Link>
+          <Link href="/legal/cookies">Cookies</Link>
+          <Link href="/legal/refunds">Refunds</Link>
+          <a href="mailto:support@roomdesigner.example">Support</a>
+          <span>AI-generated concept visuals. Not to scale.</span>
+        </div>
+      </footer>
     </div>
   );
 }

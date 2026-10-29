@@ -1,4 +1,5 @@
 import { signOutAction } from "@/app/(auth)/actions";
+import { DataControls } from "@/components/settings/data-controls";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { WorkspacePreferencesForm } from "@/components/settings/workspace-preferences-form";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,16 @@ export default async function SettingsPage() {
             currency={workspace.currency}
             unitSystem={workspace.unitSystem}
           />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Your data</CardTitle>
+          <CardDescription>Export or permanently delete your account.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DataControls />
         </CardContent>
       </Card>
 

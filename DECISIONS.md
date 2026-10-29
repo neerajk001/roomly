@@ -293,3 +293,7 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
   rollback, restore drill, worker ops) and `docs/security-audit.md` (action/route auth table).
 - No vercel.json is needed; the Vercel project should use the repo root with the filtered build
   command documented in the runbook.
+## 2026-10-29 - V6.3 logging, legal and data controls
+- Added a pino logger (`@roomdesigner/shared/logger`) with PII/token/URL redaction; unhandled server errors now log structurally. Worker still writes JSON lines and can switch to the same logger.
+- Legal drafts under `/legal/terms|privacy|cookies|refunds` (pending professional review) linked from the marketing footer, plus support contact and the AI disclaimer.
+- Data controls in Settings: JSON export of workspace/clients/projects/rooms/estimates/proposals (`/api/account/export`) and a typed-DELETE account deletion that cascades tenant data (storage objects for deleted assets are left for the cleanup job; noted).

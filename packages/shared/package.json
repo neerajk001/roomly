@@ -8,14 +8,16 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./email": "./src/email.ts"
+    "./email": "./src/email.ts",
+    "./logger": "./src/logger.ts"
   },
   "type": "module",
   "private": true,
   "dependencies": {
     "@roomdesigner/config": "workspace:*",
     "zod": "catalog:",
-    "@roomdesigner/estimate": "workspace:*"
+    "@roomdesigner/estimate": "workspace:*",
+    "pino": "^10.0.0"
   },
   "devDependencies": {
     "@roomdesigner/config": "workspace:*",

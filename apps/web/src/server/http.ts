@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { AppError } from "./app-error";
 import { ImageError } from "@roomdesigner/storage";
+import { logEvent } from "@roomdesigner/shared/logger";
 
 /**
  * Maps domain errors to safe JSON responses. Unknown errors become a generic
@@ -27,7 +28,7 @@ export function errorResponse(error: unknown): NextResponse {
       { status: 400 },
     );
   }
-  console.error("Unhandled server error:", error instanceof Error ? error.message : "unknown");
+  logEvent("error", "unhandled_server_error", { message: error instanceof Error ? error.message : "unknown" });
   return NextResponse.json(
     { error: { code: "INTERNAL", message: "Something went wrong. Try again." } },
     { status: 500 },

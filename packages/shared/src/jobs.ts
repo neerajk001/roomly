@@ -3,6 +3,7 @@ import { z } from "zod";
 /** Queue names shared by the web app (producer) and the worker (consumer). */
 export const QUEUE_RENDER_GENERATE = "render.generate";
 export const QUEUE_CLEANUP_UNCONFIRMED = "assets.cleanup-unconfirmed";
+export const QUEUE_RECOVER_STUCK = "render.recover-stuck";
 
 /** Only the job id travels through the queue. */
 export const renderJobPayloadSchema = z.object({ jobId: z.string().min(1) });

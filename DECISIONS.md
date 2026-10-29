@@ -281,3 +281,9 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
 - PDF generation (worker + @react-pdf) and the designer pipeline dashboard are still pending; the client link works without a PDF.
 ## 2026-10-28 - V4.6 proposal PDF
 - `packages/pdf` uses @react-pdf/renderer 4.9 (`renderToBuffer`) to build a text/estimate proposal PDF on demand from a server action; stored at `ws/{workspaceId}/pdf/{proposalId}.pdf` and linked on the public page. Deviation: generated in the web process rather than a worker job, and option thumbnails are not embedded yet.
+## 2026-10-29 - V6.1 security and reliability basics
+- Rate limiting moved from in-memory to a Postgres fixed-window table (`RateLimit`); one async `checkRateLimit(key, limit, windowMs)` interface used by brief uploads/submissions, share votes and proposal actions. Expired buckets are pruned by the worker.
+- Stuck job recovery: a scheduled worker job (every 10 min) fails and refunds `RUNNING` jobs older than 10 minutes (STUCK error).
+- `/api/health` uptime probe (DB round-trip, no-store).
+- Global security headers: nosniff, DENY framing, Permissions-Policy (camera self only), HSTS, and a CSP limited to frame-ancestors/object-src/base-uri (full script CSP pending a nonce strategy).
+- G3 hosting decision is still open; no deployment files were written.

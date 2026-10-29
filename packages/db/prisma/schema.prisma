@@ -538,3 +538,8 @@ model WebhookEvent {
   type        String
   processedAt DateTime @default(now())
 }
+model RateLimit {
+  key     String   @id
+  count   Int      @default(0)
+  resetAt DateTime
+}

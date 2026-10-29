@@ -3,11 +3,13 @@ import { getServerEnv } from "@roomdesigner/config/env";
 import { prisma } from "@roomdesigner/db";
 import {
   QUEUE_CLEANUP_UNCONFIRMED,
+  QUEUE_RECOVER_STUCK,
   QUEUE_RENDER_GENERATE,
   renderJobPayloadSchema,
 } from "@roomdesigner/shared";
 import { deleteObject, getObject, putObject } from "@roomdesigner/storage";
 import { cleanupUnconfirmedAssets } from "./jobs/cleanup-assets";
+import { recoverStuckJobs } from "./jobs/recover-stuck";
 import { processRenderJob } from "./jobs/render-generate";
 import { createBoss } from "./queue";
 
@@ -64,6 +66,16 @@ async function main(): Promise<void> {
         throw new Error("transient render failure");
       }
     }
+  });
+
+  await boss.createQueue(QUEUE_RECOVER_STUCK);
+  await boss.schedule(QUEUE_RECOVER_STUCK, "*/10 * * * *");
+  await boss.work<unknown>(QUEUE_RECOVER_STUCK, async () => {
+    const recovered = await recoverStuckJobs({ db: prisma, now: new Date() });
+    await prisma.rateLimit.deleteMany({
+      where: { resetAt: { lt: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
+    });
+    log("recover_stuck", { recovered });
   });
 
   await boss.schedule(QUEUE_CLEANUP_UNCONFIRMED, CLEANUP_CRON);

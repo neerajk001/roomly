@@ -14,7 +14,7 @@ export async function POST(
     const headerBag = await headers();
     const ip =
       headerBag.get("x-forwarded-for")?.split(",")[0]?.trim() ?? headerBag.get("x-real-ip") ?? "local";
-    if (!checkRateLimit(`brief-upload:${token}:${ip}`, 20, 60_000)) {
+    if (!(await checkRateLimit(`brief-upload:${token}:${ip}`, 20, 60_000))) {
       return Response.json(
         { error: { code: "RATE_LIMITED", message: "Too many uploads. Wait a minute." } },
         { status: 429 },

@@ -28,7 +28,7 @@ export async function POST(
     const headerBag = await headers();
     const ip =
       headerBag.get("x-forwarded-for")?.split(",")[0]?.trim() ?? headerBag.get("x-real-ip") ?? "local";
-    if (!checkRateLimit(`share-vote:${token}:${ip}`, 30, 60_000)) {
+    if (!(await checkRateLimit(`share-vote:${token}:${ip}`, 30, 60_000))) {
       return Response.json(
         { error: { code: "RATE_LIMITED", message: "Too many votes. Wait a minute." } },
         { status: 429 },

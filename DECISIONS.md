@@ -297,3 +297,10 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
 - Added a pino logger (`@roomdesigner/shared/logger`) with PII/token/URL redaction; unhandled server errors now log structurally. Worker still writes JSON lines and can switch to the same logger.
 - Legal drafts under `/legal/terms|privacy|cookies|refunds` (pending professional review) linked from the marketing footer, plus support contact and the AI disclaimer.
 - Data controls in Settings: JSON export of workspace/clients/projects/rooms/estimates/proposals (`/api/account/export`) and a typed-DELETE account deletion that cascades tenant data (storage objects for deleted assets are left for the cleanup job; noted).
+## 2026-10-29 - Marketing landing page
+- Rebuilt `/` to the competitor-style layout: hero with before/after, capability strip, example gallery
+  (local demo images in `public/demo`, clearly labelled concept visuals), how-it-works, Home vs Pro
+  audience cards, indicative plan cards, FAQ accordions and a closing CTA. Marketing nav/footer
+  updated (anchors, pricing, legal links).
+- Deliberately no fabricated press logos, customer counts or testimonials; plan prices are not shown
+  as real prices (G5 pending) and every render reference is labelled concept-visual/not-to-scale.

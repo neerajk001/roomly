@@ -8,6 +8,13 @@ export const metadata = { title: "Studio projects" };
 export default async function StudioHomePage() {
   const { user, workspace } = await requireWorkspace();
   const projects = await listProjects(prisma, { userId: user.id, workspaceId: workspace.id });
+  const pipeline = await prisma.proposal.groupBy({
+    by: ["status"],
+    where: { project: { workspaceId: workspace.id } },
+    _count: { _all: true },
+  });
+  const pipelineCount = (status: string): number =>
+    pipeline.find((row) => row.status === status)?._count._all ?? 0;
 
   return (
     <div className="space-y-6">
@@ -18,6 +25,22 @@ export default async function StudioHomePage() {
         </div>
         <NewProjectButton basePath="/studio" />
       </div>
+      <section aria-label="Proposal pipeline" className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+        {(
+          [
+            ["DRAFT", "Draft"],
+            ["SENT", "Sent"],
+            ["VIEWED", "Viewed"],
+            ["APPROVED", "Approved"],
+            ["CHANGES_REQUESTED", "Changes"],
+          ] as const
+        ).map(([status, label]) => (
+          <div key={status} className="rounded-lg border border-border bg-background px-3 py-2">
+            <p className="text-xs text-muted-foreground">{label}</p>
+            <p className="text-lg font-semibold text-foreground">{pipelineCount(status)}</p>
+          </div>
+        ))}
+      </section>
       <ProjectGrid
         projects={projects}
         basePath="/studio"

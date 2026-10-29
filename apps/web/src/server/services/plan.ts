@@ -7,6 +7,13 @@ export type PlanState = "FREE" | "PAID";
  * V5 will read the Subscription row; this helper stays the single source.
  */
 export async function getPlanState(db: Prisma, workspaceId: string): Promise<PlanState> {
+  const workspace = await db.workspace.findFirst({
+    where: { id: workspaceId },
+    select: { type: true },
+  });
+  // V4 rule: Pro (STUDIO) workspaces never get the platform watermark. V5 refines with plans.
+  if (workspace?.type === "STUDIO") return "PAID";
+
   const subscription = await db.subscription.findUnique({
     where: { workspaceId },
     select: { status: true },

@@ -197,7 +197,7 @@ export async function getPublicProposal(
   });
   if (proposal === null) throw new AppError("NOT_FOUND", "This proposal is not available.", 404);
 
-  const status = effectiveStatus(proposal.status, proposal.expiresAt);
+  let status = effectiveStatus(proposal.status, proposal.expiresAt);
   if (status === "EXPIRED" && proposal.status !== "EXPIRED") {
     await db.proposal.update({ where: { id: proposal.id }, data: { status: "EXPIRED" } });
   }
@@ -206,6 +206,7 @@ export async function getPublicProposal(
       where: { id: proposal.id },
       data: { status: "VIEWED", viewedAt: new Date() },
     });
+    status = "VIEWED";
   }
 
   const outputs = await db.renderOutput.findMany({
@@ -279,7 +280,7 @@ async function requireActionable(db: Prisma, token: string) {
     select: { id: true, status: true, expiresAt: true, renderOutputIds: true },
   });
   if (proposal === null) throw new AppError("NOT_FOUND", "Proposal not found.", 404);
-  const status = effectiveStatus(proposal.status, proposal.expiresAt);
+  let status = effectiveStatus(proposal.status, proposal.expiresAt);
   if (status === "EXPIRED") throw new AppError("EXPIRED", "This proposal has expired.", 410);
   if (status === "APPROVED" || status === "CHANGES_REQUESTED") {
     throw new AppError("INVALID_STATE", "This proposal is already closed.", 409);

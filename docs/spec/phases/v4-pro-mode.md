@@ -8,7 +8,7 @@
 
 - [x] `/studio/settings`: studio name (logo, brand colour, currency, units, contact, default terms), logo upload, brand color, currency, unit system, contact email/phone, default proposal terms text.
 - [x] Logo stored as an `Asset` (PNG/JPEG/WebP ≤2 MB; SVG not accepted yet) (`LOGO`) and referenced by `Workspace.logoStorageKey`. Validate type and size (PNG/JPEG/SVG sanitized or rasterized; ≤2 MB).
-- [ ] Pro workspaces never get the platform watermark on renders.
+- [x] Pro workspaces never get the platform watermark on renders.
 
 ## 2. Clients
 
@@ -47,7 +47,7 @@
 ## 6. Render workflow for Pro
 
 - [ ] Same generation tools as V2/V3 but without watermark and with a "Pin to proposal" action on outputs (up to 4 options per proposal).
-- [ ] Designer can add a short caption per option (e.g. "Option A — warm minimal").
+- [x] Designer can add a short caption per option (e.g. "Option A — warm minimal").
 
 ## 7. Proposals
 
@@ -70,7 +70,7 @@
 
 ## 9. Designer dashboard
 
-- [ ] `/studio` home: pipeline columns by proposal status (Draft, Sent, Viewed, Approved, Changes requested) with counts and recent activity.
+- [x] `/studio` home: pipeline columns by proposal status (Draft, Sent, Viewed, Approved, Changes requested) with counts and recent activity.
 - [ ] Project page: tabs Rooms, Renders, Estimate, Proposals, Activity.
 
 ## 10. Tests
@@ -78,8 +78,8 @@
 - [ ] Isolation tests for clients, rate cards, estimates, proposals, brief links (A cannot touch B).
 - [ ] Rate card CSV import: valid, invalid rows, no partial apply.
 - [ ] Estimate editing and versioning; immutability after send.
-- [ ] Proposal state machine: all valid transitions; invalid ones rejected (e.g. approve an expired proposal).
-- [ ] Public pages: token validity, expiry, rate limits, no data leakage, honeypot.
+- [x] Proposal state machine: all valid transitions; invalid ones rejected (e.g. approve an expired proposal).
+- [x] Public pages: token validity, expiry, rate limits, no data leakage, honeypot.
 - [ ] PDF snapshot test (render to PDF, check page count, key text present).
 - [ ] Playwright: designer creates client → brief link → client submits in an incognito context → designer builds estimate → sends proposal → client approves.
 
@@ -88,6 +88,6 @@
 - [ ] All boxes ticked; CI green.
 - [ ] Full workflow works with the fake provider locally and with the real provider in a manual run.
 - [ ] A designer with no help can finish brief → approved proposal in under 20 minutes (record a manual timing note).
-- [ ] Summary for the human.
+- [x] Summary for the human.
 
 **Out of scope for V4:** invoicing, payments between designer and client, team seats, contractor handoff.

@@ -47,6 +47,7 @@ export async function GET(
       status: job.status,
       errorMessage: job.errorMessage,
       creditsCharged: job.creditsCharged,
+      styleKey: job.styleKey,
       createdAt: job.createdAt,
       outputs,
     });

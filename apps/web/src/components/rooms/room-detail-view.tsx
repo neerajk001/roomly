@@ -1,5 +1,6 @@
 import { EstimateSection } from "@/components/estimates/estimate-section";
 import { RoomPhotos } from "@/components/projects/room-photos";
+import { HomeRoomResults } from "@/components/rooms/home-room-results";
 import { RenderView } from "@/components/renders/render-view";
 import type { RenderJobView } from "@/components/renders/types";
 import { Button } from "@/components/ui/button";
@@ -7,11 +8,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { prisma } from "@roomdesigner/db";
 import { presignGet } from "@roomdesigner/storage";
 import { requireWorkspace } from "@/server/auth/session";
+import { getRoughEstimate } from "@/server/services/estimates";
 import { getRoom } from "@/server/services/rooms";
 import Link from "next/link";
 
+const ROOM_LABELS: Record<string, string> = {
+  LIVING_ROOM: "Living room",
+  BEDROOM: "Bedroom",
+  KITCHEN: "Kitchen",
+  BATHROOM: "Bathroom",
+  DINING_ROOM: "Dining room",
+  HOME_OFFICE: "Home office",
+  KIDS_ROOM: "Kids room",
+  BALCONY: "Balcony",
+  HALLWAY: "Hallway",
+  OTHER: "Room",
+};
+
 function formatLength(mm: number | null, unitSystem: string): string {
-  if (mm === null) return "—";
+  if (mm === null) return "-";
   return unitSystem === "IMPERIAL" ? `${(mm / 304.8).toFixed(1)} ft` : `${(mm / 1000).toFixed(2)} m`;
 }
 
@@ -57,6 +72,7 @@ export async function RoomDetailView({
       errorMessage: job.errorMessage,
       creditsCharged: job.creditsCharged,
       label: job.kind === "EDIT" ? (job.instruction ?? "Edit") : "Base concept",
+      styleKey: job.styleKey,
       outputs: await Promise.all(
         job.outputs.map(async (output) => ({
           id: output.id,
@@ -82,6 +98,59 @@ export async function RoomDetailView({
     detail.room.heightMm !== null
       ? ` · ceiling ${formatLength(detail.room.heightMm, workspace.unitSystem)}`
       : "";
+  const roomLabel = ROOM_LABELS[detail.room.type] ?? "Room";
+  const dimensions = `${sizeLine}${ceilingLine}`;
+
+  if (basePath === "/app") {
+    const [rough, projectMeta] = await Promise.all([
+      getRoughEstimate(prisma, { userId: user.id, workspaceId: workspace.id }, roomId, {
+        persist: false,
+      }),
+      prisma.project.findFirst({
+        where: { id: projectId, workspaceId: workspace.id },
+        select: { keepList: true, notes: true },
+      }),
+    ]);
+    const top = [...rough.lines]
+      .sort((a, b) => b.totalMinor - a.totalMinor)
+      .slice(0, 3)
+      .map((line) => ({ label: line.label, totalMinor: line.totalMinor }));
+
+    return (
+      <div className="space-y-6">
+        <HomeRoomResults
+          roomId={detail.room.id}
+          projectId={projectId}
+          roomLabel={roomLabel}
+          dimensions={dimensions}
+          initialJob={initialJob}
+          history={jobViews}
+          sourceUrl={photos[0]?.url ?? null}
+          estimate={{
+            currency: rough.currency,
+            lowMinor: rough.lowMinor,
+            highMinor: rough.highMinor,
+            top,
+          }}
+          keepList={projectMeta?.keepList ?? []}
+          notes={projectMeta?.notes ?? null}
+        />
+        {initialJob?.status !== "SUCCEEDED" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Room photos</CardTitle>
+              <CardDescription>
+                Upload a clear photo so the AI can create concepts for this room.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <RoomPhotos roomId={detail.room.id} photos={photos} />
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -117,23 +186,21 @@ export async function RoomDetailView({
 
       <EstimateSection projectId={projectId} roomId={detail.room.id} />
 
-      {basePath === "/studio" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Estimate</CardTitle>
-            <CardDescription>
-              Build an editable estimate from your rate card. Each save creates a version.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild size="sm">
-              <Link href={`/studio/projects/${projectId}/rooms/${detail.room.id}/estimate`}>
-                Build estimate
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle>Estimate</CardTitle>
+          <CardDescription>
+            Build an editable estimate from your rate card. Each save creates a version.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button asChild size="sm">
+            <Link href={`/studio/projects/${projectId}/rooms/${detail.room.id}/estimate`}>
+              Build estimate
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

@@ -7,6 +7,9 @@ interface FieldProps {
   defaultValue?: string;
   errors?: string[];
   hint?: string;
+  inputMode?: "text" | "email" | "numeric";
+  maxLength?: number;
+  pattern?: string;
 }
 
 export function Field({
@@ -18,6 +21,9 @@ export function Field({
   defaultValue,
   errors,
   hint,
+  inputMode,
+  maxLength,
+  pattern,
 }: FieldProps) {
   const describedBy = errors !== undefined && errors.length > 0 ? `${name}-error` : undefined;
   return (
@@ -32,6 +38,9 @@ export function Field({
         autoComplete={autoComplete}
         required={required}
         defaultValue={defaultValue}
+        inputMode={inputMode}
+        maxLength={maxLength}
+        pattern={pattern}
         aria-invalid={errors !== undefined && errors.length > 0 ? true : undefined}
         aria-describedby={describedBy}
         className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"

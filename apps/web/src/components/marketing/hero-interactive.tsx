@@ -38,29 +38,30 @@ export function HeroInteractive() {
   const [activeStyle, setActiveStyle] = useState(STYLES[0]);
 
   return (
-    <div className="relative mx-auto w-full max-w-xl">
-      {/* Decorative ambient backdrop glow */}
-      <div className="absolute -inset-2 rounded-3xl bg-gradient-to-tr from-emerald-500/10 via-amber-200/20 to-emerald-700/15 blur-xl pointer-events-none" />
-
-      <div className="relative rounded-2xl border border-[#d8d2c4] bg-white/90 p-2.5 shadow-2xl backdrop-blur-sm transition-all duration-300">
-        <BeforeAfterSlider
-          key={activeStyle.id}
-          beforeImage="/demo/hero-before.jpg"
-          afterImage={activeStyle.afterImage}
-          beforeAlt="Messy unmade bedroom before redesign"
-          afterAlt={`AI concept redesign in ${activeStyle.name} style`}
-          aspectRatio="aspect-[4/3] sm:aspect-[16/11]"
-          enableScrollEffect={true}
-        />
+    <div className="w-full">
+      <div className="border border-black bg-white p-2.5">
+        <div className="border border-black">
+          <BeforeAfterSlider
+            key={activeStyle.id}
+            beforeImage="/demo/hero-before.jpg"
+            afterImage={activeStyle.afterImage}
+            beforeAlt="Messy unmade bedroom before redesign"
+            afterAlt={`AI concept redesign in ${activeStyle.name} style`}
+            aspectRatio="aspect-[4/3]"
+            enableScrollEffect={true}
+            variant="block"
+          />
+        </div>
 
         {/* Style selection strip */}
         <div className="mt-3">
-          <div className="flex items-center justify-between px-1 mb-2">
-            <span className="text-xs font-medium text-[#4b5a51]">
+          <div className="mb-2 flex items-center justify-between gap-2 px-0.5">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-black">
               Select AI Style Concept:
             </span>
-            <span className="text-xs font-semibold text-emerald-800">
-              {activeStyle.name} · <span className="font-normal text-[#6b776f]">{activeStyle.desc}</span>
+            <span className="truncate text-[11px] text-black">
+              <span className="font-bold uppercase">{activeStyle.name}</span>
+              <span className="text-black/60"> · {activeStyle.desc}</span>
             </span>
           </div>
 
@@ -72,26 +73,22 @@ export function HeroInteractive() {
                   key={style.id}
                   type="button"
                   onClick={() => setActiveStyle(style)}
-                  className={`group relative flex flex-col items-center gap-1.5 rounded-xl border p-1.5 transition-all text-left ${
-                    isActive
-                      ? "border-emerald-700 bg-emerald-50/70 shadow-sm ring-1 ring-emerald-700"
-                      : "border-[#e0dacf] bg-[#faf8f2] hover:border-[#c5beaf] hover:bg-white"
+                  aria-pressed={isActive}
+                  className={`group flex flex-col border text-left transition-colors ${
+                    isActive ? "border-black" : "border-black/30 hover:border-black"
                   }`}
                 >
-                  <div className="relative h-11 w-full overflow-hidden rounded-lg">
+                  <span className="relative block h-12 w-full overflow-hidden border-b border-black/20 sm:h-16">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={style.thumb}
                       alt={style.name}
                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
-                    {isActive && (
-                      <span className="absolute top-1 right-1 flex h-2 w-2 rounded-full bg-emerald-600 ring-2 ring-white" />
-                    )}
-                  </div>
+                  </span>
                   <span
-                    className={`text-[11px] font-medium tracking-tight ${
-                      isActive ? "text-emerald-900 font-semibold" : "text-[#4b5a51]"
+                    className={`block py-1 text-center text-[10px] font-bold uppercase tracking-wide ${
+                      isActive ? "bg-[#FFD400] text-black" : "bg-white text-black"
                     }`}
                   >
                     {style.name}

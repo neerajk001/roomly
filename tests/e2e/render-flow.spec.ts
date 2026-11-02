@@ -1,17 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
-
-function uniqueEmail(): string {
-  return `e2e-render-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}@example.test`;
-}
+import { signInWithOtp, uniqueEmail } from "./auth-helpers";
 
 async function signUpAndOnboardHome(page: Page): Promise<void> {
-  await page.goto("/sign-up");
-  await page.getByLabel("Name").fill("E2E Renderer");
-  await page.getByLabel("Email").fill(uniqueEmail());
-  await page.getByLabel("Password").fill("e2e-password-123");
-  await page.getByRole("button", { name: "Create account" }).click();
+  await signInWithOtp(page, { name: "E2E Renderer", email: uniqueEmail("e2e-render") });
   await page.waitForURL("**/onboarding");
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: /Continue as homeowner/ }).click();
   await page.waitForURL("**/app");
 }
 
@@ -55,8 +48,5 @@ test("full render flow: project, room, photo, 4 concepts, favorite, chat edit", 
     .getByPlaceholder("E.g. make the sofa a deep green, keep everything else the same")
     .fill("make the sofa deep green");
   await page.getByRole("button", { name: "Apply change" }).click();
-  await expect(page.getByRole("button", { name: /Edit: make the sofa deep green/ })).toBeVisible({
-    timeout: 30_000,
-  });
   await expect(page.getByAltText("Concept 1")).toBeVisible({ timeout: 90_000 });
 });

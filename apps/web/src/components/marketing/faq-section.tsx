@@ -56,10 +56,7 @@ const FAQS_RIGHT: FAQItem[] = [
 ];
 
 export function FAQSection() {
-  const [openIds, setOpenIds] = useState<Record<string, boolean>>({
-    q1: false,
-    q5: false,
-  });
+  const [openIds, setOpenIds] = useState<Record<string, boolean>>({});
 
   const toggleOpen = (id: string) => {
     setOpenIds((prev) => ({
@@ -70,57 +67,60 @@ export function FAQSection() {
 
   return (
     <section id="faq" className="mx-auto max-w-6xl px-4 py-20">
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-        <div>
-          <span className="inline-flex items-center rounded-full border border-[#d8d2c4] bg-white px-3.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-[#6b776f]">
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+        <div className="relative">
+          <span className="inline-block border border-black px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-black">
             Frequently Asked Questions
           </span>
-          <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl text-[#1f2a24]">
-            Got questions? We&apos;ve got answers.
+          <h2 className="mt-5 text-4xl font-extrabold leading-[1.02] tracking-tight text-black sm:text-5xl lg:text-6xl">
+            Got questions?
+            <br />
+            We&apos;ve got <span className="text-[#1f4fff]">answers.</span>
           </h2>
+          <svg
+            aria-hidden="true"
+            className="absolute right-0 top-3 hidden h-12 w-16 text-black md:block"
+            viewBox="0 0 60 48"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
+            <line x1="14" y1="8" x2="26" y2="40" />
+            <line x1="34" y1="8" x2="46" y2="40" />
+          </svg>
         </div>
         <Link
           href="/#faq"
-          className="inline-flex items-center text-xs font-semibold text-emerald-800 hover:text-emerald-950 transition-colors"
+          className="inline-flex w-fit items-center gap-3 border border-black bg-white px-5 py-3 text-sm font-semibold text-black transition-colors hover:bg-black hover:text-white"
         >
-          View all FAQs →
+          <span>View all FAQs</span>
+          <span aria-hidden="true">→</span>
         </Link>
       </div>
 
-      <div className="mt-12 grid gap-6 md:grid-cols-2">
+      <div className="mt-10 grid gap-4 md:grid-cols-2">
         {/* Left Column */}
         <div className="space-y-4">
-          {FAQS_LEFT.map((faq) => {
+          {FAQS_LEFT.map((faq, i) => {
             const isOpen = Boolean(openIds[faq.id]);
+            const accent = i % 2 === 0 ? "bg-[#1f4fff]" : "bg-[#FFD400]";
             return (
-              <div
-                key={faq.id}
-                className="overflow-hidden rounded-xl border border-[#d8d2c4] bg-white transition-colors"
-              >
+              <div key={faq.id} className="overflow-hidden border border-black bg-white">
                 <button
                   type="button"
                   onClick={() => toggleOpen(faq.id)}
-                  className="flex w-full items-center justify-between p-4 text-left font-medium text-[#1f2a24] hover:bg-[#faf8f2] transition-colors"
                   aria-expanded={isOpen}
+                  className="flex w-full items-stretch text-left"
                 >
-                  <span className="text-sm font-medium">{faq.q}</span>
-                  <svg
-                    className={`h-4 w-4 shrink-0 text-[#6b776f] transition-transform duration-200 ${
-                      isOpen ? "rotate-180" : ""
-                    }`}
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
+                  <span className="flex-1 px-4 py-4 text-sm font-medium text-black">{faq.q}</span>
+                  <span className={`flex w-14 shrink-0 items-center justify-center border-l border-black text-2xl font-normal text-black ${accent}`}>
+                    {isOpen ? "−" : "+"}
+                  </span>
                 </button>
                 {isOpen && (
-                  <div className="border-t border-[#eee8db] bg-[#faf8f2]/50 px-4 py-3">
-                    <p className="text-xs leading-5 text-[#5a685f]">{faq.a}</p>
+                  <div className="border-t border-black px-4 py-3">
+                    <p className="text-xs leading-5 text-black/70">{faq.a}</p>
                   </div>
                 )}
               </div>
@@ -130,37 +130,25 @@ export function FAQSection() {
 
         {/* Right Column */}
         <div className="space-y-4">
-          {FAQS_RIGHT.map((faq) => {
+          {FAQS_RIGHT.map((faq, i) => {
             const isOpen = Boolean(openIds[faq.id]);
+            const accent = i % 2 === 0 ? "bg-[#FFD400]" : "bg-[#1f4fff]";
             return (
-              <div
-                key={faq.id}
-                className="overflow-hidden rounded-xl border border-[#d8d2c4] bg-white transition-colors"
-              >
+              <div key={faq.id} className="overflow-hidden border border-black bg-white">
                 <button
                   type="button"
                   onClick={() => toggleOpen(faq.id)}
-                  className="flex w-full items-center justify-between p-4 text-left font-medium text-[#1f2a24] hover:bg-[#faf8f2] transition-colors"
                   aria-expanded={isOpen}
+                  className="flex w-full items-stretch text-left"
                 >
-                  <span className="text-sm font-medium">{faq.q}</span>
-                  <svg
-                    className={`h-4 w-4 shrink-0 text-[#6b776f] transition-transform duration-200 ${
-                      isOpen ? "rotate-180" : ""
-                    }`}
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
+                  <span className="flex-1 px-4 py-4 text-sm font-medium text-black">{faq.q}</span>
+                  <span className={`flex w-14 shrink-0 items-center justify-center border-l border-black text-2xl font-normal text-black ${accent}`}>
+                    {isOpen ? "−" : "+"}
+                  </span>
                 </button>
                 {isOpen && (
-                  <div className="border-t border-[#eee8db] bg-[#faf8f2]/50 px-4 py-3">
-                    <p className="text-xs leading-5 text-[#5a685f]">{faq.a}</p>
+                  <div className="border-t border-black px-4 py-3">
+                    <p className="text-xs leading-5 text-black/70">{faq.a}</p>
                   </div>
                 )}
               </div>

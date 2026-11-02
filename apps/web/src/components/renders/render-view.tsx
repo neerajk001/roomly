@@ -61,6 +61,7 @@ export function RenderView({
         creditsCharged: incoming.creditsCharged,
         outputs: incoming.outputs,
         label,
+        styleKey: incoming.styleKey,
       };
       return previous.some((job) => job.id === view.id)
         ? previous.map((job) => (job.id === view.id ? view : job))
@@ -68,7 +69,7 @@ export function RenderView({
     });
   }, []);
 
-  const startJob = useCallback((jobId: string, kind: "RESTYLE" | "EDIT", label: string) => {
+  const startJob = useCallback((jobId: string, kind: "RESTYLE" | "EDIT", label: string, styleKey: string | null) => {
     setJobs((previous) =>
       previous.some((job) => job.id === jobId)
         ? previous
@@ -82,6 +83,7 @@ export function RenderView({
               creditsCharged: 0,
               outputs: [],
               label,
+              styleKey,
             },
           ],
     );
@@ -111,7 +113,7 @@ export function RenderView({
         }
         if (result.jobId !== undefined) {
           track("render_requested", { kind: "RESTYLE", variations: request.variations });
-          startJob(result.jobId, "RESTYLE", "Base concept");
+          startJob(result.jobId, "RESTYLE", "Base concept", request.styleKey);
           router.refresh();
         }
       });
@@ -202,7 +204,7 @@ export function RenderView({
       }
       if (result.jobId !== undefined) {
         track("render_requested", { kind: "EDIT", variations: 1 });
-        startJob(result.jobId, "EDIT", instruction.slice(0, 40));
+        startJob(result.jobId, "EDIT", instruction.slice(0, 40), null);
         setInstruction("");
         setEditingOutputId(null);
         router.refresh();

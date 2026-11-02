@@ -14,6 +14,7 @@ export interface RenderJobView {
   creditsCharged: number;
   outputs: RenderOutputView[];
   label: string;
+  styleKey: string | null;
 }
 
 export interface RenderJobStatusResponse {
@@ -23,6 +24,7 @@ export interface RenderJobStatusResponse {
   errorMessage: string | null;
   creditsCharged: number;
   outputs: RenderOutputView[];
+  styleKey: string | null;
 }
 
 export function isTerminal(status: RenderJobView["status"]): boolean {

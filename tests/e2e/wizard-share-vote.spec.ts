@@ -1,49 +1,43 @@
 import { expect, test } from "@playwright/test";
-
-function uniqueEmail(): string {
-  return `e2e-share-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}@example.test`;
-}
+import { signInWithOtp, uniqueEmail } from "./auth-helpers";
 
 test("wizard renders, favorite, create share link, vote anonymously", async ({ page, browser }) => {
   test.setTimeout(300_000);
-  await page.goto("/sign-up");
-  await page.getByLabel("Name").fill("E2E Share");
-  await page.getByLabel("Email").fill(uniqueEmail());
-  await page.getByLabel("Password").fill("e2e-password-123");
-  await page.getByRole("button", { name: "Create account" }).click();
+  await signInWithOtp(page, { name: "E2E Share", email: uniqueEmail("e2e-share") });
   await page.waitForURL("**/onboarding");
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: /Continue as homeowner/ }).click();
   await page.waitForURL("**/app");
 
   // Guided wizard
-  await page.getByRole("link", { name: "New design" }).click();
-  await page.waitForURL("**/app/new");
-  await page.locator('input[type="file"]').setInputFiles("tests/e2e/fixtures/room.jpg");
+  await page.goto("/new");
+  await page.locator('input[type="file"]').first().setInputFiles("tests/e2e/fixtures/room.jpg");
   await page.getByRole("button", { name: "Continue" }).click();
 
   // Room step: use typical sizes
-  await page.getByText("I don't know the exact sizes").click();
+  await page.getByText("I'm not sure about the exact dimensions").click();
   await page.getByRole("button", { name: "Continue" }).click();
   // Keep / renter / budget steps
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("button", { name: "Continue" }).click();
-  // Style quiz: skip and choose
-  await page.getByRole("button", { name: "Skip, I'll choose myself" }).click();
+  // Style step: pick a style
+  await page.getByRole("button", { name: /Scandinavian/ }).click();
   await page.getByRole("button", { name: "Continue" }).click();
-  // Confirm
-  await page.getByRole("button", { name: "Generate" }).click();
+  // Final step: generate
+  await page.getByRole("button", { name: /Generate 3 concepts/ }).first().click();
 
   await page.waitForURL(/\/rooms\/[^/]+$/, { timeout: 120_000 });
+  const roomUrl = page.url();
+  const projectId = /\/projects\/([^/]+)\//.exec(roomUrl)?.[1] ?? "";
   await expect(page.getByAltText("Concept 1")).toBeVisible({ timeout: 120_000 });
 
   // Favorite the first concept
   await page.getByRole("button", { name: "Add to favorites" }).first().click();
   await expect(page.getByRole("button", { name: "Remove from favorites" }).first()).toBeVisible();
+  await page.waitForTimeout(1000);
 
   // Back to the project and create a share link
-  await page.getByRole("link", { name: /^Back to/ }).click();
-  await page.waitForURL(/\/projects\/[^/]+$/);
+  await page.goto(`/app/projects/${projectId}`);
   await page.getByRole("button", { name: "Create share link" }).click();
   const shareLink = page.getByText(/\/share\/[A-Za-z0-9_-]+/);
   await expect(shareLink).toBeVisible({ timeout: 30_000 });

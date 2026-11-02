@@ -2,13 +2,8 @@
 
 import { createGuidedProjectAction, goToRoomAction } from "@/server/actions/wizard";
 import { createRenderAction } from "@/server/actions/renders";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   STYLES,
-  formatMoney,
-  getStyle,
   typicalSizeFor,
   totalCreditCost,
 } from "@roomdesigner/shared";
@@ -42,6 +37,36 @@ const KEEP_ITEMS = [
   ["TV", "▣"],
 ] as const;
 
+const KEEP_IMAGES: Record<string, string> = {
+  Sofa: "/demo/living-after.jpg",
+  Flooring: "/demo/hero-after-modern.jpg",
+  Curtains: "/demo/bedroom-after.jpg",
+  Bed: "/demo/bedroom-after.jpg",
+  Cabinets: "/demo/kitchen-after.jpg",
+  Rug: "/demo/living-before.jpg",
+  "Dining table": "/demo/dining-after.jpg",
+  TV: "/demo/living-after.jpg",
+};
+
+const STYLE_IMAGES = [
+  "/demo/hero-after-modern.jpg",
+  "/demo/hero-after-minimal.jpg",
+  "/demo/hero-after-boho.jpg",
+  "/demo/hero-after-classic.jpg",
+];
+
+const STAGE_ITEMS = [
+  ["sofa", "Sofa"],
+  ["dining-table", "Dining table"],
+  ["rug", "Rug"],
+  ["flooring", "Flooring"],
+  ["curtains", "Curtains"],
+  ["plants", "Plants"],
+  ["art", "Art"],
+  ["lighting", "Lighting"],
+  ["storage", "Storage"],
+] as const;
+
 const STEPS = ["Photo", "Room details", "Keep items", "Renting", "Budget", "Style", "Review"];
 
 interface Draft {
@@ -56,6 +81,10 @@ interface Draft {
   renterMode: boolean;
   budget: string;
   styles: string[];
+  variations: string;
+  quality: "draft" | "final";
+  notes: string;
+  stagingItems: string[];
 }
 
 const initialDraft: Draft = {
@@ -70,6 +99,10 @@ const initialDraft: Draft = {
   renterMode: false,
   budget: "",
   styles: [],
+  variations: "3",
+  quality: "draft",
+  notes: "",
+  stagingItems: [],
 };
 
 function minorFromMajor(value: string, currency: string): number | null {
@@ -85,29 +118,64 @@ function mmFromMetres(value: string): number | null {
   return Math.round(parsed * 1000);
 }
 
-export function GuidedWizard({ currency, credits }: { currency: string; credits: number }) {
+function CheckIcon({ className = "h-3 w-3" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="4 10 8 14 16 5" />
+    </svg>
+  );
+}
+
+function StepBadge({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="absolute -top-3 left-4 border border-black bg-[#FFD400] px-3 py-1 text-sm font-bold text-black">
+      {children}
+    </span>
+  );
+}
+
+function capitalize(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+export function GuidedWizard({
+  currency,
+  initialStyle,
+}: {
+  currency: string;
+  initialStyle?: string;
+}) {
   const router = useRouter();
-  const [draft, setDraft] = useState<Draft>(initialDraft);
+  const [draft, setDraft] = useState<Draft>(() =>
+    initialStyle === undefined ? initialDraft : { ...initialDraft, styles: [initialStyle] },
+  );
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
+    if (initialStyle !== undefined) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- no draft to restore
+      setHydrated(true);
+      return;
+    }
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (raw !== null) {
       try {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is only readable after mount
         setDraft({ ...initialDraft, ...(JSON.parse(raw) as Partial<Draft>) });
       } catch {
         // ignore corrupt draft
       }
     }
-  }, []);
+    setHydrated(true);
+  }, [initialStyle]);
 
   useEffect(() => {
+    if (!hydrated) return;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
-  }, [draft]);
+  }, [draft, hydrated]);
 
   const previews = useMemo(() => files.map((file) => URL.createObjectURL(file)), [files]);
   useEffect(
@@ -122,9 +190,13 @@ export function GuidedWizard({ currency, credits }: { currency: string; credits:
   };
 
   const chosenStyle = draft.styles[0] ?? "modern";
-  const styleLabel = getStyle(chosenStyle)?.label ?? "Modern";
-  const totalCost = totalCreditCost("draft", 3);
-  const usedTypical = draft.useTypical || draft.width === "" || draft.length === "";
+  const variationCount = Math.min(4, Math.max(1, Number(draft.variations) || 3));
+  const totalCost = totalCreditCost(draft.quality, variationCount);
+  const typicalDims = typicalSizeFor(draft.roomType);
+  const widthM = draft.useTypical ? typicalDims.widthMm / 1000 : Number(draft.width);
+  const lengthM = draft.useTypical ? typicalDims.lengthMm / 1000 : Number(draft.length);
+  const heightM = draft.useTypical ? typicalDims.heightMm / 1000 : Number(draft.height);
+  const dimsLine = `${widthM.toFixed(2)} m × ${lengthM.toFixed(2)} m · ceiling ${heightM.toFixed(2)} m`;
 
   const canContinue = (): boolean => {
     if (draft.step === 0) return files.length >= 1;
@@ -154,6 +226,15 @@ export function GuidedWizard({ currency, credits }: { currency: string; credits:
         : current.keepList.length >= 10
           ? current.keepList
           : [...current.keepList, item],
+    }));
+  };
+
+  const toggleStaging = (item: string) => {
+    setDraft((current) => ({
+      ...current,
+      stagingItems: current.stagingItems.includes(item)
+        ? current.stagingItems.filter((entry) => entry !== item)
+        : [...current.stagingItems, item],
     }));
   };
 
@@ -222,8 +303,12 @@ export function GuidedWizard({ currency, credits }: { currency: string; credits:
       renderForm.set("projectId", created.projectId);
       renderForm.set("kind", "RESTYLE");
       renderForm.set("styleKey", chosenStyle);
-      renderForm.set("variations", "3");
-      renderForm.set("quality", "draft");
+      renderForm.set("variations", String(variationCount));
+      renderForm.set("quality", draft.quality);
+      if (draft.notes.trim() !== "") renderForm.set("notes", draft.notes.trim());
+      if (draft.stagingItems.length > 0) {
+        renderForm.set("stagingItems", JSON.stringify(draft.stagingItems));
+      }
       const render = await createRenderAction({}, renderForm);
       if (render.error !== undefined) {
         setError(render.error);
@@ -241,24 +326,9 @@ export function GuidedWizard({ currency, credits }: { currency: string; credits:
   };
 
   return (
-    <div className="rounded-2xl border border-[#e4dfd3] bg-[#fbf9f3] text-[#1f2a24] shadow-sm">
-      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-[#e4dfd3] px-4 py-3 text-xs">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold">🌿 RoomDesigner</span>
-          <span className="text-[#c3bcae]">|</span>
-          <span className="text-[#5b665f]">{roomLabel} redesign</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="rounded-full border border-[#e4dfd3] bg-white px-2.5 py-1">◉ {credits} credits</span>
-          <span className="rounded-md border border-[#e4dfd3] bg-white px-2.5 py-1">Save draft</span>
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#2f5233] text-[10px] font-semibold text-white">
-            {(draft.step + 1).toString()}
-          </span>
-        </div>
-      </header>
-
-      <div className="grid gap-0 lg:grid-cols-[190px_1fr]">
-        <nav aria-label="Design steps" className="border-b border-[#e4dfd3] p-3 lg:border-b-0 lg:border-r">
+    <div className={draft.step === 6 ? "" : "grid gap-0 lg:grid-cols-[240px_1fr]"}>
+      {draft.step !== 6 && (
+        <nav aria-label="Design steps" className="border-b border-black p-3 lg:border-b-0 lg:border-r lg:p-4">
           <ol className="flex gap-1 overflow-x-auto lg:flex-col lg:gap-1">
             {STEPS.map((label, index) => {
               const active = index === draft.step;
@@ -270,24 +340,24 @@ export function GuidedWizard({ currency, credits }: { currency: string; credits:
                     onClick={() => {
                       if (index <= draft.step) patch({ step: index });
                     }}
-                    className={`flex w-full items-center gap-2 whitespace-nowrap rounded-md px-2 py-2 text-left text-xs ${
+                    className={`flex w-full items-center gap-2.5 whitespace-nowrap px-2.5 py-2.5 text-left text-sm transition-colors ${
                       active
-                        ? "bg-[#e7ece0] font-medium text-[#2f5233]"
+                        ? "bg-[#1f4fff] font-semibold text-white"
                         : done
-                          ? "text-[#405048]"
-                          : "text-[#a8a294]"
+                          ? "text-black"
+                          : "text-black/40"
                     }`}
                   >
                     <span
-                      className={`flex h-5 w-5 items-center justify-center rounded-full border text-[10px] ${
+                      className={`flex h-6 w-6 items-center justify-center rounded-full border text-[11px] ${
                         active
-                          ? "border-[#2f5233] bg-[#2f5233] text-white"
+                          ? "border-white bg-white text-[#1f4fff]"
                           : done
-                            ? "border-[#2f5233] text-[#2f5233]"
-                            : "border-[#d8d2c4]"
+                            ? "border-[#1f4fff] bg-[#1f4fff] text-white"
+                            : "border-black/25 text-black/40"
                       }`}
                     >
-                      {index + 1}
+                      {done ? <CheckIcon /> : index + 1}
                     </span>
                     {label}
                   </button>
@@ -296,30 +366,33 @@ export function GuidedWizard({ currency, credits }: { currency: string; credits:
             })}
           </ol>
         </nav>
+      )}
 
-        <div className="p-5">
-          {error !== null && (
-            <p role="alert" className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
-              {error}
-            </p>
-          )}
+      <div className={draft.step === 6 ? "" : "flex min-h-0 flex-col p-5 sm:p-8 lg:p-10"}>
+          <div className="flex-1">
+            {error !== null && (
+              <p role="alert" className="mb-3 border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {error}
+              </p>
+            )}
 
           {draft.step === 0 && (
-            <div className="grid gap-5 lg:grid-cols-[1fr_240px]">
+            <div className="grid gap-5 lg:grid-cols-[1fr_230px]">
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight">Add a photo of your room</h1>
-                <p className="mt-1 text-sm text-[#5b665f]">
-                  Upload a clear photo so the AI can understand your space.
+                <h1 className="text-3xl font-extrabold tracking-tight">
+                  Add a photo of <span className="text-[#1f4fff]">your room.</span>
+                </h1>
+                <p className="mt-2 text-sm text-black/70">
+                  Upload a clear photo so our AI can understand your space and create realistic designs.
                 </p>
-                <label className="mt-4 flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#d8d2c4] bg-white px-4 py-8 text-center text-sm hover:bg-[#faf8f2]">
-                  <span className="text-2xl" aria-hidden="true">
-                    ⇪
-                  </span>
-                  <span className="mt-2 font-medium">Drag and drop a photo here</span>
-                  <span className="text-xs text-[#7a857d]">or click to upload</span>
-                  <span className="mt-2 text-[11px] text-[#a8a294]">
-                    Up to {MAX_PHOTOS} photos · JPEG, PNG or WebP · 10 MB each
-                  </span>
+                <label className="mt-4 flex cursor-pointer flex-col items-center justify-center border border-dashed border-black bg-white px-4 py-8 text-center text-sm hover:bg-black/[0.02]">
+                  <svg className="h-8 w-8 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M12 16V4" />
+                    <path d="m6 10 6-6 6 6" />
+                    <path d="M4 20h16" />
+                  </svg>
+                  <span className="mt-2 font-bold">Drag and drop a photo here</span>
+                  <span className="text-xs text-black/60">or click to upload</span>
                   <input
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
@@ -334,39 +407,68 @@ export function GuidedWizard({ currency, credits }: { currency: string; credits:
                     }}
                   />
                 </label>
-                {previews.length > 0 && (
-                  <ul className="mt-3 grid grid-cols-4 gap-2">
-                    {previews.map((url, index) => (
-                      <li key={url} className="relative overflow-hidden rounded-lg border border-[#e4dfd3]">
-                        {/* eslint-disable-next-line @next/next/no-img-element -- local object URL */}
-                        <img src={url} alt={`Selected photo ${String(index + 1)}`} className="h-16 w-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setFiles((current) => current.filter((_, i) => i !== index));
+                <p className="mt-2 text-[11px] text-black/50">
+                  Up to {MAX_PHOTOS} photos · JPEG, PNG or WebP · 10 MB each
+                </p>
+                <ul className="mt-3 grid grid-cols-4 gap-2">
+                  {previews.map((url, index) => (
+                    <li key={url} className="relative overflow-hidden border border-black">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- local object URL */}
+                      <img src={url} alt={`Selected photo ${String(index + 1)}`} className="h-16 w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFiles((current) => current.filter((_, i) => i !== index));
+                        }}
+                        className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center bg-white/90 text-[10px]"
+                        aria-label="Remove photo"
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                  {previews.length < MAX_PHOTOS && (
+                    <li>
+                      <label className="flex h-16 cursor-pointer items-center justify-center border border-black bg-white text-2xl hover:bg-black/[0.02]">
+                        +
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          multiple
+                          className="sr-only"
+                          aria-label="Add more photos"
+                          onChange={(event) => {
+                            const list = Array.from(event.target.files ?? []);
+                            setFiles((current) => [...current, ...list].slice(0, MAX_PHOTOS));
+                            event.target.value = "";
                           }}
-                          className="absolute right-1 top-1 rounded-full bg-white/90 px-1 text-[10px]"
-                          aria-label="Remove photo"
-                        >
-                          ×
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <p className="mt-3 flex items-center gap-2 rounded-md bg-[#eef1e8] px-3 py-2 text-[11px] text-[#405048]">
-                  🔒 Photos are private and only used to generate your designs.
+                        />
+                      </label>
+                    </li>
+                  )}
+                </ul>
+                <p className="mt-3 flex items-center gap-2 border border-black bg-[#fffbe0] px-3 py-2 text-[11px] text-black">
+                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="4" y="10" width="16" height="11" rx="2" />
+                    <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+                  </svg>
+                  Your photos are private and only used to generate your designs.
                 </p>
               </div>
               <aside className="hidden space-y-3 lg:block">
                 {/* eslint-disable-next-line @next/next/no-img-element -- static demo asset */}
-                <img src="/demo/living-after.jpg" alt="" className="h-36 w-full rounded-lg object-cover" />
-                <div className="rounded-lg border border-[#e4dfd3] bg-white p-3 text-xs">
-                  <p className="font-medium">Tips for best results</p>
-                  <ul className="mt-1.5 space-y-1 text-[#5b665f]">
-                    <li>✓ Use a well-lit photo</li>
-                    <li>✓ Include as much of the room as possible</li>
-                    <li>✓ Take it from a corner if you can</li>
+                <img src="/demo/living-after.jpg" alt="" className="h-36 w-full border border-black object-cover" />
+                <div className="border border-black bg-white p-3 text-xs">
+                  <p className="font-bold">Tips for best results</p>
+                  <ul className="mt-2 space-y-1.5 text-black/70">
+                    {["Use a well-lit photo", "Include as much of the room as possible", "Take it from a corner if you can"].map((tip) => (
+                      <li key={tip} className="flex items-start gap-2">
+                        <span className="mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center border border-black text-black">
+                          <CheckIcon className="h-2 w-2" />
+                        </span>
+                        {tip}
+                      </li>
+                    ))}
                   </ul>
                 </div>
               </aside>
@@ -374,81 +476,109 @@ export function GuidedWizard({ currency, credits }: { currency: string; credits:
           )}
 
           {draft.step === 1 && (
-            <div className="grid gap-5 lg:grid-cols-[1fr_240px]">
+            <div className="grid gap-5 lg:grid-cols-[1fr_230px]">
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight">Tell us about the room</h1>
-                <p className="mt-1 text-sm text-[#5b665f]">
-                  Rough sizes are fine — you can skip this if you&apos;re not sure.
+                <h1 className="text-3xl font-extrabold tracking-tight">
+                  Tell us about <span className="text-[#1f4fff]">the room.</span>
+                </h1>
+                <p className="mt-2 text-sm text-black/70">
+                  Rough sizes are fine — you can always skip this if you&apos;re not sure.
                 </p>
                 <div className="mt-4 space-y-3">
                   <div className="space-y-1">
-                    <Label htmlFor="wiz-room-type">Room type</Label>
-                    <select
-                      id="wiz-room-type"
-                      value={draft.roomType}
-                      onChange={(event) => {
-                        patch({ roomType: event.target.value });
-                      }}
-                      className="h-9 w-full rounded-md border border-input bg-white px-3 text-sm"
-                    >
-                      {ROOM_TYPES.map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
+                    <label htmlFor="wiz-room-type" className="text-xs font-bold">Room type</label>
+                    <div className="relative">
+                      <svg className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M3 11V8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3" />
+                        <path d="M3 11h18v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                      </svg>
+                      <select
+                        id="wiz-room-type"
+                        value={draft.roomType}
+                        onChange={(event) => {
+                          patch({ roomType: event.target.value });
+                        }}
+                        className="h-10 w-full appearance-none border border-black bg-white pl-9 pr-3 text-sm"
+                      >
+                        {ROOM_TYPES.map(([value, label]) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                      <svg className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                    </div>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     {(
                       [
                         ["width", "Width (m)"],
                         ["length", "Length (m)"],
-                        ["height", "Ceiling (m)"],
+                        ["height", "Ceiling height (m)"],
                       ] as const
                     ).map(([key, label]) => (
                       <div key={key} className="space-y-1">
-                        <Label htmlFor={`wiz-${key}`} className="text-xs">
+                        <label htmlFor={`wiz-${key}`} className="text-xs font-bold">
                           {label}
-                        </Label>
-                        <Input
+                        </label>
+                        <input
                           id={`wiz-${key}`}
-                          inputMode="decimal"
+                          type="number"
+                          step="0.1"
+                          min="0"
                           value={draft[key]}
                           disabled={draft.useTypical}
                           onChange={(event) => {
                             patch({ [key]: event.target.value });
                           }}
+                          className="h-10 w-full border border-black bg-white px-2 text-sm disabled:bg-black/5"
                         />
                       </div>
                     ))}
                   </div>
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={draft.useTypical}
-                      onChange={(event) => {
-                        patch({ useTypical: event.target.checked });
-                      }}
-                    />
-                    I&apos;m not sure about the exact dimensions
-                  </label>
+                  <div>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={draft.useTypical}
+                        onChange={(event) => {
+                          patch({ useTypical: event.target.checked });
+                        }}
+                        className="h-4 w-4 border border-black accent-[#1f4fff]"
+                      />
+                      I&apos;m not sure about the exact dimensions
+                    </label>
+                    {draft.useTypical && (
+                      <p className="mt-1 pl-6 text-[11px] text-black/60">
+                        That&apos;s okay. We&apos;ll use typical sizes for this room and mark the cost
+                        estimate as rougher.
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
               <aside className="space-y-3">
-                <div className="rounded-lg border border-[#e4dfd3] bg-white p-3">
+                <div className="border border-black bg-white p-3">
                   <svg viewBox="0 0 200 140" className="w-full" role="img" aria-label="Room plan guidance">
-                    <rect x="20" y="20" width="160" height="100" fill="#f3efe6" stroke="#a8a294" />
-                    <rect x="20" y="90" width="70" height="30" fill="#e0d8c6" />
-                    <rect x="20" y="40" width="34" height="30" fill="#cbd6c0" />
-                    <path d="M20 12 H180" stroke="#2f5233" strokeWidth="1" markerEnd="url(#a)" />
+                    <rect x="20" y="20" width="160" height="100" fill="#f5f5f5" stroke="#000" />
+                    <rect x="20" y="90" width="70" height="30" fill="#e5e5e5" />
+                    <rect x="20" y="40" width="34" height="30" fill="#dbe7ff" />
+                    <path d="M20 12 H180" stroke="#000" strokeWidth="1" markerEnd="url(#a)" />
                     <defs>
                       <marker id="a" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
-                        <path d="M0 0 L6 3 L0 6 z" fill="#2f5233" />
+                        <path d="M0 0 L6 3 L0 6 z" fill="#000" />
                       </marker>
                     </defs>
                   </svg>
-                  <p className="mt-2 text-[11px] text-[#7a857d]">
-                    Dimensions help us suggest better layouts and a more accurate cost range.
+                </div>
+                <div className="border border-black bg-[#fffbe0] p-3 text-[11px]">
+                  <p className="flex items-center gap-1.5 font-bold">
+                    <span aria-hidden="true">💡</span> Why we need this?
+                  </p>
+                  <p className="mt-1 text-black/70">
+                    Dimensions help us suggest better furniture layouts and a more accurate cost estimate.
                   </p>
                 </div>
               </aside>
@@ -456,14 +586,16 @@ export function GuidedWizard({ currency, credits }: { currency: string; credits:
           )}
 
           {draft.step === 2 && (
-            <div className="grid gap-5 lg:grid-cols-[1fr_240px]">
+            <div className="grid gap-5 lg:grid-cols-[1fr_230px]">
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight">What should stay?</h1>
-                <p className="mt-1 text-sm text-[#5b665f]">
-                  Select items you want to keep exactly as they are.
+                <h1 className="text-3xl font-extrabold tracking-tight">
+                  What should <span className="text-[#1f4fff]">stay?</span>
+                </h1>
+                <p className="mt-2 text-sm text-black/70">
+                  Select the items you want to keep exactly as they are in the new design.
                 </p>
                 <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4">
-                  {KEEP_ITEMS.map(([label, icon]) => {
+                  {KEEP_ITEMS.map(([label]) => {
                     const active = draft.keepList.includes(label);
                     return (
                       <button
@@ -473,17 +605,23 @@ export function GuidedWizard({ currency, credits }: { currency: string; credits:
                         onClick={() => {
                           toggleKeep(label);
                         }}
-                        className={`relative rounded-lg border-2 bg-white p-2 text-left text-xs ${
-                          active ? "border-[#2f5233]" : "border-[#e4dfd3]"
+                        className={`relative border bg-white p-1 text-left text-xs ${
+                          active ? "border-[#1f4fff] ring-1 ring-[#1f4fff]" : "border-black"
                         }`}
                       >
-                        <span className="flex h-14 items-center justify-center rounded bg-[#f3efe6] text-xl" aria-hidden="true">
-                          {icon}
+                        <span className="block h-14 w-full overflow-hidden border-b border-black bg-[#f5f5f5]">
+                          {/* eslint-disable-next-line @next/next/no-img-element -- static demo asset */}
+                          <img
+                            src={KEEP_IMAGES[label] ?? "/demo/living-after.jpg"}
+                            alt=""
+                            className="h-full w-full object-cover"
+                            aria-hidden="true"
+                          />
                         </span>
-                        <span className="mt-1 block">{label}</span>
+                        <span className="mt-1 block px-1 pb-0.5 font-medium">{label}</span>
                         {active && (
-                          <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#2f5233] text-[9px] text-white">
-                            ✓
+                          <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center bg-[#1f4fff] text-white">
+                            <CheckIcon />
                           </span>
                         )}
                       </button>
@@ -491,18 +629,18 @@ export function GuidedWizard({ currency, credits }: { currency: string; credits:
                   })}
                 </div>
                 <div className="mt-3 flex gap-2">
-                  <Input
+                  <input
                     value={draft.customKeep}
                     maxLength={40}
-                    placeholder="Add something else (e.g. bookshelf, plants)"
+                    placeholder="Add something else (e.g. bookshelf, plants, wall art)"
                     onChange={(event) => {
                       patch({ customKeep: event.target.value });
                     }}
+                    className="h-10 flex-1 border border-black bg-white px-3 text-sm"
                   />
-                  <Button
+                  <button
                     type="button"
-                    variant="outline"
-                    className="bg-white"
+                    className="flex h-10 w-10 items-center justify-center border border-black bg-[#1f4fff] text-lg text-white"
                     onClick={() => {
                       const value = draft.customKeep.trim().slice(0, 40);
                       if (value !== "") {
@@ -510,110 +648,142 @@ export function GuidedWizard({ currency, credits }: { currency: string; credits:
                         patch({ customKeep: "" });
                       }
                     }}
+                    aria-label="Add custom item"
                   >
                     +
-                  </Button>
+                  </button>
                 </div>
               </div>
-              <aside className="rounded-lg border border-[#e4dfd3] bg-white p-3 text-xs">
-                <p className="font-medium">Selected items ({draft.keepList.length})</p>
-                {draft.keepList.length === 0 ? (
-                  <p className="mt-2 text-[#7a857d]">Nothing selected yet.</p>
-                ) : (
-                  <ul className="mt-2 space-y-1">
-                    {draft.keepList.map((item) => (
-                      <li key={item} className="flex justify-between gap-2">
-                        <span>{item}</span>
-                        <button
-                          type="button"
-                          className="text-[#a33]"
-                          onClick={() => {
-                            toggleKeep(item);
-                          }}
-                          aria-label={`Remove ${item}`}
-                        >
-                          ×
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <p className="mt-3 rounded-md bg-[#eef1e8] px-2 py-1.5 text-[11px] text-[#405048]">
-                  These items will remain unchanged in the generated design.
-                </p>
+              <aside className="space-y-3">
+                <div className="border border-black bg-white p-3 text-xs">
+                  <p className="font-bold">Selected items ({draft.keepList.length})</p>
+                  {draft.keepList.length === 0 ? (
+                    <p className="mt-2 text-black/50">Nothing selected yet.</p>
+                  ) : (
+                    <ul className="mt-2 space-y-2">
+                      {draft.keepList.map((item) => (
+                        <li key={item} className="flex justify-between gap-2 border-b border-black/10 pb-1.5 last:border-0">
+                          <div className="min-w-0">
+                            <p className="truncate font-medium">{item}</p>
+                            <p className="text-[10px] text-black/50">Will be kept as is</p>
+                          </div>
+                          <button
+                            type="button"
+                            className="shrink-0 text-red-700"
+                            onClick={() => {
+                              toggleKeep(item);
+                            }}
+                            aria-label={`Remove ${item}`}
+                          >
+                            ×
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div className="flex items-start gap-2 border border-black bg-[#e8f0ff] p-3 text-[11px] text-black/80">
+                  <span aria-hidden="true">ⓘ</span>
+                  <p>These items will remain unchanged in the generated designs.</p>
+                </div>
               </aside>
             </div>
           )}
 
           {draft.step === 3 && (
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight">Do you rent or own this place?</h1>
-              <p className="mt-1 text-sm text-[#5b665f]">
-                This helps us suggest the right kind of changes for your space.
-              </p>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {[
-                  {
-                    value: true,
-                    icon: "▦",
-                    title: "I rent this place",
-                    body: "Renter-friendly changes only (paint, rugs, curtains, lighting, furniture, decor). No construction, no structural changes.",
-                  },
-                  {
-                    value: false,
-                    icon: "⌂",
-                    title: "I own this place",
-                    body: "Includes all types of changes including construction, built-ins and structural modifications.",
-                  },
-                ].map((option) => {
-                  const active = draft.renterMode === option.value;
-                  return (
-                    <button
-                      key={option.title}
-                      type="button"
-                      aria-pressed={active}
-                      onClick={() => {
-                        patch({ renterMode: option.value });
-                      }}
-                      className={`rounded-xl border-2 bg-white p-4 text-left ${
-                        active ? "border-[#2f5233]" : "border-[#e4dfd3]"
-                      }`}
-                    >
-                      <span className="text-2xl" aria-hidden="true">
-                        {option.icon}
-                      </span>
-                      <span className="mt-2 block text-sm font-medium">{option.title}</span>
-                      <span className="mt-1 block text-xs leading-5 text-[#5b665f]">{option.body}</span>
-                    </button>
-                  );
-                })}
+            <div className="grid gap-5 lg:grid-cols-[1fr_220px]">
+              <div>
+                <h1 className="text-3xl font-extrabold tracking-tight">
+                  Do you <span className="text-[#1f4fff]">rent or own</span> this place?
+                </h1>
+                <p className="mt-2 text-sm text-black/70">
+                  This helps us suggest the right kind of changes for your space.
+                </p>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {[
+                    {
+                      value: true,
+                      icon: "▦",
+                      title: "I rent this place",
+                      body: "Renter-friendly changes only (paint, rugs, curtains, lighting, furniture, decor). No construction, no structural changes.",
+                    },
+                    {
+                      value: false,
+                      icon: "⌂",
+                      title: "I own this place",
+                      body: "Includes all types of changes including construction, built-ins and structural modifications.",
+                    },
+                  ].map((option) => {
+                    const active = draft.renterMode === option.value;
+                    return (
+                      <button
+                        key={option.title}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => {
+                          patch({ renterMode: option.value });
+                        }}
+                        className={`relative border bg-white p-4 text-left ${
+                          active ? "border-[#1f4fff] ring-1 ring-[#1f4fff]" : "border-black"
+                        }`}
+                      >
+                        <span className="text-2xl" aria-hidden="true">
+                          {option.icon}
+                        </span>
+                        <span className="mt-2 block text-sm font-bold">{option.title}</span>
+                        <span className="mt-1 block text-xs leading-5 text-black/60">{option.body}</span>
+                        {active && (
+                          <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center bg-[#1f4fff] text-white">
+                            <CheckIcon />
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-3 flex items-center gap-2 border border-black bg-[#fffbe0] px-3 py-2 text-[11px]">
+                  <span aria-hidden="true">💡</span>
+                  Not sure? You can always change this later.
+                </div>
               </div>
-              <p className="mt-3 rounded-md bg-[#eef1e8] px-3 py-2 text-[11px] text-[#405048]">
-                Not sure? You can always change this later.
-              </p>
+              <aside className="relative hidden lg:block">
+                {/* eslint-disable-next-line @next/next/no-img-element -- static demo asset */}
+                <img src="/demo/homeowner-feature.jpg" alt="" className="h-full min-h-52 w-full border border-black object-cover" />
+                <p className="absolute -top-3 right-2 max-w-[120px] -rotate-3 text-center font-serif text-[11px] italic leading-tight">
+                  We&apos;ll suggest renter-friendly ideas for your space.
+                </p>
+              </aside>
             </div>
           )}
 
           {draft.step === 4 && (
             <div className="grid gap-5 lg:grid-cols-[1fr_220px]">
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight">Any budget in mind?</h1>
-                <p className="mt-1 text-sm text-[#5b665f]">
-                  This helps us prioritize the right changes.
+                <h1 className="text-3xl font-extrabold tracking-tight">
+                  Any <span className="text-[#1f4fff]">budget</span> in mind?
+                </h1>
+                <p className="mt-2 text-sm text-black/70">
+                  This helps us prioritize the right changes. You can skip this for now.
                 </p>
-                <div className="mt-4 flex items-center gap-2">
-                  <span className="rounded-md border border-[#2f5233] bg-[#eef1e8] px-2 py-1 text-xs font-medium">
-                    {currency}
-                  </span>
-                  <Input
-                    inputMode="decimal"
-                    value={draft.budget}
-                    placeholder="50,000"
-                    onChange={(event) => {
-                      patch({ budget: event.target.value });
-                    }}
-                    className="max-w-40 bg-white"
-                  />
+                <div className="mt-4 inline-flex border border-black text-xs font-bold">
+                  <span className="bg-[#1f4fff] px-3 py-1.5 text-white">{currency}</span>
+                </div>
+                <div className="mt-3">
+                  <div className="relative max-w-52">
+                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-black">
+                      {currency === "INR" ? "₹" : currency === "USD" ? "$" : currency === "EUR" ? "€" : ""}
+                    </span>
+                    <input
+                      inputMode="decimal"
+                      value={draft.budget}
+                      placeholder="50,000"
+                      onChange={(event) => {
+                        patch({ budget: event.target.value });
+                      }}
+                      aria-label="Budget"
+                      className="h-10 w-full border border-black bg-white pl-8 pr-3 text-sm"
+                    />
+                  </div>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {[
@@ -627,7 +797,9 @@ export function GuidedWizard({ currency, credits }: { currency: string; credits:
                       onClick={() => {
                         patch({ budget: value ?? "" });
                       }}
-                      className="rounded-md border border-[#d8d2c4] bg-white px-2.5 py-1.5 text-xs"
+                      className={`border px-3 py-1.5 text-xs ${
+                        draft.budget === value ? "border-[#1f4fff] bg-[#e8f0ff]" : "border-black bg-white"
+                      }`}
                     >
                       {label}
                     </button>
@@ -638,25 +810,31 @@ export function GuidedWizard({ currency, credits }: { currency: string; credits:
                   onClick={() => {
                     patch({ budget: "" });
                   }}
-                  className="mt-4 text-xs text-[#5b665f] underline"
+                  className="mt-4 border border-black bg-white px-3 py-1.5 text-xs"
                 >
                   Skip for now
                 </button>
               </div>
-              <aside className="hidden rounded-lg border border-[#e4dfd3] bg-white p-3 text-[11px] text-[#5b665f] lg:block">
-                We&apos;ll show what fits your budget first, focusing on high-impact changes.
+              <aside className="hidden space-y-3 lg:block">
+                {/* eslint-disable-next-line @next/next/no-img-element -- static demo asset */}
+                <img src="/demo/kitchen-after.jpg" alt="" className="h-32 w-full border border-black object-cover" />
+                <div className="border border-black bg-white p-3 text-[11px] text-black/70">
+                  We&apos;ll show what fits your budget first, focusing on high-impact changes.
+                </div>
               </aside>
             </div>
           )}
 
           {draft.step === 5 && (
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight">Which look do you like?</h1>
-              <p className="mt-1 text-sm text-[#5b665f]">
-                Pick the styles you like most. You can pick up to 3.
+              <h1 className="text-3xl font-extrabold tracking-tight">
+                Which <span className="text-[#1f4fff]">look</span> do you like?
+              </h1>
+              <p className="mt-2 text-sm text-black/70">
+                Pick the styles you like most. You can select multiple (up to 3).
               </p>
               <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {STYLES.map((style) => {
+                {STYLES.map((style, index) => {
                   const active = draft.styles.includes(style.key);
                   return (
                     <button
@@ -666,17 +844,21 @@ export function GuidedWizard({ currency, credits }: { currency: string; credits:
                       onClick={() => {
                         toggleStyle(style.key);
                       }}
-                      className={`relative overflow-hidden rounded-lg border-2 bg-white text-left text-xs ${
-                        active ? "border-[#2f5233]" : "border-[#e4dfd3]"
+                      className={`relative overflow-hidden border bg-white text-left text-xs ${
+                        active ? "border-[#1f4fff] ring-1 ring-[#1f4fff]" : "border-black"
                       }`}
                     >
-                      <span className="flex h-16 items-end gap-1 p-2" style={{ background: `linear-gradient(135deg, ${style.palette[0]}, ${style.palette[1]})` }}>
-                        <span className="h-3 w-3 rounded-full border border-white/60" style={{ backgroundColor: style.palette[2] }} />
-                      </span>
-                      <span className="block px-2 py-1.5">{style.label}</span>
+                      {/* eslint-disable-next-line @next/next/no-img-element -- static demo asset */}
+                      <img
+                        src={STYLE_IMAGES[index % STYLE_IMAGES.length] ?? STYLE_IMAGES[0]}
+                        alt=""
+                        className="h-16 w-full border-b border-black object-cover"
+                        aria-hidden="true"
+                      />
+                      <span className="block px-2 py-1.5 font-medium">{style.label}</span>
                       {active && (
-                        <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#2f5233] text-[9px] text-white">
-                          ✓
+                        <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center bg-[#1f4fff] text-white">
+                          <CheckIcon />
                         </span>
                       )}
                     </button>
@@ -688,7 +870,7 @@ export function GuidedWizard({ currency, credits }: { currency: string; credits:
                 onClick={() => {
                   patch({ styles: ["scandinavian"] });
                 }}
-                className="mt-3 rounded-md border border-[#d8d2c4] bg-white px-3 py-1.5 text-xs"
+                className="mt-3 border border-black bg-white px-3 py-1.5 text-xs"
               >
                 ✨ Not sure yet — choose for me
               </button>
@@ -696,98 +878,268 @@ export function GuidedWizard({ currency, credits }: { currency: string; credits:
           )}
 
           {draft.step === 6 && (
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight">Review your details</h1>
-              <p className="mt-1 text-sm text-[#5b665f]">Looks good? Generate 3 concept designs.</p>
-              <div className="mt-4 grid gap-4 lg:grid-cols-[200px_1fr]">
-                {previews[0] !== undefined ? (
-                  /* eslint-disable-next-line @next/next/no-img-element -- local object URL */
-                  <img src={previews[0]} alt="Your room" className="h-32 w-full rounded-lg object-cover" />
-                ) : (
-                  <div className="flex h-32 items-center justify-center rounded-lg bg-[#f3efe6] text-xs text-[#7a857d]">
-                    No photo preview
-                  </div>
-                )}
-                <dl className="divide-y divide-[#eee8db] text-sm">
-                  {[
-                    ["Photo", `${String(files.length)} photo${files.length === 1 ? "" : "s"} uploaded`, 0],
-                    [
-                      "Room details",
-                      `${roomLabel} · ${usedTypical ? "typical sizes" : `${draft.width} × ${draft.length} × ${draft.height} m`}`,
-                      1,
-                    ],
-                    ["Keep items", draft.keepList.length > 0 ? draft.keepList.join(", ") : "None", 2],
-                    ["Renting", draft.renterMode ? "I rent this place" : "I own this place", 3],
-                    [
-                      "Budget",
-                      minorFromMajor(draft.budget, currency) !== null
-                        ? formatMoney(minorFromMajor(draft.budget, currency) ?? 0, currency)
-                        : "Not set",
-                      4,
-                    ],
-                    ["Style", styleLabel, 5],
-                  ].map(([label, value, step]) => (
-                    <div key={String(label)} className="flex items-center justify-between gap-3 py-2">
-                      <div className="min-w-0">
-                        <dt className="text-xs text-[#7a857d]">{String(label)}</dt>
-                        <dd className="truncate">{String(value)}</dd>
-                      </div>
-                      <button
-                        type="button"
-                        className="text-xs text-[#2f5233] underline"
-                        onClick={() => {
-                          patch({ step: Number(step) });
-                        }}
-                      >
-                        Edit
-                      </button>
+            <div className="space-y-5">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      router.push("/app/spaces");
+                    }}
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-black/70 hover:text-black"
+                  >
+                    <span aria-hidden="true">←</span> Back to my spaces
+                  </button>
+                  <h1 className="mt-2 text-4xl font-extrabold leading-[1.02] tracking-tight text-black sm:text-5xl">
+                    Design your {roomLabel.toLowerCase()}
+                  </h1>
+                  <p className="mt-2 text-sm font-medium text-black/70">{dimsLine}</p>
+                </div>
+                <div className="flex flex-wrap items-stretch gap-3">
+                  <div className="flex items-center gap-3 border border-black bg-white p-3 shadow-[3px_3px_0_0_#000]">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-black bg-[#FFD400] text-black">
+                      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+                      </svg>
+                    </span>
+                    <div>
+                      <p className="text-sm font-bold text-black">Ready to generate</p>
+                      <p className="mt-0.5 max-w-[230px] text-[11px] leading-snug text-black/60">
+                        Select your preferences and create {variationCount} concepts.
+                      </p>
                     </div>
-                  ))}
-                </dl>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void submit()}
+                    disabled={busy}
+                    aria-busy={busy}
+                    className="inline-flex items-center gap-2 border border-black bg-[#1f4fff] px-5 py-3 text-sm font-bold text-white shadow-[4px_4px_0_0_#000] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0_0_#000] disabled:opacity-60"
+                  >
+                    {busy ? "Generating..." : `Generate ${String(variationCount)} concepts`}
+                    <span aria-hidden="true">→</span>
+                  </button>
+                </div>
               </div>
-              <p className="mt-3 rounded-md bg-[#eef1e8] px-3 py-2 text-[11px] text-[#405048]">
-                💡 Your room dimensions and budget guide recommendations. Renders are concept
-                visuals, not architectural plans.
-              </p>
-              <p className="mt-2 text-xs text-[#7a857d]">
-                Costs {totalCost} credits (3 draft concepts).
-              </p>
+
+              <section className="relative border border-black bg-white p-4 pt-6">
+                <StepBadge>1. Choose a style</StepBadge>
+                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                  {STYLES.map((style, index) => {
+                    const active = draft.styles.includes(style.key);
+                    return (
+                      <button
+                        key={style.key}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => {
+                          toggleStyle(style.key);
+                        }}
+                        className={`flex items-start gap-2 border bg-white p-2 text-left transition-colors ${
+                          active ? "border-[#1f4fff] ring-1 ring-[#1f4fff]" : "border-black hover:bg-black/[0.02]"
+                        }`}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element -- static demo asset */}
+                        <img
+                          src={STYLE_IMAGES[index % STYLE_IMAGES.length] ?? STYLE_IMAGES[0]}
+                          alt=""
+                          className="h-14 w-20 shrink-0 border border-black object-cover"
+                          aria-hidden="true"
+                        />
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-bold text-black">{style.label}</span>
+                          <span className="mt-0.5 block text-[11px] leading-snug text-black/60">
+                            {capitalize(style.promptHint)}
+                          </span>
+                        </span>
+                        <span
+                          className={`flex h-4 w-4 shrink-0 items-center justify-center border ${
+                            active ? "border-[#1f4fff] bg-[#1f4fff] text-white" : "border-black bg-white"
+                          }`}
+                        >
+                          {active && <CheckIcon className="h-2.5 w-2.5" />}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <section className="relative border border-black bg-white p-4 pt-6">
+                  <StepBadge>2. Variations</StepBadge>
+                  <label htmlFor="wiz-variations" className="sr-only">
+                    Variations
+                  </label>
+                  <select
+                    id="wiz-variations"
+                    value={draft.variations}
+                    onChange={(event) => {
+                      patch({ variations: event.target.value });
+                    }}
+                    className="h-10 w-full border border-black bg-white px-3 text-sm"
+                  >
+                    {[2, 3, 4].map((count) => (
+                      <option key={count} value={String(count)}>
+                        {count}
+                      </option>
+                    ))}
+                  </select>
+                </section>
+                <section className="relative border border-black bg-white p-4 pt-6">
+                  <StepBadge>3. Render quality</StepBadge>
+                  <label htmlFor="wiz-quality" className="sr-only">
+                    Render quality
+                  </label>
+                  <select
+                    id="wiz-quality"
+                    value={draft.quality}
+                    onChange={(event) => {
+                      patch({ quality: event.target.value === "final" ? "final" : "draft" });
+                    }}
+                    className="h-10 w-full border border-black bg-white px-3 text-sm"
+                  >
+                    <option value="draft">Draft (faster, cheaper)</option>
+                    <option value="final">Final (best quality)</option>
+                  </select>
+                </section>
+              </div>
+
+              <section className="relative border border-black bg-white p-4 pt-6">
+                <StepBadge>4. Stage this room (optional)</StepBadge>
+                <p className="text-xs text-black/60">
+                  Empty room? Pick what to add. Existing items that already fit are kept.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {STAGE_ITEMS.map(([key, label]) => {
+                    const active = draft.stagingItems.includes(key);
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => {
+                          toggleStaging(key);
+                        }}
+                        className={`flex items-center gap-2 border px-3 py-1.5 text-xs font-medium transition-colors ${
+                          active
+                            ? "border-black bg-[#FFD400] text-black"
+                            : "border-black bg-white text-black hover:bg-black/5"
+                        }`}
+                      >
+                        <span
+                          className={`flex h-3.5 w-3.5 items-center justify-center border border-black ${
+                            active ? "bg-black text-white" : "bg-white"
+                          }`}
+                        >
+                          {active && <CheckIcon className="h-2.5 w-2.5" />}
+                        </span>
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+
+              <section className="relative border border-black bg-white p-4 pt-6">
+                <StepBadge>5. Notes (optional)</StepBadge>
+                <label htmlFor="wiz-notes" className="sr-only">
+                  Notes
+                </label>
+                <textarea
+                  id="wiz-notes"
+                  value={draft.notes}
+                  maxLength={300}
+                  rows={2}
+                  onChange={(event) => {
+                    patch({ notes: event.target.value });
+                  }}
+                  placeholder="E.g. keep the rug and the shelf on the left"
+                  className="w-full border border-black bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#1f4fff]"
+                />
+              </section>
+
+              <div className="flex flex-wrap items-center justify-between gap-4 border border-black bg-white p-4 shadow-[4px_4px_0_0_#000]">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center border border-black bg-[#FFD400] text-black">
+                    <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+                    </svg>
+                  </span>
+                  <div>
+                    <p className="text-base font-extrabold text-black">
+                      Your design will be ready in a few seconds
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-black/60">
+                      We&apos;ll generate {variationCount} unique concepts based on your preferences,
+                      room dimensions and budget.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="border-l border-black/20 pl-4 text-xs">
+                    <p className="text-black/60">Cost</p>
+                    <p className="flex items-center gap-1.5 text-sm font-bold text-black">
+                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                        <ellipse cx="12" cy="6" rx="8" ry="3" />
+                        <path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6" />
+                        <path d="M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6" />
+                      </svg>
+                      {totalCost} credits
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void submit()}
+                    disabled={busy}
+                    aria-busy={busy}
+                    className="inline-flex items-center gap-2 border border-black bg-[#1f4fff] px-5 py-3 text-sm font-bold text-white shadow-[4px_4px_0_0_#000] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0_0_#000] disabled:opacity-60"
+                  >
+                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+                    </svg>
+                    {busy ? "Generating..." : `Generate ${String(variationCount)} concepts`}
+                    <span aria-hidden="true">→</span>
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
           {progress !== null && (
-            <p role="status" className="mt-3 text-xs text-[#5b665f]">
+            <p role="status" className="mt-3 text-xs text-black/60">
               {progress}
             </p>
           )}
+          </div>
 
-          <div className="mt-6 flex items-center justify-between border-t border-[#eee8db] pt-4">
-            <Button type="button" variant="ghost" onClick={back} disabled={draft.step === 0 || busy}>
-              ← Back
-            </Button>
-            {draft.step < STEPS.length - 1 ? (
-              <Button
+          {draft.step !== 6 && (
+            <div className="mt-6 flex items-center justify-between border-t border-black pt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  if (draft.step === 0) {
+                    router.push("/app");
+                  } else {
+                    back();
+                  }
+                }}
+                disabled={busy}
+                className="flex items-center gap-2 border border-black bg-white px-4 py-2.5 text-sm font-bold disabled:opacity-40"
+              >
+                <span aria-hidden="true">←</span> Back
+              </button>
+              <button
                 type="button"
                 onClick={next}
                 disabled={busy}
-                className="bg-[#2f5233] text-white hover:bg-[#27452b]"
+                className="flex items-center gap-3 border border-black bg-[#1f4fff] px-6 py-2.5 text-sm font-bold text-white shadow-[4px_4px_0_0_#000] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0_0_#000] disabled:opacity-60"
               >
-                Continue →
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                onClick={() => void submit()}
-                disabled={busy}
-                aria-busy={busy}
-                className="bg-[#2f5233] text-white hover:bg-[#27452b]"
-              >
-                {busy ? "Working..." : "✨ Generate 3 concepts"}
-              </Button>
-            )}
-          </div>
+                Continue <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
-    </div>
   );
 }

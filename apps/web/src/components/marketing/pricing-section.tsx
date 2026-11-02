@@ -1,12 +1,8 @@
-"use client";
-
-import { useState } from "react";
 import Link from "next/link";
 
 interface PricingPlan {
   name: string;
-  monthlyPrice: string;
-  yearlyPrice: string;
+  price: string;
   period: string;
   description: string;
   popular?: boolean;
@@ -18,8 +14,7 @@ interface PricingPlan {
 const PLANS: PricingPlan[] = [
   {
     name: "Free",
-    monthlyPrice: "₹0",
-    yearlyPrice: "₹0",
+    price: "₹0",
     period: "/ month",
     description: "Try it out with limited credits.",
     features: [
@@ -33,8 +28,7 @@ const PLANS: PricingPlan[] = [
   },
   {
     name: "Home",
-    monthlyPrice: "₹499",
-    yearlyPrice: "₹399",
+    price: "₹499",
     period: "/ month",
     description: "For homeowners and renters.",
     features: [
@@ -49,8 +43,7 @@ const PLANS: PricingPlan[] = [
   },
   {
     name: "Pro",
-    monthlyPrice: "₹1,499",
-    yearlyPrice: "₹1,199",
+    price: "₹1,499",
     period: "/ month",
     popular: true,
     description: "For individual designers.",
@@ -67,8 +60,7 @@ const PLANS: PricingPlan[] = [
   },
   {
     name: "Studio",
-    monthlyPrice: "₹3,499",
-    yearlyPrice: "₹2,799",
+    price: "₹3,499",
     period: "/ month",
     description: "For growing studios.",
     features: [
@@ -83,123 +75,107 @@ const PLANS: PricingPlan[] = [
   },
 ];
 
-export function PricingSection() {
-  const [isYearly, setIsYearly] = useState(false);
-
+function CheckIcon() {
   return (
-    <section id="pricing" className="bg-[#faf8f2] py-20 border-y border-[#e6e0d2]">
+    <svg
+      className="h-3 w-3"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <polyline points="4 10 8 14 16 5" />
+    </svg>
+  );
+}
+
+export function PricingSection() {
+  return (
+    <section id="pricing" className="border-t border-black bg-white py-20">
       <div className="mx-auto max-w-6xl px-4">
-        <div className="flex flex-col items-center text-center">
-          <span className="inline-flex items-center rounded-full border border-[#d8d2c4] bg-white px-3.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-[#6b776f]">
+        <div className="text-center">
+          <span className="inline-block border border-black px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-black">
             Simple Pricing
           </span>
-          <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl text-[#1f2a24]">
-            Plans for every type of user
+          <h2 className="mt-5 text-4xl font-extrabold tracking-tight text-black sm:text-5xl">
+            Plans for every type of user.
           </h2>
-          <p className="mt-2 text-sm text-[#6b776f]">
+          <p className="mx-auto mt-3 max-w-xl text-sm text-black/70">
             Start free and upgrade when you need more credits and features.
           </p>
-
-          {/* Monthly / Yearly Toggle */}
-          <div className="mt-7 flex items-center gap-3">
-            <div className="flex items-center rounded-full border border-[#d8d2c4] bg-white p-1 shadow-inner">
-              <button
-                type="button"
-                onClick={() => setIsYearly(false)}
-                className={`rounded-full px-4 py-1.5 text-xs font-medium transition-all ${
-                  !isYearly
-                    ? "bg-[#1f2a24] text-white shadow"
-                    : "text-[#6b776f] hover:text-[#1f2a24]"
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsYearly(true)}
-                className={`rounded-full px-4 py-1.5 text-xs font-medium transition-all ${
-                  isYearly
-                    ? "bg-[#1f2a24] text-white shadow"
-                    : "text-[#6b776f] hover:text-[#1f2a24]"
-                }`}
-              >
-                Yearly
-              </button>
-            </div>
-            <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800">
-              Save up to 20%
-            </span>
-          </div>
         </div>
 
         {/* Pricing Cards Grid */}
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {PLANS.map((plan) => {
-            const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
-            return (
-              <div
-                key={plan.name}
-                className={`relative flex flex-col justify-between rounded-2xl border p-6 transition-all duration-300 hover:shadow-lg ${
-                  plan.popular
-                    ? "border-emerald-700 bg-white shadow-md ring-2 ring-emerald-700/20"
-                    : "border-[#d8d2c4] bg-white"
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="rounded-full bg-emerald-800 px-3 py-0.5 text-[10px] font-semibold tracking-wide uppercase text-white shadow">
-                      Most popular
-                    </span>
-                  </div>
-                )}
+        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {PLANS.map((plan) => (
+            <div
+              key={plan.name}
+              className={`relative flex flex-col border border-black bg-white p-6 ${
+                plan.popular ? "shadow-[8px_8px_0_0_#000]" : ""
+              }`}
+            >
+              {plan.popular && (
+                <>
+                  <span className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap border border-black bg-[#FFD400] px-4 py-1 text-[11px] font-extrabold uppercase tracking-wide text-black">
+                    Most Popular
+                  </span>
+                  <div
+                    className="pointer-events-none absolute right-0 top-0 h-16 w-16 bg-[#FFD400]"
+                    style={{ clipPath: "polygon(100% 0, 0 0, 100% 100%)" }}
+                    aria-hidden="true"
+                  />
+                </>
+              )}
 
-                <div>
-                  <h3 className="text-base font-semibold text-[#1f2a24]">{plan.name}</h3>
-                  <div className="mt-3 flex items-baseline gap-1">
-                    <span className="text-3xl font-bold tracking-tight text-[#1f2a24]">
-                      {price}
-                    </span>
-                    <span className="text-xs text-[#6b776f]">{plan.period}</span>
-                  </div>
-                  <p className="mt-2 text-xs text-[#6b776f] min-h-[32px]">{plan.description}</p>
+              <span className="inline-block self-start border border-black px-3 py-1 text-sm font-extrabold uppercase tracking-wide text-black">
+                {plan.name}
+              </span>
 
-                  <div className="mt-6 border-t border-[#eee8db] pt-5">
-                    <ul className="space-y-3 text-xs text-[#3f4d45]">
-                      {plan.features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-2.5">
-                          <svg
-                            className="h-4 w-4 shrink-0 text-emerald-700"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="mt-8">
-                  <Link
-                    href={plan.ctaHref}
-                    className={`block w-full rounded-xl py-2.5 text-center text-xs font-semibold transition-all ${
-                      plan.popular
-                        ? "bg-emerald-800 text-white hover:bg-emerald-900 shadow-sm"
-                        : "border border-[#d8d2c4] bg-[#faf8f2] text-[#1f2a24] hover:bg-[#eee8dc]"
-                    }`}
-                  >
-                    {plan.ctaText}
-                  </Link>
-                </div>
+              <div className="mt-6 flex items-baseline gap-1">
+                <span className="text-5xl font-extrabold tracking-tight text-black">
+                  {plan.price}
+                </span>
+                <span className="text-sm text-black/60">{plan.period}</span>
               </div>
-            );
-          })}
+              <p className="mt-3 min-h-[40px] text-sm text-black/70">{plan.description}</p>
+
+              <div className="mt-5 border-t border-black/20 pt-5">
+                <ul className="space-y-3 text-sm text-black">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-center gap-3">
+                      <span
+                        className={`flex h-5 w-5 shrink-0 items-center justify-center ${
+                          plan.popular
+                            ? "bg-[#1f4fff] text-white"
+                            : "border border-black bg-white text-black"
+                        }`}
+                      >
+                        <CheckIcon />
+                      </span>
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="mt-auto pt-8">
+                <Link
+                  href={plan.ctaHref}
+                  className={`flex w-full items-center justify-between border border-black px-4 py-3 text-sm font-bold shadow-[4px_4px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none ${
+                    plan.name === "Free"
+                      ? "bg-white text-black"
+                      : "bg-[#1f4fff] text-white"
+                  }`}
+                >
+                  <span>{plan.ctaText}</span>
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>

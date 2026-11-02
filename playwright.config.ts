@@ -23,10 +23,10 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
     env: {
-      // Test env: no email verification so sign-up lands straight in the app.
       APP_URL: baseURL,
       BETTER_AUTH_URL: baseURL,
-      AUTH_REQUIRE_EMAIL_VERIFICATION: "false",
+      // Fixed OTP (123456) for the email OTP flow.
+      E2E: "1",
       // Never inherit the local dev auth bypass: the E2E tests exercise real auth.
       DEV_AUTH_BYPASS: "false",
     },

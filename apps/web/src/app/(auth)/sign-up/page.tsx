@@ -1,5 +1,5 @@
+import { EmailOtpForm } from "@/components/auth/email-otp-form";
 import { GoogleButton } from "@/components/auth/google-button";
-import { SignUpForm } from "@/components/auth/sign-up-form";
 import { getServerEnv } from "@roomdesigner/config/env";
 import Link from "next/link";
 
@@ -13,9 +13,11 @@ export default async function SignUpPage() {
     <div className="space-y-6">
       <div className="space-y-1">
         <h1 className="text-xl font-semibold text-slate-900">Create your account</h1>
-        <p className="text-sm text-slate-600">Start designing in a few minutes.</p>
+        <p className="text-sm text-slate-600">
+          Start designing in a few minutes. We&apos;ll verify your email with a one-time code.
+        </p>
       </div>
-      <SignUpForm />
+      <EmailOtpForm mode="sign-up" callbackURL="/onboarding" />
       {googleEnabled && (
         <>
           <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-slate-400">

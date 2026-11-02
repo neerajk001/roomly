@@ -4,6 +4,7 @@ import { getEmailSender } from "@roomdesigner/shared/email";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
+import { emailOTP } from "better-auth/plugins";
 import { bootstrapWorkspace } from "./workspace";
 
 const env = getServerEnv();
@@ -18,6 +19,9 @@ const trustedOrigins = env.BETTER_AUTH_URL !== undefined
   ? [env.APP_URL, env.BETTER_AUTH_URL]
   : [env.APP_URL];
 
+/** Fixed OTP for Playwright runs only; never active in production. */
+const e2eOtp = env.NODE_ENV !== "production" && process.env.E2E === "1" ? "123456" : undefined;
+
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL ?? env.APP_URL,
   secret: env.BETTER_AUTH_SECRET,
@@ -30,28 +34,6 @@ export const auth = betterAuth({
   },
   rateLimit: {
     enabled: true,
-  },
-  emailAndPassword: {
-    enabled: true,
-    requireEmailVerification: env.AUTH_REQUIRE_EMAIL_VERIFICATION,
-    sendResetPassword: async ({ user, url }) => {
-      void emailSender.send({
-        to: user.email,
-        subject: "Reset your RoomDesigner password",
-        text: `Hi ${user.name},\n\nReset your password: ${url}\n\nIf you did not request this, you can ignore this email.`,
-      });
-    },
-  },
-  emailVerification: {
-    sendVerificationEmail: async ({ user, url }) => {
-      void emailSender.send({
-        to: user.email,
-        subject: "Verify your RoomDesigner email",
-        text: `Welcome to RoomDesigner!\n\nVerify your email: ${url}`,
-      });
-    },
-    sendOnSignUp: true,
-    autoSignInAfterVerification: true,
   },
   ...(googleCredentials === undefined ? {} : { socialProviders: { google: googleCredentials } }),
   user: {
@@ -72,17 +54,35 @@ export const auth = betterAuth({
       create: {
         after: async (user) => {
           await bootstrapWorkspace(user);
-          // When email verification is disabled (dev/tests), treat sign-ups as
-          // verified so credit-spending flows work end to end.
-          if (!env.AUTH_REQUIRE_EMAIL_VERIFICATION) {
-            await prisma.user.update({
-              where: { id: user.id },
-              data: { emailVerified: true },
-            });
-          }
+          // Email OTP and social sign-in both prove email ownership, so accounts
+          // created through them are verified. Password auth is disabled.
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { emailVerified: true },
+          });
         },
       },
     },
   },
-  plugins: [nextCookies()],
+  plugins: [
+    emailOTP({
+      otpLength: 6,
+      expiresIn: 300,
+      ...(e2eOtp === undefined ? {} : { generateOTP: () => e2eOtp }),
+      async sendVerificationOTP({ email, otp, type }) {
+        const subject =
+          type === "sign-in"
+            ? "Your RoomDesigner sign-in code"
+            : type === "email-verification"
+              ? "Verify your RoomDesigner email"
+              : "Reset your RoomDesigner password";
+        await emailSender.send({
+          to: email,
+          subject,
+          text: `Your RoomDesigner code is ${otp}. It expires in 5 minutes. If you did not request this, you can ignore this email.`,
+        });
+      },
+    }),
+    nextCookies(),
+  ],
 });

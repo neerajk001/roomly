@@ -12,6 +12,7 @@ interface BeforeAfterSliderProps {
   className?: string;
   aspectRatio?: string;
   enableScrollEffect?: boolean;
+  variant?: "default" | "block";
 }
 
 export function BeforeAfterSlider({
@@ -24,6 +25,7 @@ export function BeforeAfterSlider({
   className = "",
   aspectRatio = "aspect-[4/3]",
   enableScrollEffect = true,
+  variant = "default",
 }: BeforeAfterSliderProps) {
   const [sliderPosition, setSliderPosition] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
@@ -133,7 +135,7 @@ export function BeforeAfterSlider({
   return (
     <div
       ref={containerRef}
-      className={`relative select-none overflow-hidden rounded-2xl bg-neutral-900 shadow-xl cursor-ew-resize group ${aspectRatio} ${className}`}
+      className={`relative select-none overflow-hidden bg-neutral-900 cursor-ew-resize group ${variant === "block" ? "rounded-none" : "rounded-2xl shadow-xl"} ${aspectRatio} ${className}`}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
       onKeyDown={handleKeyDown}
@@ -170,14 +172,26 @@ export function BeforeAfterSlider({
 
       {/* Labels */}
       <div className="absolute top-3 left-3 pointer-events-none z-10">
-        <span className="rounded-full bg-black/60 backdrop-blur-md px-3 py-1 text-[11px] font-semibold text-white/90 shadow-sm border border-white/10 uppercase tracking-wider">
-          {beforeLabel}
-        </span>
+        {variant === "block" ? (
+          <span className="bg-black px-3 py-1 text-[11px] font-bold uppercase tracking-[0.15em] text-white">
+            {beforeLabel}
+          </span>
+        ) : (
+          <span className="rounded-full bg-black/60 backdrop-blur-md px-3 py-1 text-[11px] font-semibold text-white/90 shadow-sm border border-white/10 uppercase tracking-wider">
+            {beforeLabel}
+          </span>
+        )}
       </div>
       <div className="absolute top-3 right-3 pointer-events-none z-10">
-        <span className="rounded-full bg-emerald-950/80 backdrop-blur-md px-3 py-1 text-[11px] font-semibold text-emerald-200 shadow-sm border border-emerald-500/30 uppercase tracking-wider">
-          {afterLabel}
-        </span>
+        {variant === "block" ? (
+          <span className="border border-black bg-[#FFD400] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.15em] text-black">
+            {afterLabel}
+          </span>
+        ) : (
+          <span className="rounded-full bg-emerald-950/80 backdrop-blur-md px-3 py-1 text-[11px] font-semibold text-emerald-200 shadow-sm border border-emerald-500/30 uppercase tracking-wider">
+            {afterLabel}
+          </span>
+        )}
       </div>
 
       {/* Divider Line & Handle */}
@@ -185,33 +199,63 @@ export function BeforeAfterSlider({
         className="absolute top-0 bottom-0 w-0.5 bg-white/90 shadow-[0_0_10px_rgba(0,0,0,0.5)] z-20 pointer-events-none transition-opacity"
         style={{ left: `${sliderPosition}%` }}
       >
-        <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-xl border border-black/10 transition-transform group-hover:scale-105 active:scale-95">
-          <svg
-            className="h-4 w-4 text-emerald-950"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <polyline points="15 18 9 12 15 6" />
-            <polyline points="9 18 3 12 9 6" />
-          </svg>
-          <div className="h-3 w-px bg-neutral-300 mx-0.5" />
-          <svg
-            className="h-4 w-4 text-emerald-950"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <polyline points="9 18 15 12 9 6" />
-            <polyline points="15 18 21 12 15 6" />
-          </svg>
-        </div>
+        {variant === "block" ? (
+          <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex h-10 w-10 items-center justify-center border border-black bg-[#FFD400] text-black">
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="15 18 9 12 15 6" />
+              <polyline points="9 18 3 12 9 6" />
+            </svg>
+            <div className="mx-0.5 h-3 w-px bg-black/50" />
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="9 18 15 12 9 6" />
+              <polyline points="15 18 21 12 15 6" />
+            </svg>
+          </div>
+        ) : (
+          <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-xl border border-black/10 transition-transform group-hover:scale-105 active:scale-95">
+            <svg
+              className="h-4 w-4 text-emerald-950"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="15 18 9 12 15 6" />
+              <polyline points="9 18 3 12 9 6" />
+            </svg>
+            <div className="h-3 w-px bg-neutral-300 mx-0.5" />
+            <svg
+              className="h-4 w-4 text-emerald-950"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="9 18 15 12 9 6" />
+              <polyline points="15 18 21 12 15 6" />
+            </svg>
+          </div>
+        )}
       </div>
     </div>
   );

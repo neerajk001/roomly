@@ -9,7 +9,13 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
   const child = spawn("pnpm", ["--filter", "@roomdesigner/worker", "start"], {
     cwd: process.cwd(),
     shell: true,
-    env: { ...process.env, IMAGE_PROVIDER: "fake", AUTH_REQUIRE_EMAIL_VERIFICATION: "false" },
+    env: {
+      ...process.env,
+      IMAGE_PROVIDER: "fake",
+      AUTH_REQUIRE_EMAIL_VERIFICATION: "false",
+      // Keep the E2E worker from colliding with a local dev worker's probe.
+      WORKER_HEALTH_PORT: "0",
+    },
     stdio: ["ignore", "pipe", "pipe"],
   });
 

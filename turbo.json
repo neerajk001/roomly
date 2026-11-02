@@ -4,6 +4,7 @@
     "NODE_ENV",
     "APP_URL",
     "DATABASE_URL",
+    "QUEUE_DATABASE_URL",
     "BETTER_AUTH_SECRET",
     "BETTER_AUTH_URL",
     "GOOGLE_CLIENT_ID",
@@ -27,7 +28,8 @@
     "BILLING_PROVIDER",
     "BILLING_API_KEY",
     "BILLING_WEBHOOK_SECRET",
-    "SENTRY_DSN"
+    "SENTRY_DSN",
+    "WORKER_HEALTH_PORT"
   ],
   "tasks": {
     "build": {

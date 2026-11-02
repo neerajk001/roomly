@@ -297,6 +297,40 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
 - Added a pino logger (`@roomdesigner/shared/logger`) with PII/token/URL redaction; unhandled server errors now log structurally. Worker still writes JSON lines and can switch to the same logger.
 - Legal drafts under `/legal/terms|privacy|cookies|refunds` (pending professional review) linked from the marketing footer, plus support contact and the AI disclaimer.
 - Data controls in Settings: JSON export of workspace/clients/projects/rooms/estimates/proposals (`/api/account/export`) and a typed-DELETE account deletion that cascades tenant data (storage objects for deleted assets are left for the cleanup job; noted).
+## 2026-11-02 - Production deployment: Vercel web + Hostinger VPS worker
+- Hosting split (G3): Next.js UI, server actions and API routes run on **Vercel**;
+  the pg-boss worker and one-off migrations run in Docker on the **Hostinger VPS**;
+  Neon remains the managed Postgres. No web Dockerfile is maintained because the
+  web tier is Vercel-managed. Recorded because the V6 text says "Dockerfiles for
+  web and worker".
+- Worker image is a multi-stage build with a non-root user, `tini`, a pinned
+  Node 22 Alpine base and a Docker `HEALTHCHECK`. The final image keeps the full
+  workspace install (tsx, Prisma CLI, sharp) so the same image can run both the
+  worker and the migration profile; pruning was rejected as too fragile for a
+  single long-lived container.
+- Added a worker HTTP health probe (`GET /health`, default port 3002,
+  `WORKER_HEALTH_PORT=0` disables it). It performs a `SELECT 1` DB round-trip so
+  Docker/uptime checks fail when the database connection is lost.
+- `docker-compose.prod.yml` now runs the worker read-only, drops all capabilities,
+  sets `no-new-privileges`, uses a tmpfs for `/tmp`, has memory/CPU limits,
+  graceful stop, log rotation and health-gated deploys (`up --wait`).
+- CI starts MinIO with the repo's compose file before Playwright (uploads/renders
+  need S3 in CI), and builds the worker image on every run to catch Dockerfile
+  regressions. Deploy only runs for successful **push** CI runs on
+  `main`/`master`, uses the `production` GitHub Environment (supports required
+  reviewers), and smoke-tests `PRODUCTION_URL/api/health` after the Vercel hook.
+- Vercel build settings are pinned in `apps/web/vercel.json` (root directory
+  `apps/web`, full workspace install, filtered build). The Vercel project must
+  still enable "Include source files outside of the Root Directory".
+- Neon URL split: Vercel uses the pooled `DATABASE_URL`; the worker and migration
+  job use the direct URL (`NEON_DIRECT_DATABASE_URL` in CI). pg-boss keeps
+  long-lived connections and should not go through the transaction pooler, so
+  added optional `QUEUE_DATABASE_URL` (used by both web and worker queue clients)
+  that falls back to `DATABASE_URL`. Set it to the direct Neon URL on Vercel.
+- Added `deploy/vps-bootstrap.sh` (Docker, UFW SSH-only, fail2ban, unattended
+  updates) and `deploy/rollback-worker.sh` (pin a previous image tag and wait for
+  health) for repeatable VPS operations.
+
 ## 2026-10-29 - Marketing landing page interactive overhaul
 - Redesigned landing page to faithfully match the user-provided design reference:
   - Hero interactive Before/After comparison slider with `< | >` drag handle, Before/After badges, and scroll-driven glide effect.

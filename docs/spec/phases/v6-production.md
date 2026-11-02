@@ -23,10 +23,10 @@
 
 ## 2. Reliability
 
-- [ ] Worker: graceful shutdown, health endpoint or heartbeat log, restart policy, concurrency limits per provider rate limits.
+- [x] Worker: graceful shutdown, health endpoint or heartbeat log, restart policy, concurrency limits per provider rate limits.
 - [ ] Queue: dead-letter handling for jobs failed after retries (alert + visible `FAILED` state + refund verified).
 - [ ] **Stuck job sweeper**: scheduled job that fails and refunds `RUNNING` jobs older than a timeout (e.g. 10 minutes).
-- [ ] Database: connection pooling configured for serverless web runtime; Prisma migrations applied with `prisma migrate deploy` in the release pipeline; migration rules documented (additive first, backfill, then remove).
+- [x] Database: connection pooling configured for serverless web runtime; Prisma migrations applied with `prisma migrate deploy` in the release pipeline; migration rules documented (additive first, backfill, then remove).
 - [ ] **Backups**: automated daily backups + point-in-time recovery enabled on the managed DB. **Run a restore drill** into a scratch database and record the steps and time in `docs/runbook.md`.
 - [ ] Object storage: versioning or lifecycle rules for deleted objects; bucket not publicly listable.
 - [ ] Idempotency review: render creation, credit grants, webhooks, email sends (no duplicate emails on retry).
@@ -69,10 +69,10 @@
 
 - [ ] Environments: `local`, `staging`, `production`, each with separate DB, bucket, keys, and billing test/live modes.
 - [ ] Dockerfiles for `web` and `worker` (multi-stage, non-root user, pinned base image) and a production `docker-compose` or platform config per the G3 decision.
-- [ ] CI/CD: on merge to `main` → test → build → deploy to staging → smoke tests → manual approval → production. Run `prisma migrate deploy` as a release step before the new version starts receiving traffic.
-- [ ] Rollback plan documented (previous image, migration compatibility).
+- [x] CI/CD: on merge to `main` → test → build → deploy to staging → smoke tests → manual approval → production. Run `prisma migrate deploy` as a release step before the new version starts receiving traffic.
+- [x] Rollback plan documented (previous image, migration compatibility).
 - [ ] Domain, TLS, DNS, email sending domain with SPF, DKIM and DMARC configured; verification emails land in inbox.
-- [ ] Environment variable matrix documented in `docs/runbook.md`.
+- [x] Environment variable matrix documented in `docs/runbook.md`.
 
 ## 8. Testing before launch
 

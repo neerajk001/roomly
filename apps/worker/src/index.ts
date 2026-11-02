@@ -8,6 +8,7 @@ import {
   renderJobPayloadSchema,
 } from "@roomdesigner/shared";
 import { deleteObject, getObject, putObject } from "@roomdesigner/storage";
+import { startHealthServer } from "./health";
 import { cleanupUnconfirmedAssets } from "./jobs/cleanup-assets";
 import { recoverStuckJobs } from "./jobs/recover-stuck";
 import { processRenderJob } from "./jobs/render-generate";
@@ -84,26 +85,44 @@ async function main(): Promise<void> {
     log("cleanup_unconfirmed", { removed });
   });
 
+  const stopHealthServer =
+    env.WORKER_HEALTH_PORT > 0
+      ? await startHealthServer(env.WORKER_HEALTH_PORT, async () => {
+          await prisma.$queryRaw`SELECT 1`;
+        })
+      : undefined;
+  if (stopHealthServer !== undefined) {
+    log("health_listening", { port: env.WORKER_HEALTH_PORT });
+  }
+
   log("ready", { queues: [QUEUE_RENDER_GENERATE, QUEUE_CLEANUP_UNCONFIRMED] });
 
-  const shutdown = (signal: string) => {
+  let shuttingDown = false;
+  const shutdown = async (signal: string): Promise<void> => {
+    if (shuttingDown) return;
+    shuttingDown = true;
     log("shutdown", { signal });
-    void boss
-      .stop({ graceful: true })
-      .then(() => prisma.$disconnect())
-      .then(() => {
-        process.exit(0);
-      })
-      .catch(() => {
-        process.exit(1);
-      });
+    // Docker sends SIGKILL after stop_grace_period (45s); exit before that.
+    const forceExit = setTimeout(() => {
+      process.exit(1);
+    }, 40_000);
+    forceExit.unref();
+    try {
+      await stopHealthServer?.();
+      await boss.stop({ graceful: true });
+      await prisma.$disconnect();
+      clearTimeout(forceExit);
+      process.exit(0);
+    } catch {
+      process.exit(1);
+    }
   };
 
   process.on("SIGTERM", () => {
-    shutdown("SIGTERM");
+    void shutdown("SIGTERM");
   });
   process.on("SIGINT", () => {
-    shutdown("SIGINT");
+    void shutdown("SIGINT");
   });
 }
 

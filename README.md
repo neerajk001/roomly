@@ -4,8 +4,18 @@ AI room redesign for homeowners (Home mode) and design studios (Pro mode).
 Working title — decision gate G1 may rename it.
 
 The full product spec lives in [`docs/spec/`](docs/spec/README.md). The current
-implementation covers **V1 — Foundation**: monorepo, database, auth, onboarding,
-shells and CI.
+implementation covers **V1-V4** plus V6 production hardening: monorepo, database,
+auth, onboarding, Home/Pro flows, worker, Docker and CI/CD.
+
+## Deployment
+
+- **Web + API**: Vercel (`apps/web`, config in `apps/web/vercel.json`)
+- **Worker + migrations**: Docker on a Hostinger VPS (`docker-compose.prod.yml`)
+- **Database**: Neon Postgres (managed, with backups)
+- **CI/CD**: GitHub Actions (`.github/workflows/ci.yml`, `deploy.yml`)
+
+See [`docs/runbook.md`](docs/runbook.md) for the full setup, secrets, deploy,
+rollback and restore procedures.
 
 ## Requirements
 

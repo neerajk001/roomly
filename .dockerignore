@@ -2,6 +2,9 @@ node_modules
 **/node_modules
 **/.next
 **/dist
+**/.turbo
+**/coverage
+**/*.tsbuildinfo
 tmp
 .git
 .github
@@ -10,5 +13,13 @@ fixtures
 tests
 playwright-report
 test-results
+room-designer-spec
 *.md
 !apps/worker/Dockerfile
+
+# Never bake secrets into images.
+.env
+.env.*
+!.env.example
+*.zip
+*.log

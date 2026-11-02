@@ -55,6 +55,10 @@ export const serverEnvSchema = z.object({
     .string()
     .min(1, "DATABASE_URL is required")
     .startsWith("postgresql://", "DATABASE_URL must be a postgresql:// URL"),
+  // Optional direct (non-pooled) Postgres URL for pg-boss. On Vercel,
+  // DATABASE_URL points at Neon's transaction pooler; set this to the direct
+  // URL so queue LISTEN/NOTIFY and long-lived sessions work reliably.
+  QUEUE_DATABASE_URL: optionalUrl,
 
   // auth
   BETTER_AUTH_SECRET: z.string().min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
@@ -99,6 +103,9 @@ export const serverEnvSchema = z.object({
   BILLING_PROVIDER: optionalString,
   BILLING_API_KEY: optionalString,
   BILLING_WEBHOOK_SECRET: optionalString,
+
+  // worker health probe (0 disables the listener)
+  WORKER_HEALTH_PORT: z.coerce.number().int().min(0).max(65535).default(3002),
 
   // observability (V6)
   SENTRY_DSN: optionalString,

@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { uploadToStorage } from "@/lib/upload-storage";
+import type { UploadTarget } from "@roomdesigner/shared";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
@@ -70,10 +72,10 @@ export function RoomPhotos({
       }
       const presign = (await presignResponse.json()) as {
         assetId: string;
-        uploadUrl: string;
+        upload: UploadTarget;
       };
 
-      await putWithProgress(presign.uploadUrl, item.file, (progress) => {
+      await uploadToStorage(presign.upload, item.file, (progress) => {
         setUploads((current) =>
           current.map((u) => (u.id === item.id ? { ...u, progress } : u)),
         );
@@ -245,32 +247,4 @@ export function RoomPhotos({
       )}
     </div>
   );
-}
-
-function putWithProgress(
-  url: string,
-  file: File,
-  onProgress: (progress: number) => void,
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const request = new XMLHttpRequest();
-    request.open("PUT", url);
-    request.setRequestHeader("content-type", file.type);
-    request.upload.onprogress = (event) => {
-      if (event.lengthComputable) {
-        onProgress(Math.round((event.loaded / event.total) * 100));
-      }
-    };
-    request.onload = () => {
-      if (request.status >= 200 && request.status < 300) {
-        resolve();
-      } else {
-        reject(new Error("Upload failed. Try again."));
-      }
-    };
-    request.onerror = () => {
-      reject(new Error("Network error during upload."));
-    };
-    request.send(file);
-  });
 }

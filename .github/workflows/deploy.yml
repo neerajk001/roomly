@@ -22,7 +22,8 @@ permissions:
   packages: write
 
 env:
-  IMAGE_NAME: roomdesigner-worker
+  WEB_IMAGE: roomdesigner-web
+  WORKER_IMAGE: roomdesigner-worker
   REGISTRY: ghcr.io
 
 jobs:
@@ -32,9 +33,8 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
-    timeout-minutes: 45
-    # Configure required reviewers on this environment for manual approval
-    # before migrations, worker and web deploys.
+    timeout-minutes: 60
+    # Configure required reviewers on this environment for manual approval.
     environment: production
     steps:
       - uses: actions/checkout@v4
@@ -67,6 +67,26 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Build and push web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: true
+          platforms: ${{ vars.WEB_PLATFORM || 'linux/amd64' }}
+          build-args: |
+            GIT_SHA=${{ steps.vars.outputs.sha }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ steps.vars.outputs.owner }}/${{ env.WEB_IMAGE }}:${{ steps.vars.outputs.sha }}
+            ${{ env.REGISTRY }}/${{ steps.vars.outputs.owner }}/${{ env.WEB_IMAGE }}:latest
+          labels: |
+            org.opencontainers.image.revision=${{ steps.vars.outputs.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
+
       - name: Build and push worker image
         uses: docker/build-push-action@v6
         with:
@@ -77,8 +97,8 @@ jobs:
           build-args: |
             GIT_SHA=${{ steps.vars.outputs.sha }}
           tags: |
-            ${{ env.REGISTRY }}/${{ steps.vars.outputs.owner }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.sha }}
-            ${{ env.REGISTRY }}/${{ steps.vars.outputs.owner }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ steps.vars.outputs.owner }}/${{ env.WORKER_IMAGE }}:${{ steps.vars.outputs.sha }}
+            ${{ env.REGISTRY }}/${{ steps.vars.outputs.owner }}/${{ env.WORKER_IMAGE }}:latest
           labels: |
             org.opencontainers.image.revision=${{ steps.vars.outputs.sha }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
@@ -89,7 +109,7 @@ jobs:
 
       - name: Apply migrations
         env:
-          # Neon's direct (non-pooled) URL. The web runtime uses the pooled URL.
+          # Neon's direct (non-pooled) URL.
           DATABASE_URL: ${{ secrets.NEON_DIRECT_DATABASE_URL }}
         run: |
           if [ -z "${DATABASE_URL}" ]; then
@@ -98,14 +118,14 @@ jobs:
           fi
           pnpm --filter @roomdesigner/db exec prisma migrate deploy
 
-      - name: Deploy worker on Hostinger VPS
+      - name: Deploy stack on Hostinger VPS
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
-          command_timeout: 10m
+          command_timeout: 15m
           script: |
             set -euo pipefail
             APP_DIR="${{ secrets.VPS_APP_DIR }}"
@@ -117,29 +137,17 @@ jobs:
             export GHCR_OWNER="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
             export IMAGE_TAG="${{ steps.vars.outputs.sha }}"
 
-            # Prefer a long-lived read-only PAT so manual pulls/rollbacks keep
-            # working after this workflow's GITHUB_TOKEN expires.
             echo "${{ secrets.VPS_GHCR_TOKEN || secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-            docker compose -f docker-compose.prod.yml pull worker
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans --wait --wait-timeout 120 worker
+            docker compose --env-file .env.production -f docker-compose.prod.yml pull web worker
+            docker compose --env-file .env.production -f docker-compose.prod.yml up -d --remove-orphans --wait --wait-timeout 180 web worker
             docker image prune -f --filter "until=168h"
-
-      - name: Trigger Vercel deploy hook
-        env:
-          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
-        run: |
-          if [ -z "${HOOK}" ]; then
-            echo "::error::VERCEL_DEPLOY_HOOK_URL is not set"
-            exit 1
-          fi
-          curl -fsS -X POST "${HOOK}"
 
       - name: Smoke test production health
         env:
           PRODUCTION_URL: ${{ secrets.PRODUCTION_URL }}
         run: |
           if [ -z "${PRODUCTION_URL}" ]; then
-            echo "::warning::PRODUCTION_URL is not set; skipping the smoke test"
+            echo "::warning::PRODUCTION_URL is not set; skipping the public smoke test"
             exit 0
           fi
           for attempt in $(seq 1 30); do

@@ -25,6 +25,7 @@
     "@aws-sdk/s3-request-presigner": "^3.1158.0",
     "@roomdesigner/config": "workspace:*",
     "@roomdesigner/shared": "workspace:*",
+    "cloudinary": "^2.11.0",
     "sharp": "^0.35.5"
   }
 }

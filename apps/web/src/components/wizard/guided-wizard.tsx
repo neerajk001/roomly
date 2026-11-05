@@ -1,11 +1,13 @@
 "use client";
 
+import { uploadToStorage } from "@/lib/upload-storage";
 import { createGuidedProjectAction, goToRoomAction } from "@/server/actions/wizard";
 import { createRenderAction } from "@/server/actions/renders";
 import {
   STYLES,
   typicalSizeFor,
   totalCreditCost,
+  type UploadTarget,
 } from "@roomdesigner/shared";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -286,13 +288,11 @@ export function GuidedWizard({
           body: JSON.stringify({ roomId: created.roomId, mime: file.type, sizeBytes: file.size }),
         });
         if (!presignResponse.ok) throw new Error("Upload could not start.");
-        const presign = (await presignResponse.json()) as { assetId: string; uploadUrl: string };
-        const put = await fetch(presign.uploadUrl, {
-          method: "PUT",
-          headers: { "content-type": file.type },
-          body: file,
-        });
-        if (!put.ok) throw new Error("Upload failed.");
+        const presign = (await presignResponse.json()) as {
+          assetId: string;
+          upload: UploadTarget;
+        };
+        await uploadToStorage(presign.upload, file);
         const confirm = await fetch(`/api/uploads/${presign.assetId}/confirm`, { method: "POST" });
         if (!confirm.ok) throw new Error("Upload could not be confirmed.");
       }

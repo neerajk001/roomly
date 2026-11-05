@@ -1,4 +1,5 @@
 import type { Prisma } from "@roomdesigner/db";
+import type { UploadTarget } from "@roomdesigner/shared";
 import {
   buildStorageKey,
   getObject,
@@ -22,17 +23,12 @@ export const presignInputSchema = z.object({
   kind: z.enum(["ORIGINAL_PHOTO", "BRIEF_UPLOAD", "LOGO"]).default("ORIGINAL_PHOTO"),
   roomId: z.string().min(1).max(64).optional(),
   mime: z.enum(["image/jpeg", "image/png", "image/webp"]),
-  sizeBytes: z
-    .number()
-    .int()
-    .positive()
-    .max(MAX_UPLOAD_BYTES, "Images must be 10 MB or smaller."),
+  sizeBytes: z.number().int().positive().max(MAX_UPLOAD_BYTES, "Images must be 10 MB or smaller."),
 });
 
 export interface PresignResult {
   assetId: string;
-  uploadUrl: string;
-  headers: Record<string, string>;
+  upload: UploadTarget;
   expiresInSeconds: number;
 }
 
@@ -63,7 +59,7 @@ export async function createUploadPresign(
       mime: input.mime,
     });
     await db.asset.update({ where: { id: asset.id }, data: { storageKey } });
-    const uploadUrl = await presignPut({
+    const upload = await presignPut({
       key: storageKey,
       contentType: input.mime,
       contentLength: input.sizeBytes,
@@ -71,8 +67,7 @@ export async function createUploadPresign(
     });
     return {
       assetId: asset.id,
-      uploadUrl,
-      headers: { "content-type": input.mime },
+      upload,
       expiresInSeconds: UPLOAD_EXPIRY_SECONDS,
     };
   }
@@ -123,7 +118,7 @@ export async function createUploadPresign(
   });
   await db.asset.update({ where: { id: asset.id }, data: { storageKey } });
 
-  const uploadUrl = await presignPut({
+  const upload = await presignPut({
     key: storageKey,
     contentType: input.mime,
     contentLength: input.sizeBytes,
@@ -132,8 +127,7 @@ export async function createUploadPresign(
 
   return {
     assetId: asset.id,
-    uploadUrl,
-    headers: { "content-type": input.mime },
+    upload,
     expiresInSeconds: UPLOAD_EXPIRY_SECONDS,
   };
 }

@@ -3,8 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { uploadToStorage } from "@/lib/upload-storage";
 import { setLogoAction, updateStudioAction, type StudioFormState } from "@/server/actions/studio";
-import { CURRENCIES } from "@roomdesigner/shared";
+import { CURRENCIES, type UploadTarget } from "@roomdesigner/shared";
 import { useRouter } from "next/navigation";
 import { useActionState, useRef, useState } from "react";
 
@@ -45,13 +46,11 @@ export function StudioSettingsForm({ profile }: { profile: StudioProfileValues }
         body: JSON.stringify({ kind: "LOGO", mime: file.type, sizeBytes: file.size }),
       });
       if (!presignResponse.ok) throw new Error("Could not start the logo upload.");
-      const presign = (await presignResponse.json()) as { assetId: string; uploadUrl: string };
-      const put = await fetch(presign.uploadUrl, {
-        method: "PUT",
-        headers: { "content-type": file.type },
-        body: file,
-      });
-      if (!put.ok) throw new Error("Logo upload failed.");
+      const presign = (await presignResponse.json()) as {
+        assetId: string;
+        upload: UploadTarget;
+      };
+      await uploadToStorage(presign.upload, file);
       const confirm = await fetch(`/api/uploads/${presign.assetId}/confirm`, { method: "POST" });
       if (!confirm.ok) throw new Error("Logo could not be confirmed.");
       const result = await setLogoAction(presign.assetId);

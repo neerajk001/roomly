@@ -7,6 +7,8 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { getServerEnv } from "@roomdesigner/config/env";
+import type { UploadTarget } from "@roomdesigner/shared";
+import type { HeadResult, PresignPutInput, PutObjectInput } from "./types";
 
 let cachedClient: S3Client | undefined;
 
@@ -36,21 +38,17 @@ function bucket(): string {
 const UPLOAD_EXPIRY_SECONDS = 10 * 60;
 const DOWNLOAD_EXPIRY_SECONDS = 60 * 60;
 
-export async function presignPut(input: {
-  key: string;
-  contentType: string;
-  contentLength?: number;
-  expiresInSeconds?: number;
-}): Promise<string> {
+export async function presignPut(input: PresignPutInput): Promise<UploadTarget> {
   const command = new PutObjectCommand({
     Bucket: bucket(),
     Key: input.key,
     ContentType: input.contentType,
     ...(input.contentLength !== undefined ? { ContentLength: input.contentLength } : {}),
   });
-  return getSignedUrl(getS3Client(), command, {
+  const url = await getSignedUrl(getS3Client(), command, {
     expiresIn: input.expiresInSeconds ?? UPLOAD_EXPIRY_SECONDS,
   });
+  return { url, method: "PUT", headers: { "content-type": input.contentType } };
 }
 
 /** Signed GET URLs are generated on demand and never stored. */
@@ -68,12 +66,6 @@ export async function presignGet(
       : {}),
   });
   return getSignedUrl(getS3Client(), command, { expiresIn: expiresInSeconds });
-}
-
-export interface HeadResult {
-  exists: boolean;
-  contentLength: number;
-  contentType: string | undefined;
 }
 
 export async function headObject(key: string): Promise<HeadResult> {
@@ -102,12 +94,7 @@ export async function getObject(key: string): Promise<Buffer> {
   return Buffer.from(bytes);
 }
 
-export async function putObject(input: {
-  key: string;
-  body: Buffer;
-  contentType: string;
-  cacheControl?: string;
-}): Promise<void> {
+export async function putObject(input: PutObjectInput): Promise<void> {
   await getS3Client().send(
     new PutObjectCommand({
       Bucket: bucket(),

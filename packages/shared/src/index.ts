@@ -28,6 +28,7 @@ export {
   renderJobPayloadSchema,
   type RenderJobPayload,
 } from "./jobs";
+export type { UploadTarget } from "./uploads";
 export {
   formatArea,
   formatLength,

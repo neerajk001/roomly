@@ -3,7 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { STYLES } from "@roomdesigner/shared";
+import { uploadToStorage } from "@/lib/upload-storage";
+import { STYLES, type UploadTarget } from "@roomdesigner/shared";
 import { useState } from "react";
 
 const ROOM_TYPES = [
@@ -87,13 +88,11 @@ export function BriefForm({
           body: JSON.stringify({ mime: file.type, sizeBytes: file.size }),
         });
         if (!presignResponse.ok) throw new Error("Upload could not start.");
-        const presign = (await presignResponse.json()) as { assetId: string; uploadUrl: string };
-        const put = await fetch(presign.uploadUrl, {
-          method: "PUT",
-          headers: { "content-type": file.type },
-          body: file,
-        });
-        if (!put.ok) throw new Error("Upload failed.");
+        const presign = (await presignResponse.json()) as {
+          assetId: string;
+          upload: UploadTarget;
+        };
+        await uploadToStorage(presign.upload, file);
         const confirm = await fetch(`/api/brief/${token}/confirm/${presign.assetId}`, {
           method: "POST",
         });

@@ -55,9 +55,8 @@ export const serverEnvSchema = z.object({
     .string()
     .min(1, "DATABASE_URL is required")
     .startsWith("postgresql://", "DATABASE_URL must be a postgresql:// URL"),
-  // Optional direct (non-pooled) Postgres URL for pg-boss. On Vercel,
-  // DATABASE_URL points at Neon's transaction pooler; set this to the direct
-  // URL so queue LISTEN/NOTIFY and long-lived sessions work reliably.
+  // Optional direct (non-pooled) Postgres URL for pg-boss. Only needed when
+  // DATABASE_URL points at a transaction pooler; otherwise it falls back.
   QUEUE_DATABASE_URL: optionalUrl,
 
   // auth
@@ -77,12 +76,19 @@ export const serverEnvSchema = z.object({
     .transform((v) => v === "true"),
 
   // storage
+  // `s3` keeps local MinIO/CI working; `cloudinary` is the production provider.
+  STORAGE_PROVIDER: z.enum(["s3", "cloudinary"]).default("s3"),
   S3_ENDPOINT: z.url().default("http://localhost:9000"),
   S3_REGION: z.string().default("auto"),
   S3_BUCKET: z.string().default("roomdesigner"),
   S3_ACCESS_KEY_ID: z.string().default(""),
   S3_SECRET_ACCESS_KEY: z.string().default(""),
   S3_PUBLIC_BASE_URL: optionalUrl,
+
+  // Cloudinary (STORAGE_PROVIDER=cloudinary). Keep these server-side only.
+  CLOUDINARY_CLOUD_NAME: optionalString,
+  CLOUDINARY_API_KEY: optionalString,
+  CLOUDINARY_API_SECRET: optionalString,
 
   // rendered image previews (lower in dev to save bandwidth/time)
   WEB_RENDER_MAX_PX: z.coerce.number().int().positive().max(4096).default(2048),

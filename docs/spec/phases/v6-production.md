@@ -68,7 +68,7 @@
 ## 7. Deployment
 
 - [ ] Environments: `local`, `staging`, `production`, each with separate DB, bucket, keys, and billing test/live modes.
-- [ ] Dockerfiles for `web` and `worker` (multi-stage, non-root user, pinned base image) and a production `docker-compose` or platform config per the G3 decision.
+- [x] Dockerfiles for `web` and `worker` (multi-stage, non-root user, pinned base image) and a production `docker-compose` or platform config per the G3 decision.
 - [x] CI/CD: on merge to `main` → test → build → deploy to staging → smoke tests → manual approval → production. Run `prisma migrate deploy` as a release step before the new version starts receiving traffic.
 - [x] Rollback plan documented (previous image, migration compatibility).
 - [ ] Domain, TLS, DNS, email sending domain with SPF, DKIM and DMARC configured; verification emails land in inbox.

@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 #
-# Production worker image. The Next.js web app is hosted on Vercel; this image
-# runs the pg-boss worker on the Hostinger VPS (see docker-compose.prod.yml).
+# Production worker image. Runs the pg-boss worker on the Hostinger VPS next to
+# the Next.js web container and Caddy (see docker-compose.prod.yml).
 #
 # Build:  docker build -f apps/worker/Dockerfile -t roomdesigner-worker .
 # Run:    see docker-compose.prod.yml / docs/runbook.md
@@ -74,4 +74,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
 ENTRYPOINT ["/sbin/tini", "--"]
 # Call tsx directly instead of through pnpm: pnpm's dependency-state check is
 # unnecessary in the immutable image and can try to write under /app.
-CMD ["node_modules/.bin/tsx", "apps/worker/src/index.ts"]
+CMD ["apps/worker/node_modules/.bin/tsx", "apps/worker/src/index.ts"]

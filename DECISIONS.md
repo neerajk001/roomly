@@ -297,7 +297,42 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
 - Added a pino logger (`@roomdesigner/shared/logger`) with PII/token/URL redaction; unhandled server errors now log structurally. Worker still writes JSON lines and can switch to the same logger.
 - Legal drafts under `/legal/terms|privacy|cookies|refunds` (pending professional review) linked from the marketing footer, plus support contact and the AI disclaimer.
 - Data controls in Settings: JSON export of workspace/clients/projects/rooms/estimates/proposals (`/api/account/export`) and a typed-DELETE account deletion that cascades tenant data (storage objects for deleted assets are left for the cleanup job; noted).
+## 2026-11-02 - All app tiers on the Hostinger VPS
+- Supersedes the earlier "Vercel web + VPS worker" split: the human decided the
+  frontend and backend both run entirely on the Hostinger VPS.
+- Added `apps/web/Dockerfile` (production Next.js image), a `web` compose service
+  and Caddy for automatic HTTPS in front of it. Removed `apps/web/vercel.json`
+  and every Vercel deploy/env instruction.
+- The deploy workflow now builds and pushes both `roomdesigner-web` and
+  `roomdesigner-worker`, applies migrations, then runs `docker compose up -d
+  --wait` for web, worker and Caddy. The web healthcheck gates the release.
+- Caddy needs ports 80/443 open and `DOMAIN` in `.env.production`; the domain's
+  DNS A/AAAA record must point at the VPS. Neon and Cloudinary remain managed
+  external services.
+
+## 2026-11-02 - Cloudinary image storage
+- Added `STORAGE_PROVIDER=s3|cloudinary`. `s3` stays the default for local dev and
+  CI (MinIO), while production uses `cloudinary`. Reason: CI and tests must never
+  require remote credentials or a paid provider.
+- Added `cloudinary@2.11.0` to `packages/storage`. This dependency is not in
+  `01-architecture.md`; it is recorded here per the dependency rule. The SDK is
+  used for signed direct uploads, private delivery URLs and the Admin API.
+- Browser uploads now return an `UploadTarget` (presigned `PUT` for S3, signed
+  multipart `POST` for Cloudinary) from `@roomdesigner/shared`. One client helper
+  handles both, so upload components do not know which provider is active.
+- Cloudinary assets are uploaded with `type=private`; `presignGet` uses
+  `private_download_url` with `expires_at`, keeping the existing ≤1 hour URL
+  behaviour. Images and PDFs use `resource_type=image`; unknown extensions fall
+  back to `raw` (raw public IDs keep the extension, per Cloudinary docs).
+- Upload confirmation still verifies size via the storage provider and re-encodes
+  through sharp before re-upload, so EXIF/GPS stripping and thumbnail generation
+  are unchanged.
+- Proposal PDFs stored in Cloudinary require PDF delivery to be enabled in the
+  Cloudinary security settings; documented in `docs/runbook.md`.
+
 ## 2026-11-02 - Production deployment: Vercel web + Hostinger VPS worker
+- Superseded later the same day: the web tier now runs on the VPS too (see the
+  "All app tiers on the Hostinger VPS" entry).
 - Hosting split (G3): Next.js UI, server actions and API routes run on **Vercel**;
   the pg-boss worker and one-off migrations run in Docker on the **Hostinger VPS**;
   Neon remains the managed Postgres. No web Dockerfile is maintained because the
@@ -342,3 +377,11 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
   - Interactive Pricing section with Monthly/Yearly toggle (with 20% discount calculation).
   - 2-column expandable FAQ accordion and high-contrast dark green bottom CTA banner with quick email input.
 
+
+## 2026-11-05 - Host Nginx instead of bundled Caddy
+- The VPS already runs host Nginx on 80/443 with a Let's Encrypt cert for
+  \oomly.neerajx.site\. To avoid a port conflict, the compose stack no longer
+  runs the Caddy container; \web\ is published on \127.0.0.1:3000\ and Nginx
+  reverse-proxies to it. The deploy workflow now pulls/starts only \web\ and
+  \worker\. \deploy/Caddyfile\ is retained for reference but unused.
+- Nginx is responsible for HTTP->HTTPS redirect and TLS renewal.

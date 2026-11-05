@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# One-time bootstrap for the Hostinger VPS that runs the RoomDesigner worker.
-# Tested on Ubuntu 22.04/24.04. Run as root:
+# One-time bootstrap for the Hostinger VPS that runs the full RoomDesigner
+# stack (Caddy + Next.js web/API + worker). Tested on Ubuntu 22.04/24.04. Run as root:
 #
 #   sudo bash deploy/vps-bootstrap.sh
 #
@@ -67,8 +67,11 @@ fi
 echo "==> Configuring unattended security updates"
 dpkg-reconfigure -f noninteractive unattended-upgrades || true
 
-echo "==> Configuring the firewall (SSH only; the worker has no inbound HTTP)"
+echo "==> Configuring the firewall (SSH + HTTP/HTTPS for Caddy)"
 ufw allow OpenSSH
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw allow 443/udp
 ufw --force enable
 
 echo "==> Configuring fail2ban"
@@ -82,10 +85,11 @@ cat <<'EOF'
 Bootstrap complete.
 
 Next steps:
-  1. Copy docker-compose.prod.yml and deploy/.env.production.example to
-     /opt/roomdesigner/ (as .env.production for the env file).
-  2. Fill in the real values in .env.production (chmod 600).
-  3. Copy deploy/rollback-worker.sh there if you want one-command rollbacks.
+  1. Copy docker-compose.prod.yml and the deploy/ directory (Caddyfile,
+     rollback.sh, env example) to /opt/roomdesigner/.
+  2. Copy deploy/.env.production.example to /opt/roomdesigner/.env.production
+     and fill in the real values (chmod 600).
+  3. Point the domain's DNS A/AAAA record at this VPS before starting Caddy.
   4. Set the GitHub repository secrets listed in docs/runbook.md.
   5. Push to main/master and let the Deploy workflow run.
 EOF

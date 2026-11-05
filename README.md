@@ -9,8 +9,11 @@ auth, onboarding, Home/Pro flows, worker, Docker and CI/CD.
 
 ## Deployment
 
-- **Web + API**: Vercel (`apps/web`, config in `apps/web/vercel.json`)
-- **Worker + migrations**: Docker on a Hostinger VPS (`docker-compose.prod.yml`)
+Everything runs on a single Hostinger VPS:
+
+- **TLS / reverse proxy**: Caddy (automatic HTTPS)
+- **Web + API + worker**: Docker (`docker-compose.prod.yml`)
+- **Images**: Cloudinary (private signed uploads/delivery); MinIO/S3 for local/CI
 - **Database**: Neon Postgres (managed, with backups)
 - **CI/CD**: GitHub Actions (`.github/workflows/ci.yml`, `deploy.yml`)
 

@@ -24,17 +24,27 @@ test("wizard renders, favorite, create share link, vote anonymously", async ({ p
   await page.getByRole("button", { name: /Scandinavian/ }).click();
   await page.getByRole("button", { name: "Continue" }).click();
   // Final step: generate
-  await page.getByRole("button", { name: /Generate 3 concepts/ }).first().click();
+  await page
+    .getByRole("button", { name: /Generate 3 concepts/ })
+    .first()
+    .click();
 
   await page.waitForURL(/\/rooms\/[^/]+$/, { timeout: 120_000 });
   const roomUrl = page.url();
   const projectId = /\/projects\/([^/]+)\//.exec(roomUrl)?.[1] ?? "";
   await expect(page.getByAltText("Concept 1")).toBeVisible({ timeout: 120_000 });
 
-  // Favorite the first concept
+  // Favorite the first concept. The UI updates optimistically, so wait for the
+  // PATCH to actually persist: the share link defaults to "favorites only"
+  // (`shareShowFavorites` defaults to true), and a lost race leaves the public
+  // gallery empty.
+  const favoritePersisted = page.waitForResponse(
+    (response) =>
+      response.url().includes("/api/render-outputs/") && response.request().method() === "PATCH",
+  );
   await page.getByRole("button", { name: "Add to favorites" }).first().click();
   await expect(page.getByRole("button", { name: "Remove from favorites" }).first()).toBeVisible();
-  await page.waitForTimeout(1000);
+  expect((await favoritePersisted).ok()).toBe(true);
 
   // Back to the project and create a share link
   await page.goto(`/app/projects/${projectId}`);
@@ -54,9 +64,7 @@ test("wizard renders, favorite, create share link, vote anonymously", async ({ p
   // Wait for hydration so the click handler is attached before voting.
   await voter.waitForLoadState("networkidle");
   await voter.waitForTimeout(1200);
-  const responsePromise = voter.waitForResponse((response) =>
-    response.url().includes("/vote"),
-  );
+  const responsePromise = voter.waitForResponse((response) => response.url().includes("/vote"));
   await voter.getByRole("button", { name: "Vote" }).first().click();
   const voteResponse = await responsePromise;
   expect(voteResponse.status()).toBe(200);

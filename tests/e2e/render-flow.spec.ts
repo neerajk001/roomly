@@ -8,7 +8,9 @@ async function signUpAndOnboardHome(page: Page): Promise<void> {
   await page.waitForURL("**/app");
 }
 
-test("full render flow: project, room, photo, 4 concepts, favorite, chat edit", async ({ page }) => {
+test("full render flow: project, room, photo, 4 concepts, favorite, chat edit", async ({
+  page,
+}) => {
   test.setTimeout(240_000);
   await page.setViewportSize({ width: 375, height: 812 });
   await signUpAndOnboardHome(page);
@@ -30,12 +32,17 @@ test("full render flow: project, room, photo, 4 concepts, favorite, chat edit", 
   await page.locator('input[type="file"]').setInputFiles("tests/e2e/fixtures/room.jpg");
   await expect(page.getByAltText("Room photo")).toBeVisible({ timeout: 30_000 });
 
-  // Generate 4 concepts
+  // Generate 3 concepts
   await page.getByRole("button", { name: "Generate 3 concepts" }).click();
-  await expect(page.getByText("Generating concepts…")).toBeVisible();
+  // Loading copy uses three ASCII dots ("Generating concepts..."); match loosely
+  // so a typographic ellipsis in the UI does not break the test. `.first()`
+  // because the status chip and the panel both show it.
+  await expect(page.getByText(/Generating concepts/).first()).toBeVisible({ timeout: 15_000 });
   await expect(page.getByAltText("Concept 1")).toBeVisible({ timeout: 90_000 });
   await expect(page.getByAltText("Concept 3")).toBeVisible();
-  await expect(page.getByText("AI-generated concept visual. Not to scale.", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("AI-generated concept visual. Not to scale.", { exact: true }),
+  ).toBeVisible();
 
   // Favorite the first concept
   const favorite = page.getByRole("button", { name: "Add to favorites" }).first();

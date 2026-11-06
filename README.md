@@ -11,7 +11,7 @@ auth, onboarding, Home/Pro flows, worker, Docker and CI/CD.
 
 Everything runs on a single Hostinger VPS:
 
-- **TLS / reverse proxy**: Caddy (automatic HTTPS)
+- **TLS / reverse proxy**: host Nginx (Let's Encrypt) → web on `127.0.0.1:3000`
 - **Web + API + worker**: Docker (`docker-compose.prod.yml`)
 - **Images**: Cloudinary (private signed uploads/delivery); MinIO/S3 for local/CI
 - **Database**: Neon Postgres (managed, with backups)

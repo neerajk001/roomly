@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 #
 # Production web image. Runs the Next.js UI, server actions and API routes on
-# the Hostinger VPS behind Caddy (see docker-compose.prod.yml).
+# the Hostinger VPS behind host Nginx (see docker-compose.prod.yml).
 
 ARG NODE_VERSION=22
 
@@ -42,6 +42,9 @@ RUN rm -rf apps/web/.next/cache
 
 FROM base AS runner
 ARG GIT_SHA=unknown
+# Persisted as image ENV so the app can report its build at runtime
+# (GET /api/health exposes it; not a deploy-time config variable).
+ENV BUILD_SHA=${GIT_SHA}
 LABEL org.opencontainers.image.title="roomdesigner-web" \
       org.opencontainers.image.description="Next.js web app for RoomDesigner" \
       org.opencontainers.image.revision="${GIT_SHA}"

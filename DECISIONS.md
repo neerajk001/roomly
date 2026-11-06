@@ -385,3 +385,8 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
   reverse-proxies to it. The deploy workflow now pulls/starts only \web\ and
   \worker\. \deploy/Caddyfile\ is retained for reference but unused.
 - Nginx is responsible for HTTP->HTTPS redirect and TLS renewal.
+
+## 2026-11-05 - Health endpoint reports the deployed git commit
+- \GET /api/health\ now returns \db\, \dbLatencyMs\ and \uild\ (plus an \x-build-sha\`n  header). \BUILD_SHA\ is an image build METADATA env (set via \ENV BUILD_SHA=\\`n  in apps/web/Dockerfile), not a deploy-time config variable, so it is intentionally
+  not in the zod env schema/.env.example/turbo globalEnv — deviation from the env-var
+  rule noted here. Local/dev builds report \uild: 'unknown'\.

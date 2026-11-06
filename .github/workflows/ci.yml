@@ -76,8 +76,10 @@ jobs:
 
       - name: Unit and integration tests
         # Vitest 5 shares node_modules/.vitest-cache between workspace packages;
-        # running the packages serially avoids a cache-cleanup race on agents.
-        run: pnpm test -- --concurrency=1
+        # running file parallelism disabled (files run serially per package)
+        # avoids a cache-cleanup race on agents. `--concurrency` was removed
+        # as a CLI flag in Vitest 5.
+        run: pnpm test -- --no-file-parallelism
 
       - name: Start MinIO for upload tests
         run: |

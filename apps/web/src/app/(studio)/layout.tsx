@@ -2,13 +2,8 @@ import { signOutAction } from "@/app/(auth)/actions";
 import { getBalance, prisma } from "@roomdesigner/db";
 import { requireOnboarded, requireWorkspace } from "@/server/auth/session";
 import Link from "next/link";
-
-const NAV = [
-  { href: "/studio", label: "Projects", icon: "▢" },
-  { href: "/studio/clients", label: "Clients", icon: "☺" },
-  { href: "/studio/rate-cards", label: "Rate cards", icon: "₹" },
-  { href: "/studio/settings", label: "Studio settings", icon: "⚙" },
-];
+import { StudioNav } from "@/components/app/studio-nav";
+import { WorkspaceSwitcher } from "@/components/app/workspace-switcher";
 
 export default async function StudioLayout({ children }: { children: React.ReactNode }) {
   await requireOnboarded();
@@ -24,22 +19,7 @@ export default async function StudioLayout({ children }: { children: React.React
             🌿 RoomDesigner <span className="text-xs font-normal text-[#7a857d]">Studio</span>
           </Link>
           <p className="mt-1 truncate text-xs text-[#7a857d]">{workspace.name}</p>
-          <nav aria-label="Studio" className="mt-6 space-y-1">
-            {NAV.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm ${
-                  item.href === "/studio"
-                    ? "bg-[#e7ece0] font-medium text-[#2f5233]"
-                    : "text-[#405048] hover:bg-[#f0ece2]"
-                }`}
-              >
-                <span aria-hidden="true">{item.icon}</span>
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+          <StudioNav />
           <div className="mt-auto space-y-2 border-t border-[#e4dfd3] pt-4">
             <p className="truncate text-xs text-[#7a857d]">{user.email}</p>
             <form action={signOutAction}>
@@ -56,11 +36,15 @@ export default async function StudioLayout({ children }: { children: React.React
               <Link href="/studio" className="text-base font-semibold lg:hidden">
                 🌿 Studio
               </Link>
-              <span className="hidden rounded-lg border border-[#e4dfd3] bg-white px-3 py-1.5 text-sm sm:inline">
-                Studio workspace ▾
-              </span>
+              <WorkspaceSwitcher current="PRO" />
             </div>
             <div className="flex items-center gap-3">
+              <Link
+                href="/studio/projects/new"
+                className="rounded-lg bg-[#2f5233] px-3 py-2 text-xs text-white"
+              >
+                New project
+              </Link>
               <span className="rounded-full border border-[#e4dfd3] bg-white px-3 py-1 text-xs">
                 ◉ {credits} credits
               </span>
@@ -74,17 +58,7 @@ export default async function StudioLayout({ children }: { children: React.React
             </div>
           </header>
 
-          <nav aria-label="Studio" className="flex gap-2 overflow-x-auto border-b border-[#e4dfd3] bg-[#fbf9f3] px-4 py-2 lg:hidden">
-            {NAV.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="whitespace-nowrap rounded-full border border-[#e4dfd3] px-3 py-1 text-xs text-[#405048]"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+          <StudioNav mobile />
 
           <main className="mx-auto w-full max-w-5xl px-4 py-6">{children}</main>
         </div>

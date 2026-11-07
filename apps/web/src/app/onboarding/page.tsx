@@ -58,7 +58,7 @@ export default async function OnboardingPage() {
             </Link>
             <div className="flex items-center gap-3">
               <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-black/60">
-                Welcome · 1 of 2
+                Choose your experience
               </span>
               <span className="h-2 w-32 overflow-hidden bg-black/10">
                 <span className="block h-full w-1/2 bg-[#1f4fff]" />

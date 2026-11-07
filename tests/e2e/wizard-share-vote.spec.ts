@@ -6,6 +6,7 @@ test("wizard renders, favorite, create share link, vote anonymously", async ({ p
   await signInWithOtp(page, { name: "E2E Share", email: uniqueEmail("e2e-share") });
   await page.waitForURL("**/onboarding");
   await page.getByRole("button", { name: /Continue as homeowner/ }).click();
+  await page.getByRole("button", { name: "Open my home workspace" }).click();
   await page.waitForURL("**/app");
 
   // Guided wizard

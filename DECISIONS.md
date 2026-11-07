@@ -388,5 +388,33 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
 
 ## 2026-11-05 - Health endpoint reports the deployed git commit
 - \GET /api/health\ now returns \db\, \dbLatencyMs\ and \uild\ (plus an \x-build-sha\`n  header). \BUILD_SHA\ is an image build METADATA env (set via \ENV BUILD_SHA=\\`n  in apps/web/Dockerfile), not a deploy-time config variable, so it is intentionally
-  not in the zod env schema/.env.example/turbo globalEnv — deviation from the env-var
+  not in the zod env schema/.env.example/turbo globalEnv ï¿½ deviation from the env-var
   rule noted here. Local/dev builds report \uild: 'unknown'\.
+# 2026-11-07 â€” Restore the two UX journeys
+- Human prioritized repairing existing UX before more phase work.
+- One corrective task spans existing Home and Pro screens.
+- Home journey: photo, concepts, cost range, shopping list, share.
+- Studio journey: client, brief, rooms, concepts, estimate, proposal.
+- Make both experiences reachable in persistent navigation.
+- Mode remains a preference, not an authorization restriction.
+- Replace misleading Save draft navigation with New design.
+- Correct Studio active states on desktop and mobile.
+- Expose account settings from both experiences.
+- Restore the full Home cost breakdown and shopping links.
+- Expose Pro concept and estimate actions at project level.
+- Separate onboarding selection from submission; show errors.
+- Add regression tests for both journeys and navigation.
+- Run typecheck, lint and tests before committing.
+- Normalize pre-existing invalid UTF-8 in this log for editing.
+- No new dependencies or product decision gates are introduced.
+- Delivered: persistent Homeowner/Interior designer links, responsive Studio navigation,
+  dashboard workflow guides, explicit onboarding confirmation with visible errors,
+  project workflow shortcuts, restored Home cost controls and photo management.
+- Corrected the itemized-cost link and removed the Home illustrative estimate panel
+  from Pro rooms; designers use the existing editable rate-card estimate instead.
+- Existing phase boxes remain unchanged: this corrective task does not complete
+  the outstanding V4 feature or acceptance-test requirements.
+- Verification: pnpm typecheck, pnpm lint and pnpm test all passed, including
+  three new experience-navigation regression tests.
+- Browser E2E attempt was blocked by the user's existing Next dev server on port 3001;
+  the runner cannot launch a second server for the same checkout on port 3100.

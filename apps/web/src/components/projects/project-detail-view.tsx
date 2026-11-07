@@ -83,56 +83,104 @@ export async function ProjectDetailView({
         </form>
       </div>
 
-      {rooms.length > 0 && (
-        <ul className="space-y-4">
-          {rooms.map((room) => (
-            <li key={room.id}>
-              <Card>
-                <CardHeader>
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div>
-                      <CardTitle>{room.name}</CardTitle>
-                      <CardDescription>
-                        {ROOM_TYPE_LABELS[room.type] ?? room.type}
-                        {room.widthMm !== null && room.lengthMm !== null
-                          ? ` · ${formatLength(room.widthMm, workspace.unitSystem)} × ${formatLength(room.lengthMm, workspace.unitSystem)}`
-                          : ""}
-                        {room.heightMm !== null
-                          ? ` · ceiling ${formatLength(room.heightMm, workspace.unitSystem)}`
-                          : ""}
-                      </CardDescription>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button asChild size="sm">
-                        <Link href={`${basePath}/projects/${projectId}/rooms/${room.id}`}>
-                          Open room
-                        </Link>
-                      </Button>
-                      <form action={deleteRoomAction}>
-                        <input type="hidden" name="roomId" value={room.id} />
-                        <input type="hidden" name="projectId" value={projectId} />
-                        <input type="hidden" name="basePath" value={basePath} />
-                        <Button type="submit" variant="ghost" size="sm">
-                          Remove
+      <nav
+        aria-label="Project workflow"
+        className="flex flex-wrap gap-3 rounded-lg border p-4 text-sm"
+      >
+        <a href="#rooms" className="underline">
+          1. Rooms & photos
+        </a>
+        {basePath === "/studio" ? (
+          <>
+            <Link href="/studio/clients" className="underline">
+              Clients & briefs
+            </Link>
+            <Link href="/studio/rate-cards" className="underline">
+              Set your rates
+            </Link>
+            <a href="#proposals" className="underline">
+              3. Proposals & approval
+            </a>
+          </>
+        ) : (
+          <a href="#share" className="underline">
+            Share & get feedback
+          </a>
+        )}
+        <a href="#add-room" className="underline">
+          Add a room
+        </a>
+      </nav>
+
+      <section id="rooms" aria-label="Project rooms">
+        {rooms.length > 0 && (
+          <ul className="space-y-4">
+            {rooms.map((room) => (
+              <li key={room.id}>
+                <Card>
+                  <CardHeader>
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <CardTitle>{room.name}</CardTitle>
+                        <CardDescription>
+                          {ROOM_TYPE_LABELS[room.type] ?? room.type}
+                          {room.widthMm !== null && room.lengthMm !== null
+                            ? ` · ${formatLength(room.widthMm, workspace.unitSystem)} × ${formatLength(room.lengthMm, workspace.unitSystem)}`
+                            : ""}
+                          {room.heightMm !== null
+                            ? ` · ceiling ${formatLength(room.heightMm, workspace.unitSystem)}`
+                            : ""}
+                        </CardDescription>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button asChild size="sm">
+                          <Link href={`${basePath}/projects/${projectId}/rooms/${room.id}`}>
+                            Open room
+                          </Link>
                         </Button>
-                      </form>
+                        <form action={deleteRoomAction}>
+                          <input type="hidden" name="roomId" value={room.id} />
+                          <input type="hidden" name="projectId" value={projectId} />
+                          <input type="hidden" name="basePath" value={basePath} />
+                          <Button type="submit" variant="ghost" size="sm">
+                            Remove
+                          </Button>
+                        </form>
+                      </div>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <RoomPhotos roomId={room.id} photos={room.photoUrls} />
-                </CardContent>
-              </Card>
-            </li>
-          ))}
-        </ul>
+                  </CardHeader>
+                  <CardContent>
+                    {basePath === "/studio" && (
+                      <div className="mb-4 flex flex-wrap gap-3 text-sm underline">
+                        <Link href={`${basePath}/projects/${projectId}/rooms/${room.id}`}>
+                          Generate & edit concepts
+                        </Link>
+                        <Link href={`${basePath}/projects/${projectId}/rooms/${room.id}/estimate`}>
+                          2. Build estimate
+                        </Link>
+                      </div>
+                    )}
+                    <RoomPhotos roomId={room.id} photos={room.photoUrls} />
+                  </CardContent>
+                </Card>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+      {basePath === "/studio" && (
+        <section id="proposals" aria-label="Project proposals">
+          <ProposalsPanel projectId={projectId} />
+        </section>
       )}
 
-      {basePath === "/studio" && <ProposalsPanel projectId={projectId} />}
+      {basePath === "/app" && (
+        <section id="share" aria-label="Share project">
+          <SharePanel projectId={projectId} />
+        </section>
+      )}
 
-      <SharePanel projectId={projectId} />
-
-      <Card>
+      <Card id="add-room">
         <CardHeader>
           <CardTitle>Add a room</CardTitle>
           <CardDescription>

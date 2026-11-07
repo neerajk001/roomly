@@ -67,6 +67,7 @@ export default async function StudioHomePage() {
 
   return (
     <div className="space-y-8">
+      <WorkflowGuide studio />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Your studio, in one place.</h1>
@@ -180,3 +181,4 @@ export default async function StudioHomePage() {
     </div>
   );
 }
+import { WorkflowGuide } from "@/components/app/workflow-guide";

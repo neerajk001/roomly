@@ -27,7 +27,9 @@ const ROOM_LABELS: Record<string, string> = {
 
 function formatLength(mm: number | null, unitSystem: string): string {
   if (mm === null) return "-";
-  return unitSystem === "IMPERIAL" ? `${(mm / 304.8).toFixed(1)} ft` : `${(mm / 1000).toFixed(2)} m`;
+  return unitSystem === "IMPERIAL"
+    ? `${(mm / 304.8).toFixed(1)} ft`
+    : `${(mm / 1000).toFixed(2)} m`;
 }
 
 export async function RoomDetailView({
@@ -135,7 +137,17 @@ export async function RoomDetailView({
           keepList={projectMeta?.keepList ?? []}
           notes={projectMeta?.notes ?? null}
         />
-        {initialJob?.status !== "SUCCEEDED" && (
+        <nav aria-label="Room workflow" className="flex flex-wrap gap-3 text-sm underline">
+          <Link href="#cost-breakdown">Cost breakdown & priorities</Link>
+          <Link href={`/app/projects/${projectId}/rooms/${roomId}/shopping-list`}>
+            Shopping list
+          </Link>
+          <Link href={`/app/projects/${projectId}#share`}>Share & get feedback</Link>
+        </nav>
+        <section id="cost-breakdown" aria-label="Cost breakdown and priorities">
+          <EstimateSection projectId={projectId} roomId={detail.room.id} />
+        </section>
+        {
           <Card>
             <CardHeader>
               <CardTitle>Room photos</CardTitle>
@@ -147,7 +159,7 @@ export async function RoomDetailView({
               <RoomPhotos roomId={detail.room.id} photos={photos} />
             </CardContent>
           </Card>
-        )}
+        }
       </div>
     );
   }
@@ -183,8 +195,6 @@ export async function RoomDetailView({
           sourceUrl={photos[0]?.url ?? null}
         />
       </section>
-
-      <EstimateSection projectId={projectId} roomId={detail.room.id} />
 
       <Card>
         <CardHeader>

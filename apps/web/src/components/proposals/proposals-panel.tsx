@@ -81,7 +81,7 @@ export async function ProposalsPanel({ projectId }: { projectId: string }) {
           <Link href={`/studio/projects/${projectId}/proposals/new`}>New proposal</Link>
         </Button>
         <p className="text-xs text-muted-foreground">
-          PDF export is coming next; the client link is live now.
+          Generate a PDF for your proposal, then send the client link to collect approval.
         </p>
         {void formatMoney}
       </CardContent>

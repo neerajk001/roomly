@@ -3,7 +3,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CURRENCIES } from "@roomdesigner/shared";
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useState } from "react";
 import { completeOnboardingAction, type OnboardingState } from "@/app/onboarding/actions";
 
 const HOME_BENEFITS = ["Explore styles", "Keep what you love", "Plan a budget"];
@@ -38,13 +38,9 @@ export function ModeCards({
     completeOnboardingAction,
     {} as OnboardingState,
   );
-  const formRef = useRef<HTMLFormElement>(null);
 
   const selectMode = (value: "HOME" | "PRO") => {
     setMode(value);
-    if (value === "HOME") {
-      formRef.current?.requestSubmit();
-    }
   };
 
   const OPTIONS = [
@@ -73,12 +69,19 @@ export function ModeCards({
   ];
 
   return (
-    <form ref={formRef} action={formAction} className="space-y-5">
+    <form action={formAction} className="space-y-5">
       <input type="hidden" name="mode" value={mode} />
       {state.error !== undefined && (
         <p role="alert" className="border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
           {state.error}
         </p>
+      )}
+      {state.fieldErrors !== undefined && (
+        <div role="alert" className="border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+          {Object.entries(state.fieldErrors).map(([field, messages]) => (
+            <p key={field}>{messages.join(" ")}</p>
+          ))}
+        </div>
       )}
 
       <div className="space-y-5">
@@ -94,14 +97,34 @@ export function ModeCards({
               <div className="grid sm:grid-cols-[1fr_45%]">
                 <div className="p-5 sm:p-6">
                   <div className="flex items-center gap-3">
-                    <span className={`flex h-11 w-11 items-center justify-center border border-black text-black ${option.accent}`}>
+                    <span
+                      className={`flex h-11 w-11 items-center justify-center border border-black text-black ${option.accent}`}
+                    >
                       {option.value === "HOME" ? (
-                        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <svg
+                          className="h-5 w-5"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
                           <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                           <polyline points="9 22 9 12 15 12 15 22" />
                         </svg>
                       ) : (
-                        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <svg
+                          className="h-5 w-5"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
                           <rect x="3" y="3" width="8" height="18" />
                           <rect x="13" y="8" width="8" height="13" />
                           <line x1="6" y1="7" x2="8" y2="7" />
@@ -135,6 +158,7 @@ export function ModeCards({
 
                   <button
                     type="button"
+                    disabled={pending}
                     onClick={() => {
                       selectMode(option.value);
                     }}
@@ -219,22 +243,24 @@ export function ModeCards({
         </>
       )}
 
-      {mode === "PRO" && (
+      {
         <div className="flex flex-col items-start justify-between gap-3 pt-1 sm:flex-row sm:items-center">
-          <p className="text-xs text-black/60">
-            You can change workspace settings later.
-          </p>
+          <p className="text-xs text-black/60">You can change workspace settings later.</p>
           <button
             type="submit"
             disabled={pending}
             aria-busy={pending}
             className="flex w-full items-center justify-center gap-3 border border-black bg-[#1f4fff] px-5 py-3 text-sm font-bold text-white shadow-[4px_4px_0_0_#000] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0_0_#000] disabled:opacity-60 sm:w-auto"
           >
-            {pending ? "Setting up..." : "Continue as professional"}
+            {pending
+              ? "Setting up..."
+              : mode === "PRO"
+                ? "Open my design studio"
+                : "Open my home workspace"}
             <span aria-hidden="true">→</span>
           </button>
         </div>
-      )}
+      }
     </form>
   );
 }

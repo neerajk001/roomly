@@ -3,6 +3,7 @@ import { AppNav } from "@/components/app/app-nav";
 import { getBalance, prisma } from "@roomdesigner/db";
 import { requireOnboarded, requireWorkspace } from "@/server/auth/session";
 import Link from "next/link";
+import { WorkspaceSwitcher } from "./workspace-switcher";
 
 function HouseIcon({ className = "h-5 w-5" }: { className?: string }) {
   return (
@@ -40,10 +41,16 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
           <AppNav variant="sidebar" />
           <div className="mt-auto space-y-2 border-t border-black/20 pt-4">
-            <Link href="/settings" className="block text-sm text-black underline-offset-4 hover:underline">
+            <Link
+              href="/settings"
+              className="block text-sm text-black underline-offset-4 hover:underline"
+            >
               Settings
             </Link>
-            <Link href="/#faq" className="block text-sm text-black underline-offset-4 hover:underline">
+            <Link
+              href="/#faq"
+              className="block text-sm text-black underline-offset-4 hover:underline"
+            >
               Help
             </Link>
             <p className="truncate text-xs text-black/50">{user.email}</p>
@@ -64,16 +71,18 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
                 </span>
                 <span className="text-sm font-extrabold tracking-tight">RoomDesigner</span>
               </Link>
-              <span className="hidden items-center gap-2 border border-black bg-white px-3 py-1.5 text-sm sm:inline-flex">
-                {workspace.type === "STUDIO" ? "Studio workspace" : "Home workspace"}
-                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </span>
+              <WorkspaceSwitcher current="HOME" />
             </div>
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-2 border border-black bg-white px-3 py-1.5 text-xs font-medium">
-                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <svg
+                  className="h-3.5 w-3.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
+                >
                   <ellipse cx="12" cy="6" rx="8" ry="3" />
                   <path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6" />
                   <path d="M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6" />
@@ -82,14 +91,23 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
               </span>
               <Link
                 href="/new"
-                className="hidden items-center gap-2 border border-black bg-white px-3 py-1.5 text-xs font-medium text-black transition-colors hover:bg-black hover:text-white sm:inline-flex"
+                className="inline-flex items-center gap-2 border border-black bg-white px-3 py-2 text-xs font-medium text-black transition-colors hover:bg-black hover:text-white"
               >
-                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <svg
+                  className="h-3.5 w-3.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
                   <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" />
                   <polyline points="17 21 17 13 7 13 7 21" />
                   <polyline points="7 3 7 8 15 8" />
                 </svg>
-                Save draft
+                New design
               </Link>
               <Link
                 href="/settings"

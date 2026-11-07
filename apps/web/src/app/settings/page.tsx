@@ -5,6 +5,7 @@ import { WorkspacePreferencesForm } from "@/components/settings/workspace-prefer
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireOnboarded, requireWorkspace } from "@/server/auth/session";
+import Link from "next/link";
 
 export const metadata = { title: "Settings" };
 
@@ -14,6 +15,10 @@ export default async function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 py-2">
+      <nav aria-label="Back to workspace" className="flex flex-wrap gap-4 text-sm underline">
+        <Link href="/app">Homeowner workspace</Link>
+        <Link href="/studio">Interior designer studio</Link>
+      </nav>
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Settings</h1>
         <p className="mt-1 text-sm text-muted-foreground">Account and workspace preferences.</p>

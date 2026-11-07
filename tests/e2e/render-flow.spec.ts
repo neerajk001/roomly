@@ -5,6 +5,7 @@ async function signUpAndOnboardHome(page: Page): Promise<void> {
   await signInWithOtp(page, { name: "E2E Renderer", email: uniqueEmail("e2e-render") });
   await page.waitForURL("**/onboarding");
   await page.getByRole("button", { name: /Continue as homeowner/ }).click();
+  await page.getByRole("button", { name: "Open my home workspace" }).click();
   await page.waitForURL("**/app");
 }
 

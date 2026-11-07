@@ -172,7 +172,12 @@ export function HomeRoomResults({
   };
 
   const submitRestyle = useCallback(
-    (input: { styleKey: string; quality: "draft" | "final"; variations: number; notes: string }) => {
+    (input: {
+      styleKey: string;
+      quality: "draft" | "final";
+      variations: number;
+      notes: string;
+    }) => {
       setPanelError(null);
       startCreate(async () => {
         const formData = new FormData();
@@ -236,7 +241,9 @@ export function HomeRoomResults({
             <span aria-hidden="true">←</span> Back to my spaces
           </Link>
           <h1 className="mt-2 text-4xl font-extrabold leading-[1.02] tracking-tight text-black sm:text-5xl">
-            {status === "SUCCEEDED" ? "Your room, reimagined." : `Design your ${roomLabel.toLowerCase()}`}
+            {status === "SUCCEEDED"
+              ? "Your room, reimagined."
+              : `Design your ${roomLabel.toLowerCase()}`}
           </h1>
           <p className="mt-2 text-sm font-medium text-black/70">
             {roomLabel} · {dimensions}
@@ -246,7 +253,16 @@ export function HomeRoomResults({
           <div className="flex items-center gap-3 border border-black bg-white p-3 shadow-[3px_3px_0_0_#000]">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-black bg-[#FFD400] text-black">
               {status === "SUCCEEDED" ? (
-                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <svg
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
                   <polyline points="4 10 8 14 16 5" />
                 </svg>
               ) : (
@@ -298,7 +314,16 @@ export function HomeRoomResults({
             href={`/app/projects/${projectId}`}
             className="inline-flex items-center gap-2 border border-black bg-white px-4 py-3 text-sm font-bold text-black transition-colors hover:bg-black hover:text-white"
           >
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
               <path d="M12 20h9" />
               <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
             </svg>
@@ -418,7 +443,9 @@ export function HomeRoomResults({
                         <button
                           type="button"
                           aria-pressed={output.isFavorite}
-                          aria-label={output.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                          aria-label={
+                            output.isFavorite ? "Remove from favorites" : "Add to favorites"
+                          }
                           onClick={() => {
                             toggleFavorite(output);
                           }}
@@ -464,7 +491,16 @@ export function HomeRoomResults({
                             }}
                             className="inline-flex flex-1 items-center justify-center gap-1.5 border border-black bg-white px-3 py-2 text-[11px] font-bold text-black hover:bg-black/5"
                           >
-                            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <svg
+                              className="h-3.5 w-3.5"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              aria-hidden="true"
+                            >
                               <path d="M12 20h9" />
                               <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
                             </svg>
@@ -496,7 +532,11 @@ export function HomeRoomResults({
                     onClick={() => {
                       setMode("side");
                     }}
-                    className={mode === "side" ? "bg-[#1f4fff] px-3 py-1.5 text-white" : "bg-white px-3 py-1.5 text-black"}
+                    className={
+                      mode === "side"
+                        ? "bg-[#1f4fff] px-3 py-1.5 text-white"
+                        : "bg-white px-3 py-1.5 text-black"
+                    }
                   >
                     Side by side
                   </button>
@@ -506,7 +546,11 @@ export function HomeRoomResults({
                     onClick={() => {
                       setMode("slider");
                     }}
-                    className={mode === "slider" ? "bg-[#1f4fff] px-3 py-1.5 text-white" : "bg-white px-3 py-1.5 text-black"}
+                    className={
+                      mode === "slider"
+                        ? "bg-[#1f4fff] px-3 py-1.5 text-white"
+                        : "bg-white px-3 py-1.5 text-black"
+                    }
                   >
                     Slider
                   </button>
@@ -528,7 +572,11 @@ export function HomeRoomResults({
                     </figure>
                     <figure className="relative overflow-hidden border border-black">
                       {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
-                      <img src={selected?.url ?? ""} alt="After" className="h-56 w-full object-cover" />
+                      <img
+                        src={selected?.url ?? ""}
+                        alt="After"
+                        className="h-56 w-full object-cover"
+                      />
                       <figcaption className="absolute bottom-2 right-2 bg-black px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
                         After (selected concept)
                       </figcaption>
@@ -538,7 +586,11 @@ export function HomeRoomResults({
                   <div>
                     <div className="relative overflow-hidden border border-black">
                       {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
-                      <img src={sourceUrl} alt="Before" className="block h-56 w-full object-cover" />
+                      <img
+                        src={sourceUrl}
+                        alt="Before"
+                        className="block h-56 w-full object-cover"
+                      />
                       <div
                         className="absolute inset-0 overflow-hidden"
                         style={{ width: `${String(clip)}%` }}
@@ -548,7 +600,10 @@ export function HomeRoomResults({
                           src={selected?.url ?? ""}
                           alt="After"
                           className="block h-full object-cover"
-                          style={{ width: `${String(10000 / Math.max(clip, 1))}%`, maxWidth: "none" }}
+                          style={{
+                            width: `${String(10000 / Math.max(clip, 1))}%`,
+                            maxWidth: "none",
+                          }}
                         />
                       </div>
                       <span className="absolute bottom-2 left-2 bg-black px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
@@ -582,7 +637,8 @@ export function HomeRoomResults({
                 <div>
                   <h2 className="text-base font-extrabold text-black">Estimated cost range</h2>
                   <p className="mt-1 text-[11px] leading-snug text-black/60">
-                    Based on selected items in this concept. Prices may vary by location and provider.
+                    Based on selected items in this concept. Prices may vary by location and
+                    provider.
                   </p>
                 </div>
                 <span className="shrink-0 border border-black bg-white px-2 py-1 text-[11px] font-semibold">
@@ -596,7 +652,10 @@ export function HomeRoomResults({
               <p className="mt-4 text-xs font-bold text-black">Top recommendations</p>
               <ul className="mt-2 divide-y divide-black/10">
                 {estimate.top.map((item) => (
-                  <li key={item.label} className="flex items-center justify-between gap-2 py-2 text-xs">
+                  <li
+                    key={item.label}
+                    className="flex items-center justify-between gap-2 py-2 text-xs"
+                  >
                     <span className="truncate text-black/80">{item.label}</span>
                     <span className="shrink-0 font-semibold text-black">
                       {formatMoney(item.totalMinor, estimate.currency)}
@@ -605,7 +664,7 @@ export function HomeRoomResults({
                 ))}
               </ul>
               <Link
-                href={`/app/projects/${projectId}/rooms/${roomId}/shopping-list`}
+                href="#cost-breakdown"
                 className="mt-3 block border border-black bg-white px-3 py-2 text-center text-xs font-bold text-black transition-colors hover:bg-black hover:text-white"
               >
                 View itemized costs →
@@ -616,7 +675,16 @@ export function HomeRoomResults({
           <details className="border border-black bg-white">
             <summary className="flex cursor-pointer items-center justify-between gap-2 px-4 py-3 text-sm font-bold text-black">
               <span className="flex items-center gap-2">
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <svg
+                  className="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
                   <rect x="3" y="3" width="18" height="18" />
                   <path d="M3 9h18" />
                   <path d="M9 21V9" />
@@ -643,7 +711,9 @@ export function HomeRoomResults({
                 </div>
                 <div>
                   <dt className="text-black/50">Notes</dt>
-                  <dd className="font-semibold text-black">{notes === null || notes === "" ? "None" : notes}</dd>
+                  <dd className="font-semibold text-black">
+                    {notes === null || notes === "" ? "None" : notes}
+                  </dd>
                 </div>
               </dl>
             </div>
@@ -664,7 +734,16 @@ export function HomeRoomResults({
                 }}
                 className="inline-flex items-center gap-2 border border-black bg-white px-4 py-2.5 text-sm font-bold text-black hover:bg-black/5"
               >
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <svg
+                  className="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
                   <path d="M6 3h12v18l-6-4-6 4z" />
                 </svg>
                 Save to my spaces
@@ -708,7 +787,10 @@ export function HomeRoomResults({
             ))}
           </div>
           {editError !== null && (
-            <p role="alert" className="mt-2 border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <p
+              role="alert"
+              className="mt-2 border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700"
+            >
               {editError}
             </p>
           )}
@@ -756,7 +838,11 @@ export function HomeRoomResults({
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
-          <img src={lightbox} alt="Concept visual" className="max-h-full max-w-full border border-black bg-white" />
+          <img
+            src={lightbox}
+            alt="Concept visual"
+            className="max-h-full max-w-full border border-black bg-white"
+          />
           <button
             type="button"
             className="absolute right-4 top-4 border border-black bg-white px-3 py-1 text-sm font-bold text-black"

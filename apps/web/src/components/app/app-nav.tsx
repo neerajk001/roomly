@@ -8,6 +8,7 @@ const NAV = [
   { href: "/app/spaces", label: "My spaces", icon: "spaces" },
   { href: "/app/inspiration", label: "Inspiration", icon: "inspiration" },
   { href: "/app/saved", label: "Saved", icon: "saved" },
+  { href: "/settings", label: "Settings", icon: "home" },
 ] as const;
 
 type NavItem = (typeof NAV)[number];
@@ -66,7 +67,10 @@ export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
 
   if (variant === "mobile") {
     return (
-      <nav aria-label="Home" className="flex gap-2 overflow-x-auto border-b border-black bg-white px-4 py-2 lg:hidden">
+      <nav
+        aria-label="Home"
+        className="flex flex-wrap gap-2 border-b border-black bg-white px-4 py-2 lg:hidden"
+      >
         {NAV.map((item) => {
           const active = isActive(pathname, item.href);
           return (
@@ -99,9 +103,7 @@ export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
             href={item.href}
             aria-current={active ? "page" : undefined}
             className={`flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${
-              active
-                ? "bg-[#1f4fff] font-semibold text-white"
-                : "text-black hover:bg-black/5"
+              active ? "bg-[#1f4fff] font-semibold text-white" : "text-black hover:bg-black/5"
             }`}
           >
             <NavIcon name={item.icon} />

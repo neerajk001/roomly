@@ -15,15 +15,20 @@ export function MarketingHeader() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 bg-white">
+    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md">
       <div className="mx-auto max-w-6xl px-4 py-3">
-        <div className="flex items-center justify-between gap-4 border border-black bg-white px-5 py-2.5">
-          <Link href="/" className="flex shrink-0 items-center gap-3">
-            <svg className="h-7 w-7 text-black" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-2 py-3 lg:flex-nowrap">
+          <Link href="/" className="flex min-w-0 items-center gap-2">
+            <svg
+              className="h-7 w-7 text-foreground"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
               <path d="M3 10.4 12 2.5l9 7.9V21a1 1 0 0 1-1 1h-5.5v-6h-5v6H4a1 1 0 0 1-1-1z" />
             </svg>
-            <span className="h-6 w-px bg-black/70" aria-hidden="true" />
-            <span className="text-xl font-extrabold tracking-tight text-black">
+            <span className="h-6 w-px bg-foreground/70" aria-hidden="true" />
+            <span className="text-sm font-semibold tracking-tight text-foreground sm:text-xl">
               RoomDesigner
             </span>
           </Link>
@@ -33,31 +38,31 @@ export function MarketingHeader() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm font-medium text-black/70 underline-offset-4 transition-colors hover:text-black hover:underline"
+                className="text-sm font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
               >
                 {link.label}
               </Link>
             ))}
           </nav>
 
-          <div className="flex shrink-0 items-center gap-4 text-sm font-medium">
-            <span className="hidden h-6 w-px bg-black/70 sm:block" aria-hidden="true" />
+          <div className="flex shrink-0 items-center gap-2 text-sm font-medium sm:gap-4">
+            <span className="hidden h-6 w-px bg-foreground/70 sm:block" aria-hidden="true" />
             <Link
               href="/sign-in"
-              className="hidden text-black transition-colors hover:text-black/60 sm:block"
+              className="hidden text-foreground transition-colors hover:text-muted-foreground sm:block"
             >
               Log in
             </Link>
             <Link
               href="/sign-up"
-              className="inline-flex items-center gap-2 border border-black bg-[#FFD400] px-4 py-2 text-[11px] font-extrabold uppercase tracking-wide text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+              className="inline-flex items-center gap-2 rounded-full bg-primary px-3 py-2.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:px-5 sm:text-sm"
             >
               <span>Get started free</span>
               <span aria-hidden="true">→</span>
             </Link>
             <button
               type="button"
-              className="flex h-9 w-9 items-center justify-center border border-black text-black lg:hidden"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-border text-foreground lg:hidden"
               aria-expanded={open}
               aria-controls="mobile-nav"
               aria-label={open ? "Close menu" : "Open menu"}
@@ -90,13 +95,13 @@ export function MarketingHeader() {
         </div>
 
         {open ? (
-          <div id="mobile-nav" className="mt-2 border border-black bg-white lg:hidden">
+          <div id="mobile-nav" className="mt-2 rounded-xl border border-border bg-card lg:hidden">
             <nav aria-label="Mobile" className="flex flex-col">
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="border-b border-black/15 px-5 py-3 text-sm font-medium text-black/70 last:border-b-0 hover:bg-black/[0.03] hover:text-black"
+                  className="border-b border-border px-5 py-3 text-sm font-medium text-muted-foreground last:border-b-0 hover:bg-foreground/[0.03] hover:text-foreground"
                   onClick={() => setOpen(false)}
                 >
                   {link.label}
@@ -104,7 +109,7 @@ export function MarketingHeader() {
               ))}
               <Link
                 href="/sign-in"
-                className="px-5 py-3 text-sm font-medium text-black/70 hover:bg-black/[0.03] hover:text-black sm:hidden"
+                className="px-5 py-3 text-sm font-medium text-muted-foreground hover:bg-foreground/[0.03] hover:text-foreground sm:hidden"
                 onClick={() => setOpen(false)}
               >
                 Log in

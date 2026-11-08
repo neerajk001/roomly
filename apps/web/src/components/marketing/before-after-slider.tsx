@@ -104,7 +104,10 @@ export function BeforeAfterSlider({
 
         // When element enters from bottom to when it reaches top third
         if (rect.top < windowHeight && rect.bottom > 0) {
-          const progress = Math.max(0, Math.min(1, (windowHeight - rect.top) / (windowHeight + rect.height * 0.5)));
+          const progress = Math.max(
+            0,
+            Math.min(1, (windowHeight - rect.top) / (windowHeight + rect.height * 0.5)),
+          );
           // Smooth glide from 25% (mostly before/messy) to 75% (revealing AI magic)
           const target = 25 + progress * 50;
           setSliderPosition(target);
@@ -173,18 +176,18 @@ export function BeforeAfterSlider({
       {/* Labels */}
       <div className="absolute top-3 left-3 pointer-events-none z-10">
         {variant === "block" ? (
-          <span className="bg-black px-3 py-1 text-[11px] font-bold uppercase tracking-[0.15em] text-white">
+          <span className="bg-foreground px-3 py-1 text-[11px] font-semibold tracking-normal text-white">
             {beforeLabel}
           </span>
         ) : (
-          <span className="rounded-full bg-black/60 backdrop-blur-md px-3 py-1 text-[11px] font-semibold text-white/90 shadow-sm border border-white/10 uppercase tracking-wider">
+          <span className="rounded-full bg-foreground/60 backdrop-blur-md px-3 py-1 text-[11px] font-semibold text-white/90 shadow-sm border border-white/10 uppercase tracking-wider">
             {beforeLabel}
           </span>
         )}
       </div>
       <div className="absolute top-3 right-3 pointer-events-none z-10">
         {variant === "block" ? (
-          <span className="border border-black bg-[#FFD400] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.15em] text-black">
+          <span className="rounded-xl border border-border bg-accent px-3 py-1 text-[11px] font-semibold tracking-normal text-foreground">
             {afterLabel}
           </span>
         ) : (
@@ -196,11 +199,11 @@ export function BeforeAfterSlider({
 
       {/* Divider Line & Handle */}
       <div
-        className="absolute top-0 bottom-0 w-0.5 bg-white/90 shadow-[0_0_10px_rgba(0,0,0,0.5)] z-20 pointer-events-none transition-opacity"
+        className="absolute top-0 bottom-0 w-0.5 bg-card/90 shadow-[0_0_10px_rgba(0,0,0,0.5)] z-20 pointer-events-none transition-opacity"
         style={{ left: `${sliderPosition}%` }}
       >
         {variant === "block" ? (
-          <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex h-10 w-10 items-center justify-center border border-black bg-[#FFD400] text-black">
+          <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-accent text-foreground">
             <svg
               className="h-4 w-4"
               viewBox="0 0 24 24"
@@ -213,7 +216,7 @@ export function BeforeAfterSlider({
               <polyline points="15 18 9 12 15 6" />
               <polyline points="9 18 3 12 9 6" />
             </svg>
-            <div className="mx-0.5 h-3 w-px bg-black/50" />
+            <div className="mx-0.5 h-3 w-px bg-foreground/50" />
             <svg
               className="h-4 w-4"
               viewBox="0 0 24 24"
@@ -228,7 +231,7 @@ export function BeforeAfterSlider({
             </svg>
           </div>
         ) : (
-          <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-xl border border-black/10 transition-transform group-hover:scale-105 active:scale-95">
+          <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-card shadow-xl rounded-xl border border-border transition-transform group-hover:scale-105 active:scale-95">
             <svg
               className="h-4 w-4 text-emerald-950"
               viewBox="0 0 24 24"

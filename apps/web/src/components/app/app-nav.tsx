@@ -69,7 +69,7 @@ export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
     return (
       <nav
         aria-label="Home"
-        className="flex flex-wrap gap-2 border-b border-black bg-white px-4 py-2 lg:hidden"
+        className="flex flex-wrap gap-2 border-b border-border bg-card px-4 py-2 lg:hidden"
       >
         {NAV.map((item) => {
           const active = isActive(pathname, item.href);
@@ -78,10 +78,10 @@ export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
               key={item.href}
               href={item.href}
               aria-current={active ? "page" : undefined}
-              className={`flex items-center gap-1.5 whitespace-nowrap border px-3 py-1 text-xs transition-colors ${
+              className={`flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-lg border px-3 py-2 text-xs transition-colors ${
                 active
-                  ? "border-black bg-[#1f4fff] font-semibold text-white"
-                  : "border-black bg-white text-black hover:bg-black/5"
+                  ? "border-transparent bg-sidebar-primary font-semibold text-sidebar-primary-foreground"
+                  : "border-border bg-card text-foreground hover:bg-foreground/5"
               }`}
             >
               <NavIcon name={item.icon} />
@@ -102,8 +102,10 @@ export function AppNav({ variant }: { variant: "sidebar" | "mobile" }) {
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className={`flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${
-              active ? "bg-[#1f4fff] font-semibold text-white" : "text-black hover:bg-black/5"
+            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+              active
+                ? "bg-sidebar-primary font-semibold text-sidebar-primary-foreground"
+                : "text-foreground hover:bg-foreground/5"
             }`}
           >
             <NavIcon name={item.icon} />

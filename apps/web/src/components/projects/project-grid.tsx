@@ -31,7 +31,7 @@ export function ProjectGrid({
         <li key={project.id}>
           <Link
             href={`${basePath}/projects/${project.id}`}
-            className="block h-full rounded-xl border border-border bg-background p-5 transition-colors hover:border-primary/40 hover:bg-muted/40"
+            className="block h-full rounded-xl rounded-xl border border-border bg-background p-5 transition-colors hover:border-primary/40 hover:bg-muted/40"
           >
             <p className="truncate font-medium text-foreground">{project.name}</p>
             <p className="mt-1 text-xs text-muted-foreground">

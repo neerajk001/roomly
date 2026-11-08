@@ -65,22 +65,34 @@ export function StudioSettingsForm({ profile }: { profile: StudioProfileValues }
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <form action={formAction} className="space-y-4">
         {state.error !== undefined && (
-          <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <p
+            role="alert"
+            className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          >
             {state.error}
           </p>
         )}
         {state.notice !== undefined && (
-          <p role="status" className="rounded-md bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700">
+          <p
+            role="status"
+            className="rounded-md bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700"
+          >
             {state.notice}
           </p>
         )}
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="studio-name">Studio name</Label>
-            <Input id="studio-name" name="name" defaultValue={profile.name} required maxLength={120} />
+            <Input
+              id="studio-name"
+              name="name"
+              defaultValue={profile.name}
+              required
+              maxLength={120}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="studio-color">Brand colour</Label>
@@ -129,7 +141,11 @@ export function StudioSettingsForm({ profile }: { profile: StudioProfileValues }
           </div>
           <div className="space-y-2">
             <Label htmlFor="studio-phone">Contact phone</Label>
-            <Input id="studio-phone" name="contactPhone" defaultValue={profile.contactPhone ?? ""} />
+            <Input
+              id="studio-phone"
+              name="contactPhone"
+              defaultValue={profile.contactPhone ?? ""}
+            />
           </div>
         </div>
         <div className="space-y-2">

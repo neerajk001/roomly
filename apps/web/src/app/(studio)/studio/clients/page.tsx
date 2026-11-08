@@ -14,7 +14,11 @@ export default async function StudioClientsPage({
 }) {
   const { q } = await searchParams;
   const { user, workspace } = await requireWorkspace();
-  const clients = await listClients(prisma, { userId: user.id, workspaceId: workspace.id }, { search: q });
+  const clients = await listClients(
+    prisma,
+    { userId: user.id, workspaceId: workspace.id },
+    { search: q },
+  );
 
   return (
     <div className="space-y-6">
@@ -48,7 +52,7 @@ export default async function StudioClientsPage({
           </CardHeader>
         </Card>
       ) : (
-        <ul className="divide-y divide-border rounded-xl border border-border bg-background">
+        <ul className="divide-y divide-border rounded-xl rounded-xl border border-border bg-background">
           {clients.map((client) => (
             <li key={client.id}>
               <Link

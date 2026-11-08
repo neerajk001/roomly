@@ -418,3 +418,33 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
   three new experience-navigation regression tests.
 - Browser E2E attempt was blocked by the user's existing Next dev server on port 3001;
   the runner cannot launch a second server for the same checkout on port 3100.
+# 2026-11-08 — Reference theme across existing screens
+- Human approved the pale blue-gray, warm-white, orange and charcoal theme.
+- Apply this as a single visual corrective task across existing phases.
+- Preserve every component, route, control, interaction and feature.
+- Add no new product components, dependencies, plans or marketing claims.
+- Centralize the approved palette and surface tokens in globals.css.
+- Replace existing blue/yellow Home and cream/green Studio styling.
+- Keep semantic success, warning and error colors distinct.
+- Preserve provider logos and user-selected studio branding.
+- Use Geist consistently, including headings previously styled as serif.
+- Replace hard offset shadows with restrained elevation.
+- Standardize rounded controls, thin borders and focus visibility.
+- Increase section spacing and surface padding without hiding content.
+- Apply the same styling to marketing, auth, onboarding and both app modes.
+- Include public briefs, sharing, approval, settings and render results.
+- Verify route/component preservation, responsive screenshots and checks.
+- Do not tick unrelated unfinished product-phase acceptance boxes.
+- The primary orange is slightly darker (#B95308) than the reference-derived
+  #C65D0A so white labels on small action buttons have stronger contrast.
+- Delivered shared colors, rounded surfaces, quieter shadows and consistent
+  typography across existing screens; Home and Studio share deep-teal navigation.
+- Desktop (1440px) and mobile (375px) landing/sign-in screenshots verified;
+  corrected the mobile header and hero sizing without hiding controls.
+- TypeScript JSX audit confirms identical ordered component/element tags in all
+  46 changed TSX files: no components were introduced or removed.
+- Authenticated screens were restyled in source; their browser walkthrough is
+  not covered by the public-page screenshots.
+- Verification passed: pnpm typecheck, pnpm lint and pnpm test (all 11 packages).
+- Existing route/component structure, user copy and event handlers are retained;
+  only visual classes, theme variables and responsive sizing were changed.

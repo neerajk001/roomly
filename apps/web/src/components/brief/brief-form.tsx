@@ -51,7 +51,9 @@ export function BriefForm({
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
 
-  const assetIds = uploads.filter((upload) => upload.status === "done").map((upload) => upload.assetId);
+  const assetIds = uploads
+    .filter((upload) => upload.status === "done")
+    .map((upload) => upload.assetId);
 
   const togglePick = (key: string) => {
     setPicks((current) =>
@@ -147,9 +149,9 @@ export function BriefForm({
         }),
       });
       if (!response.ok) {
-        const body = (await response.json().catch(() => null)) as
-          | { error?: { message?: string } }
-          | null;
+        const body = (await response.json().catch(() => null)) as {
+          error?: { message?: string };
+        } | null;
         throw new Error(body?.error?.message ?? "Could not send the brief.");
       }
       setDone(true);
@@ -243,7 +245,7 @@ export function BriefForm({
                   {style.palette.map((color) => (
                     <span
                       key={color}
-                      className="h-4 w-4 rounded-full border border-black/10"
+                      className="h-4 w-4 rounded-full border border-border"
                       style={{ backgroundColor: color }}
                     />
                   ))}
@@ -319,8 +321,16 @@ export function BriefForm({
             {uploads.map((upload) => (
               <li key={upload.assetId} className="flex justify-between gap-2">
                 <span className="truncate">{upload.name}</span>
-                <span className={upload.status === "error" ? "text-destructive" : "text-muted-foreground"}>
-                  {upload.status === "done" ? "Uploaded" : upload.status === "error" ? "Failed" : "Uploading..."}
+                <span
+                  className={
+                    upload.status === "error" ? "text-destructive" : "text-muted-foreground"
+                  }
+                >
+                  {upload.status === "done"
+                    ? "Uploaded"
+                    : upload.status === "error"
+                      ? "Failed"
+                      : "Uploading..."}
                 </span>
               </li>
             ))}
@@ -352,7 +362,12 @@ export function BriefForm({
         readOnly
       />
 
-      <Button type="button" onClick={() => void submit()} disabled={submitting} aria-busy={submitting}>
+      <Button
+        type="button"
+        onClick={() => void submit()}
+        disabled={submitting}
+        aria-busy={submitting}
+      >
         {submitting ? "Sending..." : "Send brief"}
       </Button>
     </div>

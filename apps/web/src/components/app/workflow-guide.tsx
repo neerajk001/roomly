@@ -45,7 +45,7 @@ export function WorkflowGuide({ studio = false }: { studio?: boolean }) {
         <Link
           key={step.title}
           href={step.href}
-          className="rounded-lg border border-current/20 bg-white p-4 transition-colors hover:bg-black/5"
+          className="rounded-lg border border-current/20 bg-card p-4 transition-colors hover:bg-foreground/5"
         >
           <h2 className="text-sm font-semibold">{step.title} →</h2>
           <p className="mt-2 text-xs leading-relaxed opacity-70">{step.body}</p>

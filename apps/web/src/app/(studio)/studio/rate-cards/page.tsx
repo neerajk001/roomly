@@ -30,7 +30,7 @@ export default async function StudioRateCardsPage() {
           </CardHeader>
         </Card>
       ) : (
-        <ul className="divide-y divide-border rounded-xl border border-border bg-background">
+        <ul className="divide-y divide-border rounded-xl rounded-xl border border-border bg-background">
           {cards.map((card) => (
             <li key={card.id}>
               <Link

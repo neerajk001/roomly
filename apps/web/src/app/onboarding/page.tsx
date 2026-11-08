@@ -37,40 +37,42 @@ export default async function OnboardingPage() {
   });
   if (membership === null) {
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-white px-4">
-        <p className="text-sm text-black/60">Preparing your workspace… refresh in a moment.</p>
+      <div className="flex min-h-dvh items-center justify-center bg-card px-4">
+        <p className="text-sm text-muted-foreground">
+          Preparing your workspace… refresh in a moment.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-dvh bg-white px-4 py-10 text-black">
+    <div className="min-h-dvh bg-background px-5 py-12 text-foreground">
       <div className="mx-auto max-w-3xl">
-        <div className="border border-black bg-white p-6 shadow-[10px_10px_0_0_#000] sm:p-8">
+        <div className="rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8">
           <header className="flex flex-wrap items-center justify-between gap-3">
             <Link href="/" className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center border border-black text-black">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-border text-foreground">
                 <HouseIcon />
               </span>
-              <span className="text-lg font-extrabold tracking-tight text-black">
+              <span className="text-lg font-semibold tracking-tight text-foreground">
                 RoomDesigner
               </span>
             </Link>
             <div className="flex items-center gap-3">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-black/60">
+              <span className="text-[11px] font-semibold tracking-normal text-muted-foreground">
                 Choose your experience
               </span>
-              <span className="h-2 w-32 overflow-hidden bg-black/10">
-                <span className="block h-full w-1/2 bg-[#1f4fff]" />
+              <span className="h-2 w-32 overflow-hidden bg-foreground/10">
+                <span className="block h-full w-1/2 bg-primary" />
               </span>
             </div>
           </header>
 
           <div className="mt-8 max-w-2xl">
-            <h1 className="font-serif text-4xl font-bold leading-[1.03] tracking-tight text-black sm:text-5xl">
+            <h1 className="font-sans text-4xl font-semibold leading-[1.03] tracking-tight text-foreground sm:text-5xl">
               What brings you to RoomDesigner?
             </h1>
-            <p className="mt-3 text-sm text-black/70 sm:text-base">
+            <p className="mt-3 text-sm text-muted-foreground sm:text-base">
               We&apos;ll shape your workspace around the way you design.
             </p>
           </div>
@@ -84,23 +86,23 @@ export default async function OnboardingPage() {
         </div>
 
         {/* Step indicator */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-3 text-xs font-medium text-black/70">
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-3 text-xs font-medium text-muted-foreground">
           <span className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#1f4fff] text-[11px] font-bold text-white">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-white">
               1
             </span>
             Choose your workspace
           </span>
-          <span className="h-px w-10 bg-black/30" aria-hidden="true" />
+          <span className="h-px w-10 bg-foreground/30" aria-hidden="true" />
           <span className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full border border-black text-[11px] font-bold text-black">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full border border-border text-[11px] font-semibold text-foreground">
               2
             </span>
             See the right dashboard
           </span>
-          <span className="h-px w-10 bg-black/30" aria-hidden="true" />
+          <span className="h-px w-10 bg-foreground/30" aria-hidden="true" />
           <span className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full border border-black text-[11px] font-bold text-black">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full border border-border text-[11px] font-semibold text-foreground">
               3
             </span>
             Start a design

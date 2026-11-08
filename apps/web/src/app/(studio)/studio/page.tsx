@@ -51,7 +51,9 @@ export default async function StudioHomePage() {
       where: { project: { workspaceId: workspace.id } },
       orderBy: { createdAt: "desc" },
       take: 4,
-      include: { project: { select: { id: true, name: true, client: { select: { name: true } } } } },
+      include: {
+        project: { select: { id: true, name: true, client: { select: { name: true } } } },
+      },
     }),
     prisma.client.count({ where: { workspaceId: workspace.id, deletedAt: null } }),
   ]);
@@ -66,12 +68,12 @@ export default async function StudioHomePage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <WorkflowGuide studio />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Your studio, in one place.</h1>
-          <p className="mt-1 text-sm text-[#5b665f]">
+          <p className="mt-1 text-sm text-muted-foreground">
             {clients} {clients === 1 ? "client" : "clients"} · {projects.length} recent{" "}
             {projects.length === 1 ? "project" : "projects"}
           </p>
@@ -79,13 +81,13 @@ export default async function StudioHomePage() {
         <div className="flex flex-col items-stretch gap-2 sm:flex-row">
           <Link
             href="/studio/projects/new"
-            className="rounded-lg bg-[#2f5233] px-4 py-2 text-center text-sm font-medium text-white hover:bg-[#27452b]"
+            className="rounded-lg bg-primary px-4 py-2 text-center text-sm font-medium text-white hover:bg-primary"
           >
             New project +
           </Link>
           <Link
             href="/studio/clients"
-            className="rounded-lg border border-[#d8d2c4] bg-white px-4 py-2 text-center text-sm hover:bg-[#faf8f2]"
+            className="rounded-lg border border-border bg-card px-4 py-2 text-center text-sm hover:bg-muted"
           >
             Clients
           </Link>
@@ -94,8 +96,11 @@ export default async function StudioHomePage() {
 
       <section aria-label="Proposal pipeline" className="grid grid-cols-2 gap-2 sm:grid-cols-5">
         {PIPELINE.map(([status, label]) => (
-          <div key={status} className="rounded-xl border border-[#e4dfd3] bg-white px-3 py-2">
-            <p className="text-xs text-[#7a857d]">{label}</p>
+          <div
+            key={status}
+            className="rounded-xl rounded-xl border border-border bg-card px-3 py-2"
+          >
+            <p className="text-xs text-muted-foreground">{label}</p>
             <p className="text-xl font-semibold">{count(status)}</p>
           </div>
         ))}
@@ -104,19 +109,19 @@ export default async function StudioHomePage() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold tracking-tight">Projects</h2>
-          <Link href="/studio" className="text-xs text-[#2f5233] underline">
+          <Link href="/studio" className="text-xs text-primary underline">
             Latest first ▾
           </Link>
         </div>
         {projects.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-[#cfc8b8] bg-white/60 p-8 text-center">
+          <div className="rounded-xl border border-dashed border-border bg-card/60 p-8 text-center">
             <p className="text-sm font-medium">No projects yet</p>
-            <p className="mx-auto mt-1 max-w-sm text-xs text-[#6b776f]">
+            <p className="mx-auto mt-1 max-w-sm text-xs text-muted-foreground">
               Create a project, upload room photos and generate concept options for your client.
             </p>
             <Link
               href="/studio/projects/new"
-              className="mt-3 inline-block rounded-lg bg-[#2f5233] px-4 py-2 text-sm text-white"
+              className="mt-3 inline-block rounded-lg bg-primary px-4 py-2 text-sm text-white"
             >
               Create a project
             </Link>
@@ -127,7 +132,7 @@ export default async function StudioHomePage() {
               <li key={project.id}>
                 <Link
                   href={`/studio/projects/${project.id}`}
-                  className="block overflow-hidden rounded-xl border border-[#e4dfd3] bg-white transition hover:shadow-sm"
+                  className="block overflow-hidden rounded-xl rounded-xl border border-border bg-card transition hover:shadow-sm"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element -- signed or demo asset */}
                   <img
@@ -138,7 +143,7 @@ export default async function StudioHomePage() {
                   />
                   <div className="space-y-0.5 px-3 py-2">
                     <p className="truncate text-sm font-medium">{project.name}</p>
-                    <p className="truncate text-xs text-[#7a857d]">
+                    <p className="truncate text-xs text-muted-foreground">
                       {project.client?.name ?? "No client"} · updated {relative(project.updatedAt)}
                     </p>
                   </div>
@@ -149,28 +154,31 @@ export default async function StudioHomePage() {
         )}
       </section>
 
-      <section className="rounded-xl border border-[#e4dfd3] bg-white p-4">
+      <section className="rounded-xl rounded-xl border border-border bg-card p-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-medium">Recent proposals</h2>
         </div>
         {proposals.length === 0 ? (
-          <p className="mt-3 text-xs text-[#7a857d]">
+          <p className="mt-3 text-xs text-muted-foreground">
             No proposals yet. Build an estimate, then send a branded proposal.
           </p>
         ) : (
-          <ul className="mt-3 divide-y divide-[#eee8db]">
+          <ul className="mt-3 divide-y divide-border">
             {proposals.map((proposal) => (
-              <li key={proposal.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+              <li
+                key={proposal.id}
+                className="flex flex-wrap items-center justify-between gap-2 py-2"
+              >
                 <div className="min-w-0">
                   <p className="truncate text-sm">{proposal.title}</p>
-                  <p className="truncate text-xs text-[#7a857d]">
+                  <p className="truncate text-xs text-muted-foreground">
                     {proposal.project.name}
                     {proposal.project.client?.name !== undefined
                       ? ` · ${proposal.project.client.name}`
                       : ""}
                   </p>
                 </div>
-                <span className="rounded-full bg-[#eef1e8] px-2 py-0.5 text-[11px] text-[#2f5233]">
+                <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] text-primary">
                   {proposal.status}
                 </span>
               </li>

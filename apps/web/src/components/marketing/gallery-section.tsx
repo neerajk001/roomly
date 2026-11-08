@@ -3,20 +3,13 @@
 import { useState } from "react";
 import { BeforeAfterSlider } from "./before-after-slider";
 
-const CATEGORIES = [
-  "All",
-  "Living Room",
-  "Bedroom",
-  "Kitchen",
-  "Bathroom",
-  "Home Office",
-] as const;
+const CATEGORIES = ["All", "Living Room", "Bedroom", "Kitchen", "Bathroom", "Home Office"] as const;
 
 interface GalleryItem {
   id: string;
   room: string;
   style: string;
-  category: typeof CATEGORIES[number];
+  category: (typeof CATEGORIES)[number];
   beforeImg: string;
   afterImg: string;
 }
@@ -76,19 +69,22 @@ export function GallerySection() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
   const filteredItems = GALLERY_ITEMS.filter((item) =>
-    selectedCategory === "All" ? true : item.category === selectedCategory || item.room.toLowerCase().includes(selectedCategory.toLowerCase())
+    selectedCategory === "All"
+      ? true
+      : item.category === selectedCategory ||
+        item.room.toLowerCase().includes(selectedCategory.toLowerCase()),
   );
 
   return (
     <section id="examples" className="mx-auto max-w-6xl px-4 py-20">
       <div className="text-center">
-        <span className="inline-block border border-black px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-black">
+        <span className="inline-block rounded-xl border border-border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-foreground">
           Real Spaces. Real Transformations.
         </span>
-        <h2 className="mt-5 text-4xl font-extrabold tracking-tight text-black sm:text-5xl">
+        <h2 className="mt-5 text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
           See what&apos;s possible.
         </h2>
-        <p className="mx-auto mt-3 max-w-lg text-sm text-black/70">
+        <p className="mx-auto mt-3 max-w-lg text-sm text-muted-foreground">
           From everyday rooms to dream spaces, explore AI redesigns created by our users.
         </p>
 
@@ -102,10 +98,10 @@ export function GallerySection() {
                 type="button"
                 onClick={() => setSelectedCategory(cat)}
                 aria-pressed={isActive}
-                className={`border border-black px-4 py-1.5 text-[11px] font-bold uppercase tracking-wide transition-colors ${
+                className={`rounded-xl border border-border px-4 py-1.5 text-[11px] font-semibold tracking-normal transition-colors ${
                   isActive
-                    ? "bg-[#1f4fff] text-white"
-                    : "bg-white text-black hover:bg-black/5"
+                    ? "bg-primary text-white"
+                    : "bg-card text-foreground hover:bg-foreground/5"
                 }`}
               >
                 {cat}
@@ -120,7 +116,7 @@ export function GallerySection() {
         {filteredItems.map((item) => (
           <div
             key={item.id}
-            className="group overflow-hidden border border-black bg-white"
+            className="group overflow-hidden rounded-xl border border-border bg-card"
           >
             <BeforeAfterSlider
               beforeImage={item.beforeImg}
@@ -131,16 +127,16 @@ export function GallerySection() {
               enableScrollEffect={true}
               variant="block"
             />
-            <div className="flex items-center gap-2.5 border-t border-black px-3 py-2">
-              <h3 className="text-sm font-extrabold text-black">{item.room}</h3>
-              <span className="h-3 w-px bg-black/40" aria-hidden="true" />
-              <p className="text-[11px] text-black/70">{item.style}</p>
+            <div className="flex items-center gap-2.5 border-t border-border px-3 py-2">
+              <h3 className="text-sm font-semibold text-foreground">{item.room}</h3>
+              <span className="h-3 w-px bg-foreground/40" aria-hidden="true" />
+              <p className="text-[11px] text-muted-foreground">{item.style}</p>
             </div>
           </div>
         ))}
       </div>
 
-      <p className="mt-8 text-center text-xs text-black/60">
+      <p className="mt-8 text-center text-xs text-muted-foreground">
         AI renders are concept visuals, actual results may vary.
       </p>
     </section>

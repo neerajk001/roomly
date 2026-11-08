@@ -24,7 +24,11 @@ export default async function StudioSettingsPage() {
       {logoUrl !== null && (
         <div className="flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
-          <img src={logoUrl} alt="Studio logo" className="h-12 w-auto rounded border border-border" />
+          <img
+            src={logoUrl}
+            alt="Studio logo"
+            className="h-12 w-auto rounded rounded-xl border border-border"
+          />
           <span className="text-xs text-muted-foreground">Current logo</span>
         </div>
       )}

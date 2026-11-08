@@ -69,17 +69,17 @@ export function FAQSection() {
     <section id="faq" className="mx-auto max-w-6xl px-4 py-20">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="relative">
-          <span className="inline-block border border-black px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-black">
+          <span className="inline-block rounded-xl border border-border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-foreground">
             Frequently Asked Questions
           </span>
-          <h2 className="mt-5 text-4xl font-extrabold leading-[1.02] tracking-tight text-black sm:text-5xl lg:text-6xl">
+          <h2 className="mt-5 text-4xl font-semibold leading-[1.02] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
             Got questions?
             <br />
-            We&apos;ve got <span className="text-[#1f4fff]">answers.</span>
+            We&apos;ve got <span className="text-primary">answers.</span>
           </h2>
           <svg
             aria-hidden="true"
-            className="absolute right-0 top-3 hidden h-12 w-16 text-black md:block"
+            className="absolute right-0 top-3 hidden h-12 w-16 text-foreground md:block"
             viewBox="0 0 60 48"
             fill="none"
             stroke="currentColor"
@@ -92,7 +92,7 @@ export function FAQSection() {
         </div>
         <Link
           href="/#faq"
-          className="inline-flex w-fit items-center gap-3 border border-black bg-white px-5 py-3 text-sm font-semibold text-black transition-colors hover:bg-black hover:text-white"
+          className="inline-flex w-fit items-center gap-3 rounded-xl border border-border bg-card px-5 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-foreground hover:text-white"
         >
           <span>View all FAQs</span>
           <span aria-hidden="true">→</span>
@@ -104,23 +104,27 @@ export function FAQSection() {
         <div className="space-y-4">
           {FAQS_LEFT.map((faq, i) => {
             const isOpen = Boolean(openIds[faq.id]);
-            const accent = i % 2 === 0 ? "bg-[#1f4fff]" : "bg-[#FFD400]";
+            const accent = i % 2 === 0 ? "bg-primary" : "bg-accent";
             return (
-              <div key={faq.id} className="overflow-hidden border border-black bg-white">
+              <div key={faq.id} className="overflow-hidden rounded-xl border border-border bg-card">
                 <button
                   type="button"
                   onClick={() => toggleOpen(faq.id)}
                   aria-expanded={isOpen}
                   className="flex w-full items-stretch text-left"
                 >
-                  <span className="flex-1 px-4 py-4 text-sm font-medium text-black">{faq.q}</span>
-                  <span className={`flex w-14 shrink-0 items-center justify-center border-l border-black text-2xl font-normal text-black ${accent}`}>
+                  <span className="flex-1 px-4 py-4 text-sm font-medium text-foreground">
+                    {faq.q}
+                  </span>
+                  <span
+                    className={`flex w-14 shrink-0 items-center justify-center border-l border-border text-2xl font-normal text-foreground ${accent}`}
+                  >
                     {isOpen ? "−" : "+"}
                   </span>
                 </button>
                 {isOpen && (
-                  <div className="border-t border-black px-4 py-3">
-                    <p className="text-xs leading-5 text-black/70">{faq.a}</p>
+                  <div className="border-t border-border px-4 py-3">
+                    <p className="text-xs leading-5 text-muted-foreground">{faq.a}</p>
                   </div>
                 )}
               </div>
@@ -132,23 +136,27 @@ export function FAQSection() {
         <div className="space-y-4">
           {FAQS_RIGHT.map((faq, i) => {
             const isOpen = Boolean(openIds[faq.id]);
-            const accent = i % 2 === 0 ? "bg-[#FFD400]" : "bg-[#1f4fff]";
+            const accent = i % 2 === 0 ? "bg-accent" : "bg-primary";
             return (
-              <div key={faq.id} className="overflow-hidden border border-black bg-white">
+              <div key={faq.id} className="overflow-hidden rounded-xl border border-border bg-card">
                 <button
                   type="button"
                   onClick={() => toggleOpen(faq.id)}
                   aria-expanded={isOpen}
                   className="flex w-full items-stretch text-left"
                 >
-                  <span className="flex-1 px-4 py-4 text-sm font-medium text-black">{faq.q}</span>
-                  <span className={`flex w-14 shrink-0 items-center justify-center border-l border-black text-2xl font-normal text-black ${accent}`}>
+                  <span className="flex-1 px-4 py-4 text-sm font-medium text-foreground">
+                    {faq.q}
+                  </span>
+                  <span
+                    className={`flex w-14 shrink-0 items-center justify-center border-l border-border text-2xl font-normal text-foreground ${accent}`}
+                  >
                     {isOpen ? "−" : "+"}
                   </span>
                 </button>
                 {isOpen && (
-                  <div className="border-t border-black px-4 py-3">
-                    <p className="text-xs leading-5 text-black/70">{faq.a}</p>
+                  <div className="border-t border-border px-4 py-3">
+                    <p className="text-xs leading-5 text-muted-foreground">{faq.a}</p>
                   </div>
                 )}
               </div>

@@ -94,16 +94,16 @@ function CheckIcon() {
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="border-t border-black bg-white py-20">
+    <section id="pricing" className="border-t border-border bg-card py-20">
       <div className="mx-auto max-w-6xl px-4">
         <div className="text-center">
-          <span className="inline-block border border-black px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-black">
+          <span className="inline-block rounded-xl border border-border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-foreground">
             Simple Pricing
           </span>
-          <h2 className="mt-5 text-4xl font-extrabold tracking-tight text-black sm:text-5xl">
+          <h2 className="mt-5 text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
             Plans for every type of user.
           </h2>
-          <p className="mx-auto mt-3 max-w-xl text-sm text-black/70">
+          <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
             Start free and upgrade when you need more credits and features.
           </p>
         </div>
@@ -113,44 +113,44 @@ export function PricingSection() {
           {PLANS.map((plan) => (
             <div
               key={plan.name}
-              className={`relative flex flex-col border border-black bg-white p-6 ${
-                plan.popular ? "shadow-[8px_8px_0_0_#000]" : ""
+              className={`relative flex flex-col rounded-xl border border-border bg-card p-6 ${
+                plan.popular ? "shadow-sm" : ""
               }`}
             >
               {plan.popular && (
                 <>
-                  <span className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap border border-black bg-[#FFD400] px-4 py-1 text-[11px] font-extrabold uppercase tracking-wide text-black">
+                  <span className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-xl border border-border bg-accent px-4 py-1 text-[11px] font-semibold tracking-normal text-foreground">
                     Most Popular
                   </span>
                   <div
-                    className="pointer-events-none absolute right-0 top-0 h-16 w-16 bg-[#FFD400]"
+                    className="pointer-events-none absolute right-0 top-0 h-16 w-16 bg-accent"
                     style={{ clipPath: "polygon(100% 0, 0 0, 100% 100%)" }}
                     aria-hidden="true"
                   />
                 </>
               )}
 
-              <span className="inline-block self-start border border-black px-3 py-1 text-sm font-extrabold uppercase tracking-wide text-black">
+              <span className="inline-block self-start rounded-xl border border-border px-3 py-1 text-sm font-semibold tracking-normal text-foreground">
                 {plan.name}
               </span>
 
               <div className="mt-6 flex items-baseline gap-1">
-                <span className="text-5xl font-extrabold tracking-tight text-black">
+                <span className="text-5xl font-semibold tracking-tight text-foreground">
                   {plan.price}
                 </span>
-                <span className="text-sm text-black/60">{plan.period}</span>
+                <span className="text-sm text-muted-foreground">{plan.period}</span>
               </div>
-              <p className="mt-3 min-h-[40px] text-sm text-black/70">{plan.description}</p>
+              <p className="mt-3 min-h-[40px] text-sm text-muted-foreground">{plan.description}</p>
 
-              <div className="mt-5 border-t border-black/20 pt-5">
-                <ul className="space-y-3 text-sm text-black">
+              <div className="mt-5 border-t border-border pt-5">
+                <ul className="space-y-3 text-sm text-foreground">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-center gap-3">
                       <span
                         className={`flex h-5 w-5 shrink-0 items-center justify-center ${
                           plan.popular
-                            ? "bg-[#1f4fff] text-white"
-                            : "border border-black bg-white text-black"
+                            ? "bg-primary text-white"
+                            : "rounded-xl border border-border bg-card text-foreground"
                         }`}
                       >
                         <CheckIcon />
@@ -164,10 +164,8 @@ export function PricingSection() {
               <div className="mt-auto pt-8">
                 <Link
                   href={plan.ctaHref}
-                  className={`flex w-full items-center justify-between border border-black px-4 py-3 text-sm font-bold shadow-[4px_4px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none ${
-                    plan.name === "Free"
-                      ? "bg-white text-black"
-                      : "bg-[#1f4fff] text-white"
+                  className={`flex w-full items-center justify-between rounded-xl border border-border px-4 py-3 text-sm font-semibold shadow-sm transition-all   hover:shadow-sm   active:shadow-none ${
+                    plan.name === "Free" ? "bg-card text-foreground" : "bg-primary text-white"
                   }`}
                 >
                   <span>{plan.ctaText}</span>

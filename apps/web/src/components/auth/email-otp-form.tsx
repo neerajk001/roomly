@@ -127,14 +127,14 @@ export function EmailOtpForm({
           type="submit"
           disabled={pending}
           aria-busy={pending}
-          className="w-full rounded-md bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary disabled:cursor-not-allowed disabled:opacity-60"
         >
           {pending ? "Verifying..." : mode === "sign-up" ? "Create account" : "Sign in"}
         </button>
         <div className="flex items-center justify-between gap-3 text-sm">
           <button
             type="button"
-            className="text-slate-600 underline hover:text-slate-900"
+            className="text-muted-foreground underline hover:text-foreground"
             onClick={() => {
               setStep("email");
               setError(null);
@@ -146,7 +146,7 @@ export function EmailOtpForm({
           <button
             type="button"
             disabled={pending}
-            className="text-slate-600 underline hover:text-slate-900 disabled:opacity-60"
+            className="text-muted-foreground underline hover:text-foreground disabled:opacity-60"
             onClick={() => {
               setPending(true);
               setError(null);
@@ -174,19 +174,17 @@ export function EmailOtpForm({
           {error}
         </p>
       )}
-      {mode === "sign-up" && (
-        <Field label="Name" name="name" autoComplete="name" required />
-      )}
+      {mode === "sign-up" && <Field label="Name" name="name" autoComplete="name" required />}
       <Field label="Email" name="email" type="email" autoComplete="email" required />
       <button
         type="submit"
         disabled={pending}
         aria-busy={pending}
-        className="w-full rounded-md bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary disabled:cursor-not-allowed disabled:opacity-60"
       >
         {pending ? "Sending code..." : "Continue with email"}
       </button>
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-muted-foreground">
         We&apos;ll email you a one-time code. No password needed.
       </p>
     </form>

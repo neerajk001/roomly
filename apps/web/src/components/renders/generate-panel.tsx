@@ -108,9 +108,7 @@ export function GeneratePanel({
       </div>
 
       <fieldset className="space-y-2">
-        <legend className="text-sm font-medium text-foreground">
-          Stage this room (optional)
-        </legend>
+        <legend className="text-sm font-medium text-foreground">Stage this room (optional)</legend>
         <p className="text-xs text-muted-foreground">
           Empty room? Pick what to add. Existing items that already fit are kept.
         </p>
@@ -179,7 +177,7 @@ export function GeneratePanel({
           role="dialog"
           aria-modal="true"
           aria-label="Not enough credits"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/60 p-4"
         >
           <div className="w-full max-w-sm space-y-3 rounded-xl bg-background p-5 shadow-xl">
             <h2 className="text-lg font-semibold text-foreground">Not enough credits</h2>

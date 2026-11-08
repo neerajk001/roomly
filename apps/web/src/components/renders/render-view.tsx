@@ -69,26 +69,29 @@ export function RenderView({
     });
   }, []);
 
-  const startJob = useCallback((jobId: string, kind: "RESTYLE" | "EDIT", label: string, styleKey: string | null) => {
-    setJobs((previous) =>
-      previous.some((job) => job.id === jobId)
-        ? previous
-        : [
-            ...previous,
-            {
-              id: jobId,
-              kind,
-              status: "QUEUED",
-              errorMessage: null,
-              creditsCharged: 0,
-              outputs: [],
-              label,
-              styleKey,
-            },
-          ],
-    );
-    setCurrentId(jobId);
-  }, []);
+  const startJob = useCallback(
+    (jobId: string, kind: "RESTYLE" | "EDIT", label: string, styleKey: string | null) => {
+      setJobs((previous) =>
+        previous.some((job) => job.id === jobId)
+          ? previous
+          : [
+              ...previous,
+              {
+                id: jobId,
+                kind,
+                status: "QUEUED",
+                errorMessage: null,
+                creditsCharged: 0,
+                outputs: [],
+                label,
+                styleKey,
+              },
+            ],
+      );
+      setCurrentId(jobId);
+    },
+    [],
+  );
 
   const submitRestyle = useCallback(
     (request: RestyleRequest) => {
@@ -301,7 +304,11 @@ export function RenderView({
           {favorites.slice(0, 2).map((output, index) => (
             <figure key={output.id} className="overflow-hidden rounded-lg border border-border">
               {/* eslint-disable-next-line @next/next/no-img-element -- signed URL, no optimizer */}
-              <img src={output.url} alt={`Favorite ${String(index + 1)}`} className="block w-full" />
+              <img
+                src={output.url}
+                alt={`Favorite ${String(index + 1)}`}
+                className="block w-full"
+              />
               <figcaption className="border-t border-border px-2 py-1 text-xs text-muted-foreground">
                 Favorite {String(index + 1)}
               </figcaption>
@@ -421,7 +428,9 @@ export function RenderView({
               </li>
             ))}
           </ul>
-          <p className="text-xs text-muted-foreground">AI-generated concept visual. Not to scale.</p>
+          <p className="text-xs text-muted-foreground">
+            AI-generated concept visual. Not to scale.
+          </p>
 
           {sourceUrl !== undefined && sourceUrl !== null && current.outputs[0] !== undefined && (
             <div className="space-y-2">
@@ -441,10 +450,10 @@ export function RenderView({
                     style={{ width: `${String(10000 / Math.max(clip, 1))}%`, maxWidth: "none" }}
                   />
                 </div>
-                <span className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-0.5 text-xs text-white">
+                <span className="absolute bottom-2 left-2 rounded bg-foreground/60 px-2 py-0.5 text-xs text-white">
                   Before
                 </span>
-                <span className="absolute bottom-2 right-2 rounded bg-black/60 px-2 py-0.5 text-xs text-white">
+                <span className="absolute bottom-2 right-2 rounded bg-foreground/60 px-2 py-0.5 text-xs text-white">
                   After
                 </span>
               </div>
@@ -471,7 +480,9 @@ export function RenderView({
         <Card>
           <CardHeader>
             <CardTitle>Edit this concept</CardTitle>
-            <CardDescription>Describe one change. Edits run at best quality (3 credits).</CardDescription>
+            <CardDescription>
+              Describe one change. Edits run at best quality (3 credits).
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex flex-wrap gap-1.5">
@@ -536,7 +547,7 @@ export function RenderView({
           role="dialog"
           aria-modal="true"
           aria-label="Concept preview"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/70 p-4"
           onClick={() => {
             setLightbox(null);
           }}
@@ -545,7 +556,7 @@ export function RenderView({
           <img src={lightbox} alt="Concept visual" className="max-h-full max-w-full rounded-lg" />
           <button
             type="button"
-            className="absolute right-4 top-4 rounded-full bg-white/90 px-3 py-1 text-sm"
+            className="absolute right-4 top-4 rounded-full bg-card/90 px-3 py-1 text-sm"
             onClick={() => {
               setLightbox(null);
             }}

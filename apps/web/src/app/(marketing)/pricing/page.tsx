@@ -4,7 +4,7 @@ export const metadata = { title: "Pricing" };
 
 export default function PricingPage() {
   return (
-    <div className="mx-auto max-w-3xl space-y-8 px-4 py-16">
+    <div className="mx-auto max-w-3xl space-y-10 px-4 py-16">
       <div className="text-center">
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">Pricing</h1>
         <p className="mt-2 text-sm text-muted-foreground">

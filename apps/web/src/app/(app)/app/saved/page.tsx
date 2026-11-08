@@ -34,12 +34,7 @@ const COLLECTIONS = [
 
 type Collection = (typeof COLLECTIONS)[number][0];
 
-function href(params: {
-  view?: string;
-  collection?: string;
-  sort?: string;
-  q?: string;
-}): string {
+function href(params: { view?: string; collection?: string; sort?: string; q?: string }): string {
   const search = new URLSearchParams();
   if (params.view !== undefined && params.view !== "all") search.set("view", params.view);
   if (params.collection !== undefined && params.collection !== "all")
@@ -98,7 +93,8 @@ export default async function SavedPage({
   const all = await Promise.all(
     savedRaw.map(async (output) => {
       const roomLabel = ROOM_LABELS[output.job.room.type] ?? "Room";
-      const styleLabel = output.job.styleKey === null ? "Saved" : (getStyle(output.job.styleKey)?.label ?? "Saved");
+      const styleLabel =
+        output.job.styleKey === null ? "Saved" : (getStyle(output.job.styleKey)?.label ?? "Saved");
       return {
         id: output.id,
         roomId: output.job.room.id,
@@ -117,7 +113,8 @@ export default async function SavedPage({
     all: all.length,
     living: all.filter((item) => item.roomType === "LIVING_ROOM").length,
     bedroom: all.filter((item) => item.roomType === "BEDROOM").length,
-    later: all.filter((item) => item.roomType !== "LIVING_ROOM" && item.roomType !== "BEDROOM").length,
+    later: all.filter((item) => item.roomType !== "LIVING_ROOM" && item.roomType !== "BEDROOM")
+      .length,
   };
 
   const filtered = all.filter((item) => {
@@ -134,16 +131,31 @@ export default async function SavedPage({
     <div className="grid gap-6 lg:grid-cols-[1fr_250px]">
       <div className="min-w-0 space-y-5">
         <div>
-          <h1 className="text-4xl font-extrabold leading-[1.02] tracking-tight text-black sm:text-5xl">
+          <h1 className="text-4xl font-semibold leading-[1.02] tracking-tight text-foreground sm:text-5xl">
             Your saved concepts
           </h1>
-          <p className="mt-2 text-sm text-black/70">The looks you want to come back to.</p>
+          <p className="mt-2 text-sm text-muted-foreground">The looks you want to come back to.</p>
         </div>
 
-        <form action="/app/saved" method="get" className="flex items-center gap-2 border border-black bg-white px-3 py-2">
+        <form
+          action="/app/saved"
+          method="get"
+          className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2"
+        >
           {activeView === "all" ? null : <input type="hidden" name="view" value={activeView} />}
-          {activeCollection === "all" ? null : <input type="hidden" name="collection" value={activeCollection} />}
-          <svg className="h-4 w-4 shrink-0 text-black/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          {activeCollection === "all" ? null : (
+            <input type="hidden" name="collection" value={activeCollection} />
+          )}
+          <svg
+            className="h-4 w-4 shrink-0 text-muted-foreground"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
             <circle cx="11" cy="11" r="7" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
@@ -156,7 +168,7 @@ export default async function SavedPage({
             type="search"
             defaultValue={query}
             placeholder="Search your saved items..."
-            className="min-w-0 flex-1 bg-transparent text-sm text-black outline-none placeholder:text-black/50"
+            className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
           />
         </form>
 
@@ -167,12 +179,17 @@ export default async function SavedPage({
               return (
                 <Link
                   key={value}
-                  href={href({ view: value, collection: activeCollection, sort: activeSort, q: query })}
+                  href={href({
+                    view: value,
+                    collection: activeCollection,
+                    sort: activeSort,
+                    q: query,
+                  })}
                   aria-current={active ? "page" : undefined}
                   className={`border px-3 py-1.5 text-xs font-medium transition-colors ${
                     active
-                      ? "border-black bg-black text-white"
-                      : "border-black bg-white text-black hover:bg-black/5"
+                      ? "border-border bg-foreground text-white"
+                      : "border-border bg-card text-foreground hover:bg-foreground/5"
                   }`}
                 >
                   {label}
@@ -187,21 +204,21 @@ export default async function SavedPage({
               sort: activeSort === "recent" ? "oldest" : "recent",
               q: query,
             })}
-            className="border border-black bg-white px-3 py-1.5 text-xs font-medium text-black hover:bg-black/5"
+            className="rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-foreground/5"
           >
             {activeSort === "recent" ? "Recently saved" : "Oldest first"} ▾
           </Link>
         </div>
 
         {filtered.length === 0 ? (
-          <div className="border border-dashed border-black/40 bg-white p-10 text-center">
-            <p className="text-sm font-bold text-black">Nothing saved here yet</p>
-            <p className="mx-auto mt-1 max-w-sm text-xs text-black/60">
+          <div className="border border-dashed border-border bg-card p-10 text-center">
+            <p className="text-sm font-semibold text-foreground">Nothing saved here yet</p>
+            <p className="mx-auto mt-1 max-w-sm text-xs text-muted-foreground">
               Tap the bookmark on a concept and it will appear here.
             </p>
             <Link
               href="/app/inspiration"
-              className="mt-4 inline-block border border-black bg-[#1f4fff] px-4 py-2 text-sm font-bold text-white shadow-[3px_3px_0_0_#000]"
+              className="mt-4 inline-block rounded-xl border border-border bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm"
             >
               Find inspiration
             </Link>
@@ -210,33 +227,40 @@ export default async function SavedPage({
           <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {filtered.map((item) => (
               <li key={item.id}>
-                <article className="flex flex-col overflow-hidden border border-black bg-white">
-                  <Link href={`/app/projects/${item.projectId}/rooms/${item.roomId}`} className="block">
+                <article className="flex flex-col overflow-hidden rounded-xl border border-border bg-card">
+                  <Link
+                    href={`/app/projects/${item.projectId}/rooms/${item.roomId}`}
+                    className="block"
+                  >
                     {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
                     <img
                       src={item.url}
                       alt={item.title}
-                      className="h-36 w-full border-b border-black object-cover"
+                      className="h-36 w-full border-b border-border object-cover"
                       loading="lazy"
                     />
                   </Link>
                   <div className="flex flex-1 flex-col p-3">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-bold leading-snug text-black">{item.title}</p>
+                      <p className="text-sm font-semibold leading-snug text-foreground">
+                        {item.title}
+                      </p>
                       <span className="flex shrink-0 items-center gap-2">
-                        <span className="text-[#1f4fff]" aria-hidden="true">
+                        <span className="text-primary" aria-hidden="true">
                           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M6 3h12v18l-6-4-6 4z" />
                           </svg>
                         </span>
-                        <span className="text-black/60" aria-hidden="true">⋮</span>
+                        <span className="text-muted-foreground" aria-hidden="true">
+                          ⋮
+                        </span>
                       </span>
                     </div>
                     <div className="mt-2 flex flex-wrap gap-1.5">
-                      <span className="border border-black/30 px-1.5 py-0.5 text-[10px] text-black/70">
+                      <span className="rounded-xl border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground">
                         {item.roomLabel}
                       </span>
-                      <span className="border border-black/30 px-1.5 py-0.5 text-[10px] text-black/70">
+                      <span className="rounded-xl border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground">
                         {item.styleLabel}
                       </span>
                     </div>
@@ -248,12 +272,14 @@ export default async function SavedPage({
         )}
       </div>
 
-      <aside className="h-fit border border-black bg-white lg:sticky lg:top-4">
-        <div className="flex items-center justify-between border-b border-black px-3 py-2.5">
-          <p className="text-sm font-bold text-black">Collections</p>
-          <span className="text-black/60" aria-hidden="true">+</span>
+      <aside className="h-fit rounded-xl border border-border bg-card lg:sticky lg:top-4">
+        <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
+          <p className="text-sm font-semibold text-foreground">Collections</p>
+          <span className="text-muted-foreground" aria-hidden="true">
+            +
+          </span>
         </div>
-        <ul className="divide-y divide-black/10">
+        <ul className="divide-y divide-border">
           {COLLECTIONS.map(([value, label]) => {
             const active = activeCollection === value;
             return (
@@ -262,16 +288,27 @@ export default async function SavedPage({
                   href={href({ view: activeView, collection: value, sort: activeSort, q: query })}
                   aria-current={active ? "true" : undefined}
                   className={`flex items-center justify-between gap-2 px-3 py-2.5 text-xs transition-colors ${
-                    active ? "bg-black/[0.04] font-semibold text-black" : "text-black/80 hover:bg-black/[0.03]"
+                    active
+                      ? "bg-foreground/[0.04] font-semibold text-foreground"
+                      : "text-muted-foreground hover:bg-foreground/[0.03]"
                   }`}
                 >
                   <span className="flex min-w-0 items-center gap-2">
-                    <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <svg
+                      className="h-3.5 w-3.5 shrink-0"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
                       <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                     </svg>
                     <span className="truncate">{label}</span>
                   </span>
-                  <span className="shrink-0 text-black/50">{counts[value]}</span>
+                  <span className="shrink-0 text-muted-foreground">{counts[value]}</span>
                 </Link>
               </li>
             );

@@ -18,7 +18,7 @@ export function StudioNav({ mobile = false }: { mobile?: boolean }) {
       aria-label="Studio"
       className={
         mobile
-          ? "flex flex-wrap gap-2 border-b border-[#e4dfd3] bg-[#fbf9f3] px-4 py-2 lg:hidden"
+          ? "flex flex-wrap gap-2 border-b border-border bg-card px-4 py-2 lg:hidden"
           : "mt-6 space-y-1"
       }
     >
@@ -32,7 +32,7 @@ export function StudioNav({ mobile = false }: { mobile?: boolean }) {
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className={`${mobile ? "inline-flex" : "flex"} min-h-10 items-center rounded-lg px-3 py-2 text-sm ${active ? "bg-[#e7ece0] font-semibold text-[#2f5233]" : "text-[#405048] hover:bg-[#f0ece2]"}`}
+            className={`${mobile ? "inline-flex" : "flex"} min-h-10 items-center rounded-lg px-3 py-2 text-sm ${active ? "bg-sidebar-primary font-semibold text-sidebar-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
           >
             {item.label}
           </Link>

@@ -8,12 +8,12 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-slate-50 px-4 py-12">
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-background px-5 py-16">
       <div className="w-full max-w-sm">
-        <p className="mb-8 text-center text-lg font-semibold tracking-tight text-slate-900">
+        <p className="mb-8 text-center text-lg font-semibold tracking-tight text-foreground">
           RoomDesigner
         </p>
-        <main className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">{children}</main>
+        <main className="rounded-2xl border border-border bg-card p-8 shadow-sm">{children}</main>
       </div>
     </div>
   );

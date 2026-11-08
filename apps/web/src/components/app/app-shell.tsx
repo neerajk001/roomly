@@ -30,32 +30,34 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   const initial = (user.name.trim()[0] ?? "R").toUpperCase();
 
   return (
-    <div className="min-h-dvh bg-white text-black">
+    <div className="min-h-dvh bg-background text-foreground">
       <div className="mx-auto flex max-w-[1500px]">
-        <aside className="hidden w-60 shrink-0 flex-col border-r border-black bg-white px-4 py-5 lg:flex">
+        <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-border bg-sidebar px-5 py-7 lg:flex">
           <Link href="/app" className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center border border-black text-black">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-border text-foreground">
               <HouseIcon />
             </span>
-            <span className="text-base font-extrabold tracking-tight text-black">RoomDesigner</span>
+            <span className="text-base font-semibold tracking-tight text-foreground">
+              RoomDesigner
+            </span>
           </Link>
           <AppNav variant="sidebar" />
-          <div className="mt-auto space-y-2 border-t border-black/20 pt-4">
+          <div className="mt-auto space-y-2 border-t border-border pt-4">
             <Link
               href="/settings"
-              className="block text-sm text-black underline-offset-4 hover:underline"
+              className="block text-sm text-foreground underline-offset-4 hover:underline"
             >
               Settings
             </Link>
             <Link
               href="/#faq"
-              className="block text-sm text-black underline-offset-4 hover:underline"
+              className="block text-sm text-foreground underline-offset-4 hover:underline"
             >
               Help
             </Link>
-            <p className="truncate text-xs text-black/50">{user.email}</p>
+            <p className="truncate text-xs text-muted-foreground">{user.email}</p>
             <form action={signOutAction}>
-              <button type="submit" className="text-sm text-black underline">
+              <button type="submit" className="text-sm text-foreground underline">
                 Sign out
               </button>
             </form>
@@ -63,18 +65,18 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
         </aside>
 
         <div className="min-w-0 flex-1">
-          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-black bg-white px-4 py-3">
+          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-4 py-3">
             <div className="flex items-center gap-3">
               <Link href="/app" className="flex items-center gap-2 lg:hidden">
-                <span className="flex h-8 w-8 items-center justify-center border border-black text-black">
+                <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-border text-foreground">
                   <HouseIcon className="h-4 w-4" />
                 </span>
-                <span className="text-sm font-extrabold tracking-tight">RoomDesigner</span>
+                <span className="text-sm font-semibold tracking-tight">RoomDesigner</span>
               </Link>
               <WorkspaceSwitcher current="HOME" />
             </div>
             <div className="flex items-center gap-3">
-              <span className="flex items-center gap-2 border border-black bg-white px-3 py-1.5 text-xs font-medium">
+              <span className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-medium">
                 <svg
                   className="h-3.5 w-3.5"
                   viewBox="0 0 24 24"
@@ -91,7 +93,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
               </span>
               <Link
                 href="/new"
-                className="inline-flex items-center gap-2 border border-black bg-white px-3 py-2 text-xs font-medium text-black transition-colors hover:bg-black hover:text-white"
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-foreground hover:text-white"
               >
                 <svg
                   className="h-3.5 w-3.5"
@@ -111,7 +113,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
               </Link>
               <Link
                 href="/settings"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-black text-xs font-semibold text-white"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground text-xs font-semibold text-white"
                 aria-label="Account settings"
               >
                 {initial}
@@ -121,7 +123,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
 
           <AppNav variant="mobile" />
 
-          <main className="mx-auto w-full max-w-6xl px-4 py-6">{children}</main>
+          <main className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-8 sm:py-10">{children}</main>
         </div>
       </div>
     </div>

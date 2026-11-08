@@ -27,7 +27,7 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-10">
       <header className="space-y-1">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">Design concepts</p>
+        <p className="text-xs tracking-normal text-muted-foreground">Design concepts</p>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           {gallery.projectName}
         </h1>

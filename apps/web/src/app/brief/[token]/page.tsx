@@ -52,9 +52,7 @@ export default async function BriefPage({ params }: { params: Promise<{ token: s
       />
       <div className="mx-auto max-w-2xl space-y-6 px-4 py-10">
         <header className="space-y-1">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            {brief.brandName}
-          </p>
+          <p className="text-xs tracking-normal text-muted-foreground">{brief.brandName}</p>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Tell us about your room
           </h1>
@@ -62,7 +60,7 @@ export default async function BriefPage({ params }: { params: Promise<{ token: s
             A few questions and some photos. No account needed.
           </p>
         </header>
-        <div className="rounded-xl border border-border bg-background p-5 shadow-sm">
+        <div className="rounded-xl rounded-xl border border-border bg-background p-5 shadow-sm">
           <BriefForm token={token} clientName={brief.clientName} brandName={brief.brandName} />
         </div>
         <p className="text-xs text-muted-foreground">

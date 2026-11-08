@@ -16,7 +16,9 @@ export default async function PublicProposalPage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
-  const proposal = await getPublicProposal(prisma, token, (key) => presignGet(key)).catch(() => null);
+  const proposal = await getPublicProposal(prisma, token, (key) => presignGet(key)).catch(
+    () => null,
+  );
   if (proposal === null) notFound();
 
   return (
@@ -29,9 +31,7 @@ export default async function PublicProposalPage({
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-10">
         <header className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-              {proposal.brandName}
-            </p>
+            <p className="text-xs tracking-normal text-muted-foreground">{proposal.brandName}</p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">
               {proposal.title}
             </h1>
@@ -42,7 +42,11 @@ export default async function PublicProposalPage({
           </div>
           {proposal.logoUrl !== null && (
             /* eslint-disable-next-line @next/next/no-img-element -- signed URL */
-            <img src={proposal.logoUrl} alt={`${proposal.brandName} logo`} className="h-10 w-auto" />
+            <img
+              src={proposal.logoUrl}
+              alt={`${proposal.brandName} logo`}
+              className="h-10 w-auto"
+            />
           )}
         </header>
 
@@ -62,9 +66,16 @@ export default async function PublicProposalPage({
           <h2 className="text-lg font-semibold text-foreground">Options</h2>
           <ul className="grid gap-3 sm:grid-cols-2">
             {proposal.options.map((option) => (
-              <li key={option.id} className="overflow-hidden rounded-lg border border-border bg-background">
+              <li
+                key={option.id}
+                className="overflow-hidden rounded-lg border border-border bg-background"
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
-                <img src={option.url} alt={option.caption ?? "Concept option"} className="block w-full" />
+                <img
+                  src={option.url}
+                  alt={option.caption ?? "Concept option"}
+                  className="block w-full"
+                />
                 {option.caption !== null && (
                   <p className="border-t border-border px-3 py-2 text-sm">{option.caption}</p>
                 )}
@@ -76,11 +87,11 @@ export default async function PublicProposalPage({
           </p>
         </section>
 
-        <section className="rounded-xl border border-border bg-background p-5">
+        <section className="rounded-xl rounded-xl border border-border bg-background p-5">
           <ProposalActions token={token} proposal={proposal} />
         </section>
 
-        <details className="rounded-xl border border-border bg-background p-5">
+        <details className="rounded-xl rounded-xl border border-border bg-background p-5">
           <summary className="cursor-pointer text-sm font-medium">
             Estimate (v{proposal.estimate.version}) —{" "}
             {formatMoney(proposal.estimate.totalMinor, proposal.currency)}

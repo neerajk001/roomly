@@ -52,8 +52,8 @@ export function ModeCards({
       benefits: HOME_BENEFITS,
       image: "/demo/living-after.jpg",
       cta: "Continue as homeowner",
-      accent: "bg-[#FFD400]",
-      selectedBorder: "border-[#FFD400]",
+      accent: "bg-accent",
+      selectedBorder: "border-accent",
     },
     {
       value: "PRO" as const,
@@ -63,8 +63,8 @@ export function ModeCards({
       benefits: PRO_BENEFITS,
       image: "/demo/office-after.jpg",
       cta: "Continue as professional",
-      accent: "bg-[#cfe3ff]",
-      selectedBorder: "border-[#1f4fff]",
+      accent: "bg-accent",
+      selectedBorder: "border-primary",
     },
   ];
 
@@ -90,15 +90,15 @@ export function ModeCards({
           return (
             <div
               key={option.value}
-              className={`overflow-hidden border bg-white transition-colors ${
-                active ? option.selectedBorder : "border-black"
+              className={`overflow-hidden border bg-card transition-colors ${
+                active ? option.selectedBorder : "border-border"
               }`}
             >
               <div className="grid sm:grid-cols-[1fr_45%]">
                 <div className="p-5 sm:p-6">
                   <div className="flex items-center gap-3">
                     <span
-                      className={`flex h-11 w-11 items-center justify-center border border-black text-black ${option.accent}`}
+                      className={`flex h-11 w-11 items-center justify-center rounded-xl border border-border text-foreground ${option.accent}`}
                     >
                       {option.value === "HOME" ? (
                         <svg
@@ -135,20 +135,22 @@ export function ModeCards({
                         </svg>
                       )}
                     </span>
-                    <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-black">
+                    <span className="text-[11px] font-semibold tracking-normal text-foreground">
                       {option.label}
                     </span>
                   </div>
 
-                  <h2 className="mt-4 font-serif text-2xl font-bold tracking-tight text-black">
+                  <h2 className="mt-4 font-sans text-2xl font-semibold tracking-tight text-foreground">
                     {option.title}
                   </h2>
-                  <p className="mt-2 text-sm leading-relaxed text-black/70">{option.body}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    {option.body}
+                  </p>
 
                   <ul className="mt-4 space-y-2">
                     {option.benefits.map((benefit) => (
-                      <li key={benefit} className="flex items-center gap-3 text-sm text-black">
-                        <span className="flex h-5 w-5 shrink-0 items-center justify-center border border-black bg-white text-black">
+                      <li key={benefit} className="flex items-center gap-3 text-sm text-foreground">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-foreground">
                           <CheckIcon />
                         </span>
                         <span>{benefit}</span>
@@ -163,10 +165,10 @@ export function ModeCards({
                       selectMode(option.value);
                     }}
                     aria-pressed={active}
-                    className={`mt-6 flex w-full items-center justify-center gap-3 border border-black px-5 py-3 text-sm font-bold transition-all ${
+                    className={`mt-6 flex w-full items-center justify-center gap-3 rounded-xl border border-border px-5 py-3 text-sm font-semibold transition-all ${
                       option.value === "HOME"
-                        ? "bg-[#1f4fff] text-white shadow-[4px_4px_0_0_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0_0_#000]"
-                        : "bg-white text-black shadow-[4px_4px_0_0_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0_0_#000]"
+                        ? "bg-primary text-white shadow-sm   hover:shadow-sm"
+                        : "bg-card text-foreground shadow-sm   hover:shadow-sm"
                     }`}
                   >
                     <span>{option.cta}</span>
@@ -183,7 +185,7 @@ export function ModeCards({
                     aria-hidden="true"
                   />
                   {active && (
-                    <span className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center bg-[#1f4fff] text-white">
+                    <span className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center bg-primary text-white">
                       <CheckIcon className="h-4 w-4" />
                     </span>
                   )}
@@ -195,7 +197,7 @@ export function ModeCards({
       </div>
 
       {mode === "PRO" && (
-        <div className="grid gap-4 border border-black bg-white p-4 sm:grid-cols-3">
+        <div className="grid gap-4 rounded-xl border border-border bg-card p-4 sm:grid-cols-3">
           <div className="space-y-2 sm:col-span-1">
             <Label htmlFor="studioName">Studio name</Label>
             <Input
@@ -212,7 +214,7 @@ export function ModeCards({
               id="currency"
               name="currency"
               defaultValue={defaultCurrency}
-              className="h-9 w-full border border-black bg-white px-3 text-sm"
+              className="h-9 w-full rounded-xl border border-border bg-card px-3 text-sm"
             >
               {CURRENCIES.map((code) => (
                 <option key={code} value={code}>
@@ -227,7 +229,7 @@ export function ModeCards({
               id="unitSystem"
               name="unitSystem"
               defaultValue={defaultUnitSystem}
-              className="h-9 w-full border border-black bg-white px-3 text-sm"
+              className="h-9 w-full rounded-xl border border-border bg-card px-3 text-sm"
             >
               <option value="METRIC">Metric (m, cm)</option>
               <option value="IMPERIAL">Imperial (ft, in)</option>
@@ -245,12 +247,12 @@ export function ModeCards({
 
       {
         <div className="flex flex-col items-start justify-between gap-3 pt-1 sm:flex-row sm:items-center">
-          <p className="text-xs text-black/60">You can change workspace settings later.</p>
+          <p className="text-xs text-muted-foreground">You can change workspace settings later.</p>
           <button
             type="submit"
             disabled={pending}
             aria-busy={pending}
-            className="flex w-full items-center justify-center gap-3 border border-black bg-[#1f4fff] px-5 py-3 text-sm font-bold text-white shadow-[4px_4px_0_0_#000] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0_0_#000] disabled:opacity-60 sm:w-auto"
+            className="flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all   hover:shadow-sm disabled:opacity-60 sm:w-auto"
           >
             {pending
               ? "Setting up..."

@@ -236,22 +236,22 @@ export function HomeRoomResults({
         <div>
           <Link
             href="/app/spaces"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-black/70 hover:text-black"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
           >
             <span aria-hidden="true">←</span> Back to my spaces
           </Link>
-          <h1 className="mt-2 text-4xl font-extrabold leading-[1.02] tracking-tight text-black sm:text-5xl">
+          <h1 className="mt-2 text-4xl font-semibold leading-[1.02] tracking-tight text-foreground sm:text-5xl">
             {status === "SUCCEEDED"
               ? "Your room, reimagined."
               : `Design your ${roomLabel.toLowerCase()}`}
           </h1>
-          <p className="mt-2 text-sm font-medium text-black/70">
+          <p className="mt-2 text-sm font-medium text-muted-foreground">
             {roomLabel} · {dimensions}
           </p>
         </div>
         <div className="flex flex-wrap items-stretch gap-3">
-          <div className="flex items-center gap-3 border border-black bg-white p-3 shadow-[3px_3px_0_0_#000]">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-black bg-[#FFD400] text-black">
+          <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-sm">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-accent text-foreground">
               {status === "SUCCEEDED" ? (
                 <svg
                   className="h-5 w-5"
@@ -272,7 +272,7 @@ export function HomeRoomResults({
               )}
             </span>
             <div>
-              <p className="text-sm font-bold text-black">
+              <p className="text-sm font-semibold text-foreground">
                 {status === "SUCCEEDED"
                   ? `${String(outputs.length)} concepts ready`
                   : status === "FAILED"
@@ -281,7 +281,7 @@ export function HomeRoomResults({
                       ? "Ready to generate"
                       : "Generating concepts..."}
               </p>
-              <p className="mt-0.5 max-w-[230px] text-[11px] leading-snug text-black/60">
+              <p className="mt-0.5 max-w-[230px] text-[11px] leading-snug text-muted-foreground">
                 {status === "SUCCEEDED"
                   ? "Based on your photo and preferences."
                   : status === "FAILED"
@@ -304,7 +304,7 @@ export function HomeRoomResults({
                   notes: notes ?? "",
                 });
               }}
-              className="inline-flex items-center gap-2 border border-black bg-[#1f4fff] px-4 py-3 text-sm font-bold text-white shadow-[4px_4px_0_0_#000] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0_0_#000] disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-primary px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all   hover:shadow-sm disabled:opacity-60"
             >
               Generate more
               <span aria-hidden="true">✦</span>
@@ -312,7 +312,7 @@ export function HomeRoomResults({
           )}
           <Link
             href={`/app/projects/${projectId}`}
-            className="inline-flex items-center gap-2 border border-black bg-white px-4 py-3 text-sm font-bold text-black transition-colors hover:bg-black hover:text-white"
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-foreground hover:text-white"
           >
             <svg
               className="h-4 w-4"
@@ -339,9 +339,9 @@ export function HomeRoomResults({
       )}
 
       {current === null && (
-        <div className="border border-black bg-white p-8 text-center">
-          <p className="text-lg font-extrabold text-black">Ready to generate</p>
-          <p className="mx-auto mt-1 max-w-md text-sm text-black/60">
+        <div className="rounded-xl border border-border bg-card p-8 text-center">
+          <p className="text-lg font-semibold text-foreground">Ready to generate</p>
+          <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
             Create 3 concept visuals from your room photo, style and preferences.
           </p>
           <button
@@ -350,7 +350,7 @@ export function HomeRoomResults({
             onClick={() => {
               submitRestyle({ styleKey: "modern", quality: "draft", variations: 3, notes: "" });
             }}
-            className="mt-4 inline-flex items-center gap-2 border border-black bg-[#1f4fff] px-5 py-2.5 text-sm font-bold text-white shadow-[4px_4px_0_0_#000] disabled:opacity-60"
+            className="mt-4 inline-flex items-center gap-2 rounded-xl border border-border bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm disabled:opacity-60"
           >
             Generate 3 concepts <span aria-hidden="true">→</span>
           </button>
@@ -358,16 +358,16 @@ export function HomeRoomResults({
       )}
 
       {current !== null && (status === "QUEUED" || status === "RUNNING") && (
-        <div className="border border-black bg-white p-5">
-          <p className="text-base font-extrabold text-black">Generating concepts...</p>
-          <p className="mt-1 text-xs text-black/60">
+        <div className="rounded-xl border border-border bg-card p-5">
+          <p className="text-base font-semibold text-foreground">Generating concepts...</p>
+          <p className="mt-1 text-xs text-muted-foreground">
             This usually takes a few seconds. You can leave this page; results are saved.
           </p>
           <div className="mt-4 grid grid-cols-3 gap-3" aria-hidden="true">
             {[0, 1, 2].map((index) => (
               <div
                 key={index}
-                className="h-32 animate-pulse border border-black/20 bg-black/5"
+                className="h-32 animate-pulse rounded-xl border border-border bg-foreground/5"
                 style={{ animationDelay: `${String(index * 120)}ms` }}
               />
             ))}
@@ -376,9 +376,9 @@ export function HomeRoomResults({
       )}
 
       {current !== null && status === "FAILED" && (
-        <div className="border border-black bg-white p-5">
-          <p className="text-base font-extrabold text-black">That render didn&apos;t work</p>
-          <p className="mt-1 text-sm text-black/60">
+        <div className="rounded-xl border border-border bg-card p-5">
+          <p className="text-base font-semibold text-foreground">That render didn&apos;t work</p>
+          <p className="mt-1 text-sm text-muted-foreground">
             {current.errorMessage ?? "Something went wrong."} Your credits were refunded.
           </p>
           <button
@@ -392,7 +392,7 @@ export function HomeRoomResults({
                 notes: notes ?? "",
               });
             }}
-            className="mt-4 inline-flex items-center gap-2 border border-black bg-white px-4 py-2 text-sm font-bold text-black disabled:opacity-60"
+            className="mt-4 inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground disabled:opacity-60"
           >
             Try again
           </button>
@@ -402,10 +402,10 @@ export function HomeRoomResults({
       {current !== null && status === "SUCCEEDED" && outputs.length > 0 && (
         <>
           <section>
-            <h2 className="text-2xl font-extrabold tracking-tight text-black">
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
               Choose your favourite design
             </h2>
-            <p className="mt-1 text-xs text-black/60">
+            <p className="mt-1 text-xs text-muted-foreground">
               {outputs.length} unique concepts based on your room, style and budget.
             </p>
             <ul className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -414,8 +414,8 @@ export function HomeRoomResults({
                 return (
                   <li key={output.id}>
                     <article
-                      className={`relative flex h-full flex-col overflow-hidden border bg-white ${
-                        index === 0 ? "border-[#1f4fff] ring-1 ring-[#1f4fff]" : "border-black"
+                      className={`relative flex h-full flex-col overflow-hidden border bg-card ${
+                        index === 0 ? "border-primary ring-1 ring-primary" : "border-border"
                       }`}
                     >
                       <div className="relative">
@@ -436,7 +436,7 @@ export function HomeRoomResults({
                           />
                         </button>
                         {index === 0 && (
-                          <span className="absolute left-2 top-2 inline-flex items-center gap-1 border border-black bg-[#FFD400] px-2 py-1 text-[10px] font-extrabold uppercase tracking-wide text-black">
+                          <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-xl border border-border bg-accent px-2 py-1 text-[10px] font-semibold tracking-normal text-foreground">
                             <span aria-hidden="true">✦</span> Best match
                           </span>
                         )}
@@ -449,7 +449,7 @@ export function HomeRoomResults({
                           onClick={() => {
                             toggleFavorite(output);
                           }}
-                          className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center border border-black bg-white text-black"
+                          className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-xl border border-border bg-card text-foreground"
                         >
                           <svg
                             className="h-4 w-4"
@@ -466,10 +466,10 @@ export function HomeRoomResults({
                         </button>
                       </div>
                       <div className="flex flex-1 flex-col p-3">
-                        <p className="text-sm font-extrabold text-black">
+                        <p className="text-sm font-semibold text-foreground">
                           {String(index + 1).padStart(2, "0")} · {label}
                         </p>
-                        <p className="mt-1 text-[11px] leading-relaxed text-black/60">
+                        <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
                           {styleDescription(styleKey)}
                         </p>
                         <div className="mt-auto flex gap-2 pt-3">
@@ -478,7 +478,7 @@ export function HomeRoomResults({
                             onClick={() => {
                               setLightbox(`/api/render-outputs/${output.id}/file`);
                             }}
-                            className="inline-flex flex-1 items-center justify-center gap-1.5 border border-black bg-[#1f4fff] px-3 py-2 text-[11px] font-bold text-white"
+                            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-primary px-3 py-2 text-[11px] font-semibold text-white"
                           >
                             View full design <span aria-hidden="true">→</span>
                           </button>
@@ -489,7 +489,7 @@ export function HomeRoomResults({
                               setInstruction("");
                               setEditError(null);
                             }}
-                            className="inline-flex flex-1 items-center justify-center gap-1.5 border border-black bg-white px-3 py-2 text-[11px] font-bold text-black hover:bg-black/5"
+                            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-[11px] font-semibold text-foreground hover:bg-foreground/5"
                           >
                             <svg
                               className="h-3.5 w-3.5"
@@ -513,19 +513,21 @@ export function HomeRoomResults({
                 );
               })}
             </ul>
-            <p className="mt-2 text-[11px] text-black/60">
+            <p className="mt-2 text-[11px] text-muted-foreground">
               AI-generated concept visual. Not to scale.
             </p>
           </section>
 
           <div className="grid gap-4 lg:grid-cols-[1.35fr_1fr]">
-            <section className="border border-black bg-white">
-              <div className="flex flex-wrap items-start justify-between gap-2 border-b border-black px-3 py-2.5">
+            <section className="rounded-xl border border-border bg-card">
+              <div className="flex flex-wrap items-start justify-between gap-2 border-b border-border px-3 py-2.5">
                 <div>
-                  <h2 className="text-base font-extrabold text-black">Before / After</h2>
-                  <p className="text-[11px] text-black/60">See how your space transforms.</p>
+                  <h2 className="text-base font-semibold text-foreground">Before / After</h2>
+                  <p className="text-[11px] text-muted-foreground">
+                    See how your space transforms.
+                  </p>
                 </div>
-                <div className="flex border border-black text-[11px] font-semibold">
+                <div className="flex rounded-xl border border-border text-[11px] font-semibold">
                   <button
                     type="button"
                     aria-pressed={mode === "side"}
@@ -534,8 +536,8 @@ export function HomeRoomResults({
                     }}
                     className={
                       mode === "side"
-                        ? "bg-[#1f4fff] px-3 py-1.5 text-white"
-                        : "bg-white px-3 py-1.5 text-black"
+                        ? "bg-primary px-3 py-1.5 text-white"
+                        : "bg-card px-3 py-1.5 text-foreground"
                     }
                   >
                     Side by side
@@ -548,8 +550,8 @@ export function HomeRoomResults({
                     }}
                     className={
                       mode === "slider"
-                        ? "bg-[#1f4fff] px-3 py-1.5 text-white"
-                        : "bg-white px-3 py-1.5 text-black"
+                        ? "bg-primary px-3 py-1.5 text-white"
+                        : "bg-card px-3 py-1.5 text-foreground"
                     }
                   >
                     Slider
@@ -558,33 +560,33 @@ export function HomeRoomResults({
               </div>
               <div className="p-3">
                 {sourceUrl === null ? (
-                  <p className="py-10 text-center text-xs text-black/50">
+                  <p className="py-10 text-center text-xs text-muted-foreground">
                     Add a room photo to see the before / after comparison.
                   </p>
                 ) : mode === "side" ? (
                   <div className="grid grid-cols-2 gap-2">
-                    <figure className="relative overflow-hidden border border-black">
+                    <figure className="relative overflow-hidden rounded-xl border border-border">
                       {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
                       <img src={sourceUrl} alt="Before" className="h-56 w-full object-cover" />
-                      <figcaption className="absolute bottom-2 left-2 bg-black px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+                      <figcaption className="absolute bottom-2 left-2 bg-foreground px-2 py-1 text-[10px] font-semibold tracking-normal text-white">
                         Before
                       </figcaption>
                     </figure>
-                    <figure className="relative overflow-hidden border border-black">
+                    <figure className="relative overflow-hidden rounded-xl border border-border">
                       {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
                       <img
                         src={selected?.url ?? ""}
                         alt="After"
                         className="h-56 w-full object-cover"
                       />
-                      <figcaption className="absolute bottom-2 right-2 bg-black px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+                      <figcaption className="absolute bottom-2 right-2 bg-foreground px-2 py-1 text-[10px] font-semibold tracking-normal text-white">
                         After (selected concept)
                       </figcaption>
                     </figure>
                   </div>
                 ) : (
                   <div>
-                    <div className="relative overflow-hidden border border-black">
+                    <div className="relative overflow-hidden rounded-xl border border-border">
                       {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
                       <img
                         src={sourceUrl}
@@ -606,14 +608,14 @@ export function HomeRoomResults({
                           }}
                         />
                       </div>
-                      <span className="absolute bottom-2 left-2 bg-black px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+                      <span className="absolute bottom-2 left-2 bg-foreground px-2 py-1 text-[10px] font-semibold tracking-normal text-white">
                         Before
                       </span>
-                      <span className="absolute bottom-2 right-2 bg-black px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+                      <span className="absolute bottom-2 right-2 bg-foreground px-2 py-1 text-[10px] font-semibold tracking-normal text-white">
                         After
                       </span>
                     </div>
-                    <label className="mt-2 block text-[11px] text-black/60">
+                    <label className="mt-2 block text-[11px] text-muted-foreground">
                       Drag to compare
                       <input
                         type="range"
@@ -624,7 +626,7 @@ export function HomeRoomResults({
                         onChange={(event) => {
                           setClip(Number(event.target.value));
                         }}
-                        className="mt-1 w-full accent-[#1f4fff]"
+                        className="mt-1 w-full accent-primary"
                       />
                     </label>
                   </div>
@@ -632,32 +634,32 @@ export function HomeRoomResults({
               </div>
             </section>
 
-            <section className="border border-black bg-white p-4">
+            <section className="rounded-xl border border-border bg-card p-4">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <h2 className="text-base font-extrabold text-black">Estimated cost range</h2>
-                  <p className="mt-1 text-[11px] leading-snug text-black/60">
+                  <h2 className="text-base font-semibold text-foreground">Estimated cost range</h2>
+                  <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
                     Based on selected items in this concept. Prices may vary by location and
                     provider.
                   </p>
                 </div>
-                <span className="shrink-0 border border-black bg-white px-2 py-1 text-[11px] font-semibold">
+                <span className="shrink-0 rounded-xl border border-border bg-card px-2 py-1 text-[11px] font-semibold">
                   {estimate.currency}
                 </span>
               </div>
-              <p className="mt-3 text-2xl font-extrabold tracking-tight text-black">
+              <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
                 {formatMoney(estimate.lowMinor, estimate.currency)} –{" "}
                 {formatMoney(estimate.highMinor, estimate.currency)}
               </p>
-              <p className="mt-4 text-xs font-bold text-black">Top recommendations</p>
-              <ul className="mt-2 divide-y divide-black/10">
+              <p className="mt-4 text-xs font-semibold text-foreground">Top recommendations</p>
+              <ul className="mt-2 divide-y divide-border">
                 {estimate.top.map((item) => (
                   <li
                     key={item.label}
                     className="flex items-center justify-between gap-2 py-2 text-xs"
                   >
-                    <span className="truncate text-black/80">{item.label}</span>
-                    <span className="shrink-0 font-semibold text-black">
+                    <span className="truncate text-muted-foreground">{item.label}</span>
+                    <span className="shrink-0 font-semibold text-foreground">
                       {formatMoney(item.totalMinor, estimate.currency)}
                     </span>
                   </li>
@@ -665,15 +667,15 @@ export function HomeRoomResults({
               </ul>
               <Link
                 href="#cost-breakdown"
-                className="mt-3 block border border-black bg-white px-3 py-2 text-center text-xs font-bold text-black transition-colors hover:bg-black hover:text-white"
+                className="mt-3 block rounded-xl border border-border bg-card px-3 py-2 text-center text-xs font-semibold text-foreground transition-colors hover:bg-foreground hover:text-white"
               >
                 View itemized costs →
               </Link>
             </section>
           </div>
 
-          <details className="border border-black bg-white">
-            <summary className="flex cursor-pointer items-center justify-between gap-2 px-4 py-3 text-sm font-bold text-black">
+          <details className="rounded-xl border border-border bg-card">
+            <summary className="flex cursor-pointer items-center justify-between gap-2 px-4 py-3 text-sm font-semibold text-foreground">
               <span className="flex items-center gap-2">
                 <svg
                   className="h-4 w-4"
@@ -693,25 +695,25 @@ export function HomeRoomResults({
               </span>
               <span aria-hidden="true">⌄</span>
             </summary>
-            <div className="border-t border-black px-4 py-3">
+            <div className="border-t border-border px-4 py-3">
               <dl className="grid gap-3 text-xs sm:grid-cols-2">
                 <div>
-                  <dt className="text-black/50">Room</dt>
-                  <dd className="font-semibold text-black">{roomLabel}</dd>
+                  <dt className="text-muted-foreground">Room</dt>
+                  <dd className="font-semibold text-foreground">{roomLabel}</dd>
                 </div>
                 <div>
-                  <dt className="text-black/50">Dimensions</dt>
-                  <dd className="font-semibold text-black">{dimensions}</dd>
+                  <dt className="text-muted-foreground">Dimensions</dt>
+                  <dd className="font-semibold text-foreground">{dimensions}</dd>
                 </div>
                 <div>
-                  <dt className="text-black/50">Keep items</dt>
-                  <dd className="font-semibold text-black">
+                  <dt className="text-muted-foreground">Keep items</dt>
+                  <dd className="font-semibold text-foreground">
                     {keepList.length > 0 ? keepList.join(", ") : "None"}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-black/50">Notes</dt>
-                  <dd className="font-semibold text-black">
+                  <dt className="text-muted-foreground">Notes</dt>
+                  <dd className="font-semibold text-foreground">
                     {notes === null || notes === "" ? "None" : notes}
                   </dd>
                 </div>
@@ -722,7 +724,7 @@ export function HomeRoomResults({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Link
               href="/app/spaces"
-              className="inline-flex items-center gap-2 border border-black bg-white px-4 py-2.5 text-sm font-bold text-black"
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground"
             >
               <span aria-hidden="true">←</span> Back to my spaces
             </Link>
@@ -732,7 +734,7 @@ export function HomeRoomResults({
                 onClick={() => {
                   if (selected !== null) toggleFavorite(selected);
                 }}
-                className="inline-flex items-center gap-2 border border-black bg-white px-4 py-2.5 text-sm font-bold text-black hover:bg-black/5"
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-foreground/5"
               >
                 <svg
                   className="h-4 w-4"
@@ -757,7 +759,7 @@ export function HomeRoomResults({
                     setEditError(null);
                   }
                 }}
-                className="inline-flex items-center gap-2 border border-black bg-[#1f4fff] px-4 py-2.5 text-sm font-bold text-white shadow-[3px_3px_0_0_#000]"
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm"
               >
                 Edit this design <span aria-hidden="true">→</span>
               </button>
@@ -767,9 +769,9 @@ export function HomeRoomResults({
       )}
 
       {editingOutputId !== null && (
-        <section className="border border-black bg-white p-4">
-          <h2 className="text-base font-extrabold text-black">Edit this concept</h2>
-          <p className="mt-1 text-xs text-black/60">
+        <section className="rounded-xl border border-border bg-card p-4">
+          <h2 className="text-base font-semibold text-foreground">Edit this concept</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
             Describe one change. Edits run at best quality (3 credits).
           </p>
           <div className="mt-3 flex flex-wrap gap-1.5">
@@ -780,7 +782,7 @@ export function HomeRoomResults({
                 onClick={() => {
                   setInstruction(example);
                 }}
-                className="border border-black bg-white px-2.5 py-1 text-xs text-black hover:bg-black/5"
+                className="rounded-xl border border-border bg-card px-2.5 py-1 text-xs text-foreground hover:bg-foreground/5"
               >
                 {example}
               </button>
@@ -802,7 +804,7 @@ export function HomeRoomResults({
               setInstruction(event.target.value);
             }}
             placeholder="E.g. make the sofa a deep green, keep everything else the same"
-            className="mt-2 w-full border border-black bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#1f4fff]"
+            className="mt-2 w-full rounded-xl border border-border bg-card px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
           />
           <div className="mt-2 flex items-center gap-2">
             <button
@@ -810,7 +812,7 @@ export function HomeRoomResults({
               disabled={editPending || instruction.trim().length < 3}
               onClick={submitEdit}
               aria-busy={editPending}
-              className="border border-black bg-[#1f4fff] px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
+              className="rounded-xl border border-border bg-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
             >
               {editPending ? "Starting..." : "Apply change"}
             </button>
@@ -819,7 +821,7 @@ export function HomeRoomResults({
               onClick={() => {
                 setEditingOutputId(null);
               }}
-              className="border border-black bg-white px-4 py-2 text-sm font-bold text-black"
+              className="rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground"
             >
               Cancel
             </button>
@@ -832,7 +834,7 @@ export function HomeRoomResults({
           role="dialog"
           aria-modal="true"
           aria-label="Concept preview"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/70 p-4"
           onClick={() => {
             setLightbox(null);
           }}
@@ -841,11 +843,11 @@ export function HomeRoomResults({
           <img
             src={lightbox}
             alt="Concept visual"
-            className="max-h-full max-w-full border border-black bg-white"
+            className="max-h-full max-w-full rounded-xl border border-border bg-card"
           />
           <button
             type="button"
-            className="absolute right-4 top-4 border border-black bg-white px-3 py-1 text-sm font-bold text-black"
+            className="absolute right-4 top-4 rounded-xl border border-border bg-card px-3 py-1 text-sm font-semibold text-foreground"
             onClick={() => {
               setLightbox(null);
             }}

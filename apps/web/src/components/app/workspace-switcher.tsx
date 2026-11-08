@@ -9,14 +9,14 @@ export function WorkspaceSwitcher({ current }: { current: "HOME" | "PRO" }) {
       <Link
         href="/app"
         aria-current={current === "HOME" ? "page" : undefined}
-        className={`rounded-md px-3 py-2 ${current === "HOME" ? "bg-black text-white" : "hover:bg-black/5"}`}
+        className={`rounded-md px-3 py-2 ${current === "HOME" ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-foreground/5"}`}
       >
         Homeowner
       </Link>
       <Link
         href="/studio"
         aria-current={current === "PRO" ? "page" : undefined}
-        className={`rounded-md px-3 py-2 ${current === "PRO" ? "bg-black text-white" : "hover:bg-black/5"}`}
+        className={`rounded-md px-3 py-2 ${current === "PRO" ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-foreground/5"}`}
       >
         Interior designer
       </Link>

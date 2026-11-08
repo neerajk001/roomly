@@ -38,9 +38,9 @@ export function HeroInteractive() {
   const [activeStyle, setActiveStyle] = useState(STYLES[0]);
 
   return (
-    <div className="w-full">
-      <div className="border border-black bg-white p-2.5">
-        <div className="border border-black">
+    <div className="min-w-0 w-full">
+      <div className="rounded-xl border border-border bg-card p-2.5">
+        <div className="rounded-xl border border-border">
           <BeforeAfterSlider
             key={activeStyle.id}
             beforeImage="/demo/hero-before.jpg"
@@ -55,13 +55,13 @@ export function HeroInteractive() {
 
         {/* Style selection strip */}
         <div className="mt-3">
-          <div className="mb-2 flex items-center justify-between gap-2 px-0.5">
-            <span className="text-[11px] font-bold uppercase tracking-wide text-black">
+          <div className="mb-2 flex min-w-0 flex-wrap items-center justify-between gap-2 px-0.5">
+            <span className="text-[11px] font-semibold tracking-normal text-foreground">
               Select AI Style Concept:
             </span>
-            <span className="truncate text-[11px] text-black">
-              <span className="font-bold uppercase">{activeStyle.name}</span>
-              <span className="text-black/60"> · {activeStyle.desc}</span>
+            <span className="min-w-0 truncate text-[11px] text-foreground">
+              <span className="font-semibold uppercase">{activeStyle.name}</span>
+              <span className="text-muted-foreground"> · {activeStyle.desc}</span>
             </span>
           </div>
 
@@ -75,10 +75,10 @@ export function HeroInteractive() {
                   onClick={() => setActiveStyle(style)}
                   aria-pressed={isActive}
                   className={`group flex flex-col border text-left transition-colors ${
-                    isActive ? "border-black" : "border-black/30 hover:border-black"
+                    isActive ? "border-border" : "border-border hover:border-border"
                   }`}
                 >
-                  <span className="relative block h-12 w-full overflow-hidden border-b border-black/20 sm:h-16">
+                  <span className="relative block h-12 w-full overflow-hidden border-b border-border sm:h-16">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={style.thumb}
@@ -87,8 +87,8 @@ export function HeroInteractive() {
                     />
                   </span>
                   <span
-                    className={`block py-1 text-center text-[10px] font-bold uppercase tracking-wide ${
-                      isActive ? "bg-[#FFD400] text-black" : "bg-white text-black"
+                    className={`block py-1 text-center text-[10px] font-semibold tracking-normal ${
+                      isActive ? "bg-accent text-foreground" : "bg-card text-foreground"
                     }`}
                   >
                     {style.name}

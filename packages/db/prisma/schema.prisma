@@ -209,6 +209,7 @@ model Workspace {
   creditLedger CreditLedger[]
   briefLinks   BriefLink[]
   subscription Subscription?
+  proposalEmails ProposalEmail[]
 
   @@index([ownerId])
 }
@@ -472,10 +473,15 @@ model Proposal {
   approvedAt       DateTime?
   approvedOutputId String?
   pdfStorageKey    String?
+  snapshot         Json?
+  revisesId        String?
+  supersededById   String?
+  supersedePrevious Boolean @default(false)
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 
   comments ProposalComment[]
+  emailEvents ProposalEmail[]
 
   @@index([projectId])
 }
@@ -490,6 +496,23 @@ model ProposalComment {
   createdAt  DateTime      @default(now())
 
   @@index([proposalId])
+}
+
+model ProposalEmail {
+  id            String @id @default(cuid())
+  workspaceId   String
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  proposalId    String
+  proposal      Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  kind          String
+  dedupeKey     String @unique
+  commentId     String?
+  attempts      Int @default(0)
+  lastAttemptAt DateTime?
+  sentAt        DateTime?
+  createdAt     DateTime @default(now())
+  @@index([workspaceId])
+  @@index([sentAt, lastAttemptAt])
 }
 
 model BriefLink {

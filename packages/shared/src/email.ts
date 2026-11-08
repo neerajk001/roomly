@@ -5,6 +5,7 @@ export interface SendEmailInput {
   subject: string;
   text: string;
   html?: string;
+  idempotencyKey?: string;
 }
 
 /**
@@ -39,6 +40,7 @@ const createResendSender = (apiKey: string, from: string): EmailSender => ({
       headers: {
         authorization: `Bearer ${apiKey}`,
         "content-type": "application/json",
+        ...(input.idempotencyKey !== undefined ? { "Idempotency-Key": input.idempotencyKey } : {}),
       },
       body: JSON.stringify({
         from,

@@ -13,6 +13,8 @@ import { cleanupUnconfirmedAssets } from "./jobs/cleanup-assets";
 import { recoverStuckJobs } from "./jobs/recover-stuck";
 import { processRenderJob } from "./jobs/render-generate";
 import { createBoss } from "./queue";
+import { processProposalEmails } from "./jobs/proposal-emails";
+import { getEmailSender } from "@roomdesigner/shared/email";
 
 const RETRY_LIMIT = 2;
 const CLEANUP_CRON = "17 * * * *";
@@ -35,6 +37,16 @@ async function main(): Promise<void> {
     expireInSeconds: 300,
   });
   await boss.createQueue(QUEUE_CLEANUP_UNCONFIRMED);
+  await boss.createQueue("proposal.emails");
+  await boss.schedule("proposal.emails", "* * * * *");
+  await boss.work("proposal.emails", async () => {
+    const result = await processProposalEmails({
+      db: prisma,
+      sender: getEmailSender(),
+      appUrl: env.APP_URL,
+    });
+    if (result.sent > 0 || result.failed > 0) log("proposal_emails", result);
+  });
 
   await boss.work<unknown>(QUEUE_RENDER_GENERATE, async (jobs) => {
     for (const job of jobs) {

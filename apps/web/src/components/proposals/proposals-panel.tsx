@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { getServerEnv } from "@roomdesigner/config/env";
 import { prisma } from "@roomdesigner/db";
 import { formatMoney } from "@roomdesigner/shared";
-import { generateProposalPdfAction, sendProposalAction } from "@/server/actions/proposals";
+import { ProposalDeliveryControls } from "./proposal-delivery-controls";
 import { requireWorkspace } from "@/server/auth/session";
 import { listProposals } from "@/server/services/proposals";
 import Link from "next/link";
@@ -36,7 +36,9 @@ export async function ProposalsPanel({ projectId }: { projectId: string }) {
                   <span className="text-sm font-medium text-foreground">
                     v{proposal.version} · {proposal.title}
                   </span>
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs">{proposal.status}</span>
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
+                    {proposal.status}
+                  </span>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {proposal.sentAt !== null
@@ -49,25 +51,31 @@ export async function ProposalsPanel({ projectId }: { projectId: string }) {
                     : ""}
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
-                  {proposal.status === "DRAFT" && (
-                    <form action={sendProposalAction}>
-                      <input type="hidden" name="proposalId" value={proposal.id} />
-                      <input type="hidden" name="projectId" value={projectId} />
-                      <Button type="submit" size="sm">
-                        Send to client
-                      </Button>
-                    </form>
-                  )}
+                  <Link
+                    className="text-sm underline"
+                    href={`/studio/projects/${projectId}/proposals/new?${proposal.status === "DRAFT" ? "edit" : "revise"}=${proposal.id}`}
+                  >
+                    {proposal.status === "DRAFT" ? "Edit draft" : "Create revision"}
+                  </Link>
+                  <a
+                    href={`/api/proposals/${proposal.id}/pdf`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm underline"
+                  >
+                    Preview PDF
+                  </a>
                   {proposal.status !== "DRAFT" && (
-                    <CopyLinkButton url={`${base}/p/${proposal.publicToken}`} label="Copy client link" />
+                    <CopyLinkButton
+                      url={`${base}/p/${proposal.publicToken}`}
+                      label="Copy client link"
+                    />
                   )}
-                  <form action={generateProposalPdfAction}>
-                    <input type="hidden" name="proposalId" value={proposal.id} />
-                    <input type="hidden" name="projectId" value={projectId} />
-                    <Button type="submit" size="sm" variant="outline">
-                      Generate PDF
-                    </Button>
-                  </form>
+                  <ProposalDeliveryControls
+                    proposalId={proposal.id}
+                    projectId={projectId}
+                    draft={proposal.status === "DRAFT"}
+                  />
                   {proposal.pdfStorageKey !== null && (
                     <span className="text-xs text-muted-foreground">PDF ready (client link)</span>
                   )}

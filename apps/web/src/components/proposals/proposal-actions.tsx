@@ -13,7 +13,7 @@ export function ProposalActions({
   token: string;
   proposal: Pick<
     PublicProposal,
-    "status" | "options" | "approvedOutputId" | "approvedByName" | "comments"
+    "status" | "options" | "approvedOutputId" | "approvedByName" | "comments" | "supersededToken"
   >;
 }) {
   const router = useRouter();
@@ -24,7 +24,10 @@ export function ProposalActions({
   const [error, setError] = useState<string | null>(null);
   const [action, setAction] = useState<"approve" | "changes" | null>(null);
 
-  const closed = proposal.status === "APPROVED" || proposal.status === "CHANGES_REQUESTED";
+  const closed =
+    proposal.status === "APPROVED" ||
+    proposal.status === "CHANGES_REQUESTED" ||
+    proposal.supersededToken !== null;
   const expired = proposal.status === "EXPIRED";
 
   const submit = async (kind: "approve" | "changes" | "comment") => {
@@ -54,9 +57,9 @@ export function ProposalActions({
         }),
       });
       if (!response.ok) {
-        const body = (await response.json().catch(() => null)) as
-          | { error?: { message?: string } }
-          | null;
+        const body = (await response.json().catch(() => null)) as {
+          error?: { message?: string };
+        } | null;
         throw new Error(body?.error?.message ?? "Could not send that.");
       }
       setMessage("");
@@ -124,7 +127,9 @@ export function ProposalActions({
                 <li key={option.id}>
                   <label
                     className={`flex items-center gap-3 rounded-lg border p-2 ${
-                      selected === option.id ? "border-primary ring-2 ring-primary/30" : "border-border"
+                      selected === option.id
+                        ? "border-primary ring-2 ring-primary/30"
+                        : "border-border"
                     }`}
                   >
                     <input
@@ -137,7 +142,11 @@ export function ProposalActions({
                       }}
                     />
                     {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
-                    <img src={option.thumbUrl} alt={option.caption ?? "Concept"} className="h-14 w-20 rounded object-cover" />
+                    <img
+                      src={option.thumbUrl}
+                      alt={option.caption ?? "Concept"}
+                      className="h-14 w-20 rounded object-cover"
+                    />
                     <span className="text-sm">{option.caption ?? "Concept option"}</span>
                   </label>
                 </li>

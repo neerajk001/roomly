@@ -496,3 +496,16 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
   and keep different currencies separate. Starter-card creation is race-safe.
 - Unit, CSV and integration regressions pass; typecheck/lint/tests pass across
   all 11 packages. Six completed V4 checklist items are now ticked.
+- Batch 5 uses an additive proposal snapshot and durable email-outbox migration.
+  Existing proposals are retained; legacy sent proposals without snapshots keep
+  their previous behavior. New sends freeze names, branding, prices and image keys.
+- Revisions link back to their source. Replacing an old public link is opt-in;
+  approved proposals remain available as their original approval records.
+- Email events are written with state changes and retried by the existing worker.
+  Resend's documented Idempotency-Key protects duplicates within 24 hours.
+- Batch 5 complete: editable drafts with stale-write protection, opt-in revision
+  links, frozen sent content, pin/order controls and public before/after review.
+- PDF preview and download share one renderer with branding, images and totals.
+  Generation remains on-demand in the web app as the previously recorded deviation;
+  email delivery uses the worker. Both PDF fixture pages were visually inspected.
+- Typecheck, lint and all 11 package test tasks pass (49 web tests, 8 worker tests).

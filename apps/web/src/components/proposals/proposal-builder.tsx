@@ -11,14 +11,34 @@ export function ProposalBuilder({
   estimates,
   outputs,
   defaultTerms,
+  initial,
 }: {
   projectId: string;
   estimates: { id: string; label: string }[];
   outputs: { id: string; index: number; thumbUrl: string; roomName: string }[];
   defaultTerms: string;
+  initial?: {
+    id?: string;
+    updatedAt?: string;
+    title: string;
+    intro: string;
+    terms: string;
+    estimateId: string;
+    expiresInDays: number;
+    revisesId?: string;
+    supersedePrevious: boolean;
+    options: { outputId: string; caption?: string }[];
+  };
 }) {
-  const [state, formAction, pending] = useActionState(createProposalAction, {} as ProposalFormState);
-  const [selected, setSelected] = useState<Record<string, string>>({});
+  const [state, formAction, pending] = useActionState(
+    createProposalAction,
+    {} as ProposalFormState,
+  );
+  const [selected, setSelected] = useState<Record<string, string>>(() =>
+    Object.fromEntries(
+      (initial?.options ?? []).map((option) => [option.outputId, option.caption ?? ""]),
+    ),
+  );
 
   const options = Object.entries(selected).map(([outputId, caption]) => ({
     outputId,
@@ -29,6 +49,15 @@ export function ProposalBuilder({
     <form action={formAction} className="space-y-5">
       <input type="hidden" name="projectId" value={projectId} />
       <input type="hidden" name="options" value={JSON.stringify(options)} />
+      {initial?.id !== undefined && (
+        <>
+          <input type="hidden" name="proposalId" value={initial.id} />
+          <input type="hidden" name="updatedAt" value={initial.updatedAt} />
+        </>
+      )}
+      {initial?.revisesId !== undefined && (
+        <input type="hidden" name="revisesId" value={initial.revisesId} />
+      )}
 
       {state.error !== undefined && (
         <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -39,7 +68,13 @@ export function ProposalBuilder({
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="proposal-title">Title</Label>
-          <Input id="proposal-title" name="title" required maxLength={160} defaultValue="Design proposal" />
+          <Input
+            id="proposal-title"
+            name="title"
+            required
+            maxLength={160}
+            defaultValue={initial?.title ?? "Design proposal"}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="proposal-estimate">Estimate</Label>
@@ -48,6 +83,7 @@ export function ProposalBuilder({
             name="estimateId"
             className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
             required
+            defaultValue={initial?.estimateId}
           >
             {estimates.map((estimate) => (
               <option key={estimate.id} value={estimate.id}>
@@ -58,7 +94,12 @@ export function ProposalBuilder({
         </div>
         <div className="space-y-2">
           <Label htmlFor="proposal-expiry">Valid for (days)</Label>
-          <Input id="proposal-expiry" name="expiresInDays" inputMode="numeric" defaultValue="14" />
+          <Input
+            id="proposal-expiry"
+            name="expiresInDays"
+            inputMode="numeric"
+            defaultValue={initial?.expiresInDays ?? 14}
+          />
         </div>
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="proposal-intro">Intro</Label>
@@ -67,6 +108,7 @@ export function ProposalBuilder({
             name="intro"
             rows={3}
             maxLength={2000}
+            defaultValue={initial?.intro}
             className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
           />
         </div>
@@ -77,17 +119,28 @@ export function ProposalBuilder({
             name="terms"
             rows={4}
             maxLength={4000}
-            defaultValue={defaultTerms}
+            defaultValue={initial?.terms ?? defaultTerms}
             className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
           />
         </div>
       </div>
+      {initial?.revisesId !== undefined && (
+        <label className="flex items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            name="supersedePrevious"
+            defaultChecked={initial.supersedePrevious}
+          />
+          Replace the previous public link when sending this revision. Approved versions remain
+          available.
+        </label>
+      )}
 
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium">Pin renders (up to 4)</legend>
         {outputs.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Favorite some renders first; only favorites can be pinned.
+            Generate room concepts first, then choose up to four here.
           </p>
         ) : (
           <ul className="grid gap-2 sm:grid-cols-2">
@@ -125,6 +178,49 @@ export function ProposalBuilder({
                       }}
                     />
                   )}
+                  {checked && (
+                    <div className="flex gap-2 text-xs">
+                      <button
+                        type="button"
+                        className="underline"
+                        disabled={Object.keys(selected)[0] === output.id}
+                        onClick={() =>
+                          setSelected((current) => {
+                            const entries = Object.entries(current);
+                            const index = entries.findIndex(([id]) => id === output.id);
+                            if (index > 0)
+                              [entries[index - 1], entries[index]] = [
+                                entries[index]!,
+                                entries[index - 1]!,
+                              ];
+                            return Object.fromEntries(entries);
+                          })
+                        }
+                      >
+                        Move earlier
+                      </button>
+                      <button
+                        type="button"
+                        className="underline"
+                        disabled={Object.keys(selected).at(-1) === output.id}
+                        onClick={() =>
+                          setSelected((current) => {
+                            const entries = Object.entries(current);
+                            const index = entries.findIndex(([id]) => id === output.id);
+                            if (index >= 0 && index < entries.length - 1)
+                              [entries[index], entries[index + 1]] = [
+                                entries[index + 1]!,
+                                entries[index]!,
+                              ];
+                            return Object.fromEntries(entries);
+                          })
+                        }
+                      >
+                        Move later
+                      </button>
+                      <span>Position {Object.keys(selected).indexOf(output.id) + 1}</span>
+                    </div>
+                  )}
                 </li>
               );
             })}
@@ -133,7 +229,11 @@ export function ProposalBuilder({
       </fieldset>
 
       <Button type="submit" disabled={pending || estimates.length === 0}>
-        {pending ? "Saving..." : "Create draft proposal"}
+        {pending
+          ? "Saving..."
+          : initial?.id !== undefined
+            ? "Save draft proposal"
+            : "Create draft proposal"}
       </Button>
       <p className="text-xs text-muted-foreground">
         Sending freezes the options and the estimate version, and emails the client a public link.

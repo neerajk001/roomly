@@ -4,6 +4,8 @@ import { formatMoney } from "@roomdesigner/shared";
 import { presignGet } from "@roomdesigner/storage";
 import { getPublicProposal } from "@/server/services/proposals";
 import { notFound } from "next/navigation";
+import Link from "next/link";
+import { BeforeAfterSlider } from "@/components/marketing/before-after-slider";
 
 export const metadata = {
   title: "Proposal",
@@ -29,6 +31,14 @@ export default async function PublicProposalPage({
         aria-hidden="true"
       />
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-10">
+        {proposal.supersededToken !== null && (
+          <p role="status" className="rounded-lg bg-accent p-4 text-sm">
+            This proposal has been replaced.{" "}
+            <Link className="underline" href={`/p/${proposal.supersededToken}`}>
+              View the newer proposal
+            </Link>
+          </p>
+        )}
         <header className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs tracking-normal text-muted-foreground">{proposal.brandName}</p>
@@ -64,18 +74,30 @@ export default async function PublicProposalPage({
 
         <section className="space-y-3" aria-label="Concept options">
           <h2 className="text-lg font-semibold text-foreground">Options</h2>
-          <ul className="grid gap-3 sm:grid-cols-2">
+          <ul
+            className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-3"
+            tabIndex={0}
+            aria-label="Swipe or scroll through concept options"
+          >
             {proposal.options.map((option) => (
               <li
                 key={option.id}
-                className="overflow-hidden rounded-lg border border-border bg-background"
+                className="min-w-0 w-full shrink-0 snap-start overflow-hidden rounded-lg border border-border bg-card sm:w-[calc(50%-0.5rem)]"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
-                <img
-                  src={option.url}
-                  alt={option.caption ?? "Concept option"}
-                  className="block w-full"
-                />
+                {option.beforeUrl !== null ? (
+                  <BeforeAfterSlider
+                    beforeImage={option.beforeUrl}
+                    afterImage={option.url}
+                    enableScrollEffect={false}
+                  />
+                ) : (
+                  /* eslint-disable-next-line @next/next/no-img-element -- signed URL */
+                  <img
+                    src={option.url}
+                    alt={option.caption ?? "Concept option"}
+                    className="block w-full"
+                  />
+                )}
                 {option.caption !== null && (
                   <p className="border-t border-border px-3 py-2 text-sm">{option.caption}</p>
                 )}

@@ -1,16 +1,18 @@
 "use server";
 
-import { getServerEnv } from "@roomdesigner/config/env";
 import { prisma } from "@roomdesigner/db";
-import { getEmailSender } from "@roomdesigner/shared/email";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireWorkspace } from "../auth/session";
 import { AppError } from "../app-error";
-import { createProposal, proposalInputSchema, sendProposal } from "../services/proposals";
-import { renderProposalPdf } from "@roomdesigner/pdf";
-import { putObject } from "@roomdesigner/storage";
+import {
+  createProposal,
+  updateProposalDraft,
+  proposalInputSchema,
+  sendProposal,
+} from "../services/proposals";
+import { storeProposalPdf } from "../services/proposal-pdf";
 
 export interface ProposalFormState {
   error?: string;
@@ -35,6 +37,8 @@ export async function createProposalAction(
     terms: formData.get("terms") ?? undefined,
     expiresInDays: Number(formData.get("expiresInDays") ?? 14),
     options,
+    revisesId: formData.get("revisesId") ?? undefined,
+    supersedePrevious: formData.get("supersedePrevious") === "on",
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Check the proposal." };
@@ -42,11 +46,18 @@ export async function createProposalAction(
 
   const { user, workspace } = await requireWorkspace();
   try {
-    await createProposal(
-      prisma,
-      { userId: user.id, workspaceId: workspace.id },
-      parsed.data,
-    );
+    const editingId = formData.get("proposalId");
+    if (typeof editingId === "string" && editingId !== "") {
+      await updateProposalDraft(
+        prisma,
+        { userId: user.id, workspaceId: workspace.id },
+        editingId,
+        parsed.data,
+        String(formData.get("updatedAt") ?? ""),
+      );
+    } else {
+      await createProposal(prisma, { userId: user.id, workspaceId: workspace.id }, parsed.data);
+    }
   } catch (error) {
     if (error instanceof AppError) return { error: error.message };
     throw error;
@@ -59,23 +70,9 @@ export async function sendProposalAction(formData: FormData): Promise<void> {
   const id = z.string().min(1).parse(formData.get("proposalId"));
   const projectId = z.string().min(1).parse(formData.get("projectId"));
   const { user, workspace } = await requireWorkspace();
-  const { token } = await sendProposal(prisma, { userId: user.id, workspaceId: workspace.id }, id);
-
-  const proposal = await prisma.proposal.findFirst({
-    where: { id, project: { workspaceId: workspace.id } },
-    select: {
-      title: true,
-      project: { select: { client: { select: { email: true, name: true } } } },
-    },
-  });
-  const clientEmail = proposal?.project.client?.email;
-  if (clientEmail !== undefined && clientEmail !== null) {
-    void getEmailSender().send({
-      to: clientEmail,
-      subject: `Your design proposal: ${proposal?.title ?? ""}`,
-      text: `Hi ${proposal?.project.client?.name ?? "there"},\n\nYour proposal is ready: ${getServerEnv().APP_URL}/p/${token}\n\nYou can approve an option or request changes there.\n`,
-    });
-  }
+  const ctx = { userId: user.id, workspaceId: workspace.id };
+  await storeProposalPdf(prisma, ctx, id);
+  await sendProposal(prisma, ctx, id);
 
   revalidatePath(`/studio/projects/${projectId}`);
 }
@@ -84,42 +81,28 @@ export async function generateProposalPdfAction(formData: FormData): Promise<voi
   const id = z.string().min(1).parse(formData.get("proposalId"));
   const projectId = z.string().min(1).parse(formData.get("projectId"));
   const { user, workspace } = await requireWorkspace();
-  const proposal = await prisma.proposal.findFirst({
-    where: { id, project: { workspaceId: workspace.id } },
-    include: {
-      estimate: { include: { lines: { orderBy: { sortOrder: "asc" } } } },
-      project: { select: { name: true, client: { select: { name: true } } } },
-    },
-  });
-  if (proposal === null) throw new AppError("NOT_FOUND", "Proposal not found.", 404);
-
-  const captions = (proposal.optionCaptions ?? {}) as Record<string, string>;
-  const buffer = await renderProposalPdf({
-    brandName: workspace.brandName ?? workspace.name,
-    title: proposal.title,
-    projectName: proposal.project.name,
-    clientName: proposal.project.client?.name ?? null,
-    intro: proposal.intro,
-    terms: proposal.terms,
-    currency: proposal.estimate.currency,
-    estimateVersion: proposal.estimate.version,
-    lines: proposal.estimate.lines.map((line) => ({
-      label: line.label,
-      quantity: line.quantity.toNumber(),
-      totalMinor: line.totalMinor,
-    })),
-    subtotalMinor: proposal.estimate.subtotalMinor,
-    markupMinor: proposal.estimate.markupMinor,
-    taxMinor: proposal.estimate.taxMinor,
-    totalMinor: proposal.estimate.totalMinor,
-    options: proposal.renderOutputIds.map((outputId) => ({
-      caption: captions[outputId] ?? "",
-    })),
-  });
-
-  const key = `ws/${workspace.id}/pdf/${proposal.id}.pdf`;
-  await putObject({ key, body: buffer, contentType: "application/pdf" });
-  await prisma.proposal.update({ where: { id: proposal.id }, data: { pdfStorageKey: key } });
+  await storeProposalPdf(prisma, { userId: user.id, workspaceId: workspace.id }, id);
   revalidatePath(`/studio/projects/${projectId}`);
   void user;
+}
+
+export async function deliverProposalAction(
+  _prev: ProposalFormState,
+  formData: FormData,
+): Promise<ProposalFormState> {
+  const operation = z.enum(["pdf", "send"]).safeParse(formData.get("operation"));
+  if (!operation.success) return { error: "Choose a proposal action." };
+  try {
+    if (operation.data === "send") await sendProposalAction(formData);
+    else await generateProposalPdfAction(formData);
+    return {
+      notice:
+        operation.data === "send"
+          ? "Proposal sent. Copy the client link below; email delivery runs in the background when a client email is available."
+          : "PDF prepared. Preview it before sending.",
+    };
+  } catch (error) {
+    if (error instanceof AppError) return { error: error.message };
+    return { error: "The proposal could not be prepared. Please try again." };
+  }
 }

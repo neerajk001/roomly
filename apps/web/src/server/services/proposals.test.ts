@@ -7,6 +7,7 @@ import {
   getPublicProposal,
   requestChanges,
   sendProposal,
+  updateProposalDraft,
 } from "./proposals";
 import { parseCsv } from "../csv";
 
@@ -102,6 +103,79 @@ afterAll(async () => {
 });
 
 describe("proposal state machine", () => {
+  it("freezes content and branding and queues first-view notification once", async () => {
+    const draft = await createProposal(prisma, ctx(), {
+      projectId,
+      estimateId,
+      title: "Frozen proposal",
+      options: [{ outputId }],
+    });
+    const before = await getPublicProposal(
+      prisma,
+      (await sendProposal(prisma, ctx(), draft.id)).token,
+      sign,
+    );
+    await prisma.workspace.updateMany({
+      where: { id: workspaceId },
+      data: { brandName: "Changed studio" },
+    });
+    const after = await getPublicProposal(prisma, draft.publicToken, sign);
+    expect(after.brandName).toBe(before.brandName);
+    expect(
+      await prisma.proposalEmail.count({
+        where: { workspaceId, proposalId: draft.id, kind: "VIEWED" },
+      }),
+    ).toBe(1);
+    await prisma.workspace.updateMany({ where: { id: workspaceId }, data: { brandName: null } });
+  });
+
+  it("edits drafts with a version check, then prevents editing after send", async () => {
+    const draft = await createProposal(prisma, ctx(), {
+      projectId,
+      estimateId,
+      title: "Editable",
+      options: [{ outputId }],
+    });
+    const input = { projectId, estimateId, title: "Updated draft", options: [{ outputId }] };
+    await updateProposalDraft(prisma, ctx(), draft.id, input, draft.updatedAt.toISOString());
+    await expect(
+      updateProposalDraft(prisma, ctx(), draft.id, input, draft.updatedAt.toISOString()),
+    ).rejects.toMatchObject({ code: "INVALID_STATE" });
+    await sendProposal(prisma, ctx(), draft.id);
+    const sent = await prisma.proposal.findFirstOrThrow({
+      where: { id: draft.id, project: { workspaceId } },
+    });
+    await expect(
+      updateProposalDraft(prisma, ctx(), draft.id, input, sent.updatedAt.toISOString()),
+    ).rejects.toMatchObject({ code: "INVALID_STATE" });
+  });
+
+  it("replaces an old link only when explicitly enabled on a sent revision", async () => {
+    const first = await createProposal(prisma, ctx(), {
+      projectId,
+      estimateId,
+      title: "Version one",
+      options: [{ outputId }],
+    });
+    await sendProposal(prisma, ctx(), first.id);
+    const revision = await createProposal(prisma, ctx(), {
+      projectId,
+      estimateId,
+      title: "Revision",
+      options: [{ outputId }],
+      revisesId: first.id,
+      supersedePrevious: true,
+    });
+    expect((await getPublicProposal(prisma, first.publicToken, sign)).supersededToken).toBeNull();
+    await sendProposal(prisma, ctx(), revision.id);
+    expect((await getPublicProposal(prisma, first.publicToken, sign)).supersededToken).toBe(
+      revision.publicToken,
+    );
+    await expect(
+      approveProposal(prisma, first.publicToken, outputId, "Client"),
+    ).rejects.toMatchObject({ code: "INVALID_STATE" });
+  });
+
   it("does not expose drafts or accept client actions before sending", async () => {
     const draft = await createProposal(prisma, ctx(), {
       projectId,

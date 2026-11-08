@@ -14,6 +14,7 @@ import type {
 import { isTerminal } from "@/components/renders/types";
 import { STYLES } from "@roomdesigner/shared";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 
 export function RenderView({
@@ -436,6 +437,12 @@ export function RenderView({
                     >
                       Edit this
                     </button>
+                    <Link
+                      className="rounded px-1.5 py-1 text-xs text-primary underline"
+                      href={`/studio/projects/${projectId}/proposals/new?pin=${output.id}`}
+                    >
+                      Pin to proposal
+                    </Link>
                   </div>
                 </div>
               </li>

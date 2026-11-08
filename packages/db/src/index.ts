@@ -23,6 +23,7 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export type Prisma = PrismaClient;
+export { Prisma as PrismaRuntime } from "./generated/prisma/client";
 export type * from "./generated/prisma/client";
 export * from "./generated/prisma/enums";
 
@@ -31,9 +32,4 @@ export type TransactionClient = Omit<
   "$connect" | "$disconnect" | "$on" | "$transaction" | "$extends"
 >;
 
-export {
-  InsufficientCreditsError,
-  getBalance,
-  refundCredits,
-  reserveCredits,
-} from "./credits";
+export { InsufficientCreditsError, getBalance, refundCredits, reserveCredits } from "./credits";

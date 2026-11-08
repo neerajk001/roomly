@@ -7,10 +7,18 @@ import { z } from "zod";
 import { requireWorkspace } from "../auth/session";
 import { AppError } from "../app-error";
 import { createProject, softDeleteProject } from "../services/projects";
-import { createRoom, deleteRoom, openingListSchema, roomTypeSchema } from "../services/rooms";
+import {
+  createRoom,
+  updateRoom,
+  getRoom,
+  deleteRoom,
+  openingListSchema,
+  roomTypeSchema,
+} from "../services/rooms";
 
 export interface ProjectFormState {
   error?: string;
+  notice?: string;
   fieldErrors?: Record<string, string[]>;
 }
 
@@ -41,7 +49,10 @@ export async function createProjectAction(
     const project = await createProject(
       prisma,
       { userId: user.id, workspaceId: workspace.id },
-      { name: parsed.data.name, ...(parsed.data.clientId !== undefined ? { clientId: parsed.data.clientId } : {}) },
+      {
+        name: parsed.data.name,
+        ...(parsed.data.clientId !== undefined ? { clientId: parsed.data.clientId } : {}),
+      },
     );
     projectId = project.id;
   } catch (error) {
@@ -85,6 +96,19 @@ export async function createRoomAction(
   _prev: ProjectFormState,
   formData: FormData,
 ): Promise<ProjectFormState> {
+  return saveRoomForm(formData);
+}
+
+export async function updateRoomAction(
+  _prev: ProjectFormState,
+  formData: FormData,
+): Promise<ProjectFormState> {
+  const roomId = z.string().min(1).safeParse(formData.get("roomId"));
+  if (!roomId.success) return { error: "Invalid room." };
+  return saveRoomForm(formData, roomId.data);
+}
+
+async function saveRoomForm(formData: FormData, roomId?: string): Promise<ProjectFormState> {
   const parsed = createRoomFormSchema.safeParse({
     projectId: formData.get("projectId"),
     basePath: formData.get("basePath"),
@@ -115,19 +139,23 @@ export async function createRoomAction(
 
   const { user, workspace } = await requireWorkspace();
   try {
-    await createRoom(
-      prisma,
-      { userId: user.id, workspaceId: workspace.id },
-      parsed.data.projectId,
-      {
-        name: parsed.data.name,
-        type: parsed.data.type,
-        widthMm: parsed.data.widthMm,
-        lengthMm: parsed.data.lengthMm,
-        heightMm: parsed.data.heightMm,
-        openings: openingsParsed.data,
-      },
-    );
+    const ctx = { userId: user.id, workspaceId: workspace.id };
+    const input = {
+      name: parsed.data.name,
+      type: parsed.data.type,
+      widthMm: parsed.data.widthMm,
+      lengthMm: parsed.data.lengthMm,
+      heightMm: parsed.data.heightMm,
+      openings: openingsParsed.data,
+    };
+    if (roomId !== undefined) {
+      const existing = await getRoom(prisma, ctx, roomId);
+      if (existing.project.id !== parsed.data.projectId)
+        throw new AppError("NOT_FOUND", "Room not found.", 404);
+      await updateRoom(prisma, ctx, roomId, input);
+    } else {
+      await createRoom(prisma, ctx, parsed.data.projectId, input);
+    }
   } catch (error) {
     if (error instanceof AppError) {
       return { fieldErrors: { form: [error.message] } };
@@ -136,7 +164,11 @@ export async function createRoomAction(
   }
 
   revalidatePath(`${parsed.data.basePath}/projects/${parsed.data.projectId}`);
-  return {};
+  if (roomId !== undefined) {
+    revalidatePath(`${parsed.data.basePath}/projects/${parsed.data.projectId}/rooms/${roomId}`);
+    revalidatePath(`/studio/projects/${parsed.data.projectId}/rooms/${roomId}/estimate`);
+  }
+  return { notice: roomId !== undefined ? "Room details saved." : "Room added." };
 }
 
 export async function deleteRoomAction(formData: FormData): Promise<void> {

@@ -1,6 +1,6 @@
 import { prisma } from "@roomdesigner/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { createRoom, getRoom } from "./rooms";
+import { createRoom, getRoom, updateRoom, removeRoomPhoto } from "./rooms";
 import { getProject } from "./projects";
 import { createRender } from "./renders";
 import { listRoomRenderJobs } from "./render-history";
@@ -90,6 +90,16 @@ describe("createRoom", () => {
       where: { id: render.jobId, workspaceId },
     });
     expect(stored.sourceAssetId).toBe(photo.id);
+    await expect(
+      removeRoomPhoto(prisma, { userId, workspaceId: "unrelated" }, photo.id),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await removeRoomPhoto(prisma, ctx(), photo.id);
+    expect((await getRoom(prisma, ctx(), result.roomId)).photos).toEqual([]);
+    expect(
+      await prisma.renderJob.count({
+        where: { id: render.jobId, workspaceId, sourceAssetId: photo.id },
+      }),
+    ).toBe(1);
   });
 
   it("allows only one project from simultaneous brief submissions", async () => {
@@ -179,6 +189,30 @@ describe("createRoom", () => {
         widthMm: 100,
         lengthMm: 5000,
         heightMm: 2700,
+        openings: [],
+      }),
+    ).rejects.toMatchObject({ code: "INVALID_INPUT" });
+  });
+
+  it("updates room details, clears optional sizes and validates service input", async () => {
+    const room = await createRoom(prisma, ctx(), projectId, {
+      name: "Before",
+      type: "BEDROOM",
+      widthMm: 4000,
+      openings: [],
+    });
+    const updated = await updateRoom(prisma, ctx(), room.id, {
+      name: "After",
+      type: "HOME_OFFICE",
+      openings: [],
+    });
+    expect(updated.name).toBe("After");
+    expect(updated.widthMm).toBeNull();
+    await expect(
+      updateRoom(prisma, ctx(), room.id, {
+        name: "Invalid",
+        type: "BEDROOM",
+        widthMm: 10,
         openings: [],
       }),
     ).rejects.toMatchObject({ code: "INVALID_INPUT" });

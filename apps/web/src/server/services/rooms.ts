@@ -105,15 +105,16 @@ export async function updateRoom(
   roomId: string,
   input: RoomInput,
 ): Promise<Room> {
+  const valid = validateRoomInput(input);
   const updated = await db.room.updateMany({
     where: { id: roomId, project: { workspaceId: ctx.workspaceId, deletedAt: null } },
     data: {
-      name: input.name,
-      type: input.type,
-      widthMm: input.widthMm,
-      lengthMm: input.lengthMm,
-      heightMm: input.heightMm,
-      openings: input.openings.map((opening) => ({ ...opening })),
+      name: valid.name,
+      type: valid.type,
+      widthMm: valid.widthMm ?? null,
+      lengthMm: valid.lengthMm ?? null,
+      heightMm: valid.heightMm ?? null,
+      openings: valid.openings.map((opening) => ({ ...opening })),
     },
   });
   if (updated.count === 0) {
@@ -141,6 +142,25 @@ export interface RoomDetail {
   room: Room;
   project: { id: string; name: string };
   photos: { id: string; width: number | null; height: number | null; storageKey: string }[];
+}
+
+/** Detach photos while preserving assets used by existing concept history. */
+export async function removeRoomPhoto(
+  db: Prisma,
+  ctx: ServiceContext,
+  assetId: string,
+): Promise<void> {
+  const removed = await db.asset.updateMany({
+    where: {
+      id: assetId,
+      workspaceId: ctx.workspaceId,
+      roomId: { not: null },
+      kind: { in: ["ORIGINAL_PHOTO", "BRIEF_UPLOAD"] },
+      room: { project: { workspaceId: ctx.workspaceId, deletedAt: null } },
+    },
+    data: { roomId: null },
+  });
+  if (removed.count !== 1) throw new AppError("NOT_FOUND", "Room photo not found.", 404);
 }
 
 export async function getRoom(

@@ -3,6 +3,7 @@ import { presignGet } from "@roomdesigner/storage";
 import { getStyle } from "@roomdesigner/shared";
 import { requireWorkspace } from "@/server/auth/session";
 import Link from "next/link";
+import { z } from "zod";
 
 export const metadata = { title: "Saved" };
 
@@ -34,13 +35,20 @@ const COLLECTIONS = [
 
 type Collection = (typeof COLLECTIONS)[number][0];
 
-function href(params: { view?: string; collection?: string; sort?: string; q?: string }): string {
+function href(params: {
+  view?: string;
+  collection?: string;
+  sort?: string;
+  q?: string;
+  page?: number;
+}): string {
   const search = new URLSearchParams();
   if (params.view !== undefined && params.view !== "all") search.set("view", params.view);
   if (params.collection !== undefined && params.collection !== "all")
     search.set("collection", params.collection);
   if (params.sort !== undefined && params.sort !== "recent") search.set("sort", params.sort);
   if (params.q !== undefined && params.q !== "") search.set("q", params.q);
+  if (params.page !== undefined && params.page > 1) search.set("page", String(params.page));
   const query = search.toString();
   return query === "" ? "/app/saved" : `/app/saved?${query}`;
 }
@@ -55,9 +63,16 @@ function inCollection(roomType: string, collection: Collection): boolean {
 export default async function SavedPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; collection?: string; sort?: string; q?: string }>;
+  searchParams: Promise<{
+    view?: string;
+    collection?: string;
+    sort?: string;
+    q?: string;
+    page?: string;
+  }>;
 }) {
-  const { view, collection, sort, q } = await searchParams;
+  const { view, collection, sort, q, page: pageInput } = await searchParams;
+  const page = z.coerce.number().int().min(1).max(100000).catch(1).parse(pageInput);
   const { workspace } = await requireWorkspace();
   const activeView = view === "rooms" || view === "styles" ? view : "all";
   const activeCollection: Collection =
@@ -68,9 +83,11 @@ export default async function SavedPage({
   const query = q?.trim() ?? "";
 
   const savedRaw = await prisma.renderOutput.findMany({
-    where: { isFavorite: true, job: { workspaceId: workspace.id } },
+    where: {
+      isFavorite: true,
+      job: { workspaceId: workspace.id, room: { project: { deletedAt: null } } },
+    },
     orderBy: { createdAt: activeSort === "oldest" ? "asc" : "desc" },
-    take: 48,
     include: {
       asset: { select: { storageKey: true } },
       thumbAsset: { select: { storageKey: true } },
@@ -225,7 +242,7 @@ export default async function SavedPage({
           </div>
         ) : (
           <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {filtered.map((item) => (
+            {filtered.slice((page - 1) * 24, page * 24).map((item) => (
               <li key={item.id}>
                 <article className="flex flex-col overflow-hidden rounded-xl border border-border bg-card">
                   <Link
@@ -270,8 +287,45 @@ export default async function SavedPage({
             ))}
           </ul>
         )}
+        <nav
+          aria-label="Saved concept pages"
+          className="flex flex-wrap items-center justify-between gap-3 text-sm"
+        >
+          {page > 1 ? (
+            <Link
+              className="underline"
+              href={href({
+                view: activeView,
+                collection: activeCollection,
+                sort: activeSort,
+                q: query,
+                page: page - 1,
+              })}
+            >
+              Previous concepts
+            </Link>
+          ) : (
+            <span />
+          )}
+          <span>Page {page}</span>
+          {filtered.length > page * 24 ? (
+            <Link
+              className="underline"
+              href={href({
+                view: activeView,
+                collection: activeCollection,
+                sort: activeSort,
+                q: query,
+                page: page + 1,
+              })}
+            >
+              More concepts
+            </Link>
+          ) : (
+            <span />
+          )}
+        </nav>
       </div>
-
       <aside className="h-fit rounded-xl border border-border bg-card lg:sticky lg:top-4">
         <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
           <p className="text-sm font-semibold text-foreground">Collections</p>

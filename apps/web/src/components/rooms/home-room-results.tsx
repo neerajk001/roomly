@@ -1,6 +1,7 @@
 "use client";
 
 import { createRenderAction } from "@/server/actions/renders";
+import { saveFavorite } from "@/lib/save-favorite";
 import type {
   RenderJobStatusResponse,
   RenderJobView,
@@ -68,6 +69,7 @@ export function HomeRoomResults({
   const [createPending, startCreate] = useTransition();
   const [editPending, startEdit] = useTransition();
   const attempts = useRef(0);
+  const savingFavorites = useRef(new Set<string>());
 
   const current = jobs.find((job) => job.id === currentId) ?? null;
   const status = current?.status ?? null;
@@ -151,6 +153,9 @@ export function HomeRoomResults({
   }, [currentId, status, upsertJob, router]);
 
   const toggleFavorite = (output: RenderOutputView) => {
+    if (savingFavorites.current.has(output.id)) return;
+    savingFavorites.current.add(output.id);
+    setPanelError(null);
     const next = !output.isFavorite;
     setJobs((previous) =>
       previous.map((job) =>
@@ -164,11 +169,19 @@ export function HomeRoomResults({
           : job,
       ),
     );
-    void fetch(`/api/render-outputs/${output.id}`, {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ isFavorite: next }),
-    });
+    void saveFavorite(output.id, next)
+      .catch(() => {
+        setJobs((previous) =>
+          previous.map((job) => ({
+            ...job,
+            outputs: job.outputs.map((item) =>
+              item.id === output.id ? { ...item, isFavorite: output.isFavorite } : item,
+            ),
+          })),
+        );
+        setPanelError("Your favorite could not be saved. Please try again.");
+      })
+      .finally(() => savingFavorites.current.delete(output.id));
   };
 
   const submitRestyle = useCallback(

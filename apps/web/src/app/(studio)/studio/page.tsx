@@ -2,6 +2,7 @@ import { prisma } from "@roomdesigner/db";
 import { presignGet } from "@roomdesigner/storage";
 import { requireWorkspace } from "@/server/auth/session";
 import Link from "next/link";
+import { z } from "zod";
 
 export const metadata = { title: "Studio" };
 
@@ -20,14 +21,26 @@ function relative(date: Date): string {
   return `${String(days)} days ago`;
 }
 
-export default async function StudioHomePage() {
+export default async function StudioHomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const page = z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(100000)
+    .catch(1)
+    .parse((await searchParams).page);
   const { workspace } = await requireWorkspace();
 
   const [projects, counts, proposals, clients] = await Promise.all([
     prisma.project.findMany({
       where: { workspaceId: workspace.id, deletedAt: null },
       orderBy: { createdAt: "desc" },
-      take: 9,
+      skip: (page - 1) * 9,
+      take: 10,
       include: {
         client: { select: { name: true } },
         rooms: {
@@ -65,8 +78,10 @@ export default async function StudioHomePage() {
   const count = (status: string): number =>
     counts.find((row) => row.status === status)?._count._all ?? 0;
 
+  const hasMore = projects.length > 9;
+  const visibleProjects = projects.slice(0, 9);
   const covers = new Map<string, string>();
-  for (const project of projects) {
+  for (const project of visibleProjects) {
     const key = project.rooms.flatMap((room) => room.assets)[0]?.storageKey;
     if (key !== undefined) covers.set(project.id, await presignGet(key));
   }
@@ -132,7 +147,7 @@ export default async function StudioHomePage() {
           </div>
         ) : (
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {projects.map((project, index) => (
+            {visibleProjects.map((project, index) => (
               <li key={project.id}>
                 <Link
                   href={`/studio/projects/${project.id}`}
@@ -158,7 +173,24 @@ export default async function StudioHomePage() {
         )}
       </section>
 
-      <section className="rounded-xl rounded-xl border border-border bg-card p-4">
+      <nav aria-label="Project pages" className="flex items-center justify-between gap-3 text-sm">
+        {page > 1 ? (
+          <Link className="underline" href={`/studio?page=${page - 1}`}>
+            Previous projects
+          </Link>
+        ) : (
+          <span />
+        )}
+        <span>Page {page}</span>
+        {hasMore ? (
+          <Link className="underline" href={`/studio?page=${page + 1}`}>
+            More projects
+          </Link>
+        ) : (
+          <span />
+        )}
+      </nav>
+      <section className="rounded-xl border border-border bg-card p-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-medium">Recent proposals</h2>
         </div>

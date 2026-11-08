@@ -2,6 +2,8 @@ import { prisma } from "@roomdesigner/db";
 import { presignGet } from "@roomdesigner/storage";
 import { requireWorkspace } from "@/server/auth/session";
 import Link from "next/link";
+import { z } from "zod";
+import { roomTypeSchema } from "@/server/services/rooms";
 
 export const metadata = { title: "My spaces" };
 
@@ -20,10 +22,11 @@ function relative(date: Date): string {
   return `Updated ${String(days)} days ago`;
 }
 
-function href(params: { type?: string; sort?: string }): string {
+function href(params: { type?: string; sort?: string; page?: number }): string {
   const search = new URLSearchParams();
   if (params.type !== undefined && params.type !== "") search.set("type", params.type);
   if (params.sort !== undefined && params.sort !== "recent") search.set("sort", params.sort);
+  if (params.page !== undefined && params.page > 1) search.set("page", String(params.page));
   const query = search.toString();
   return query === "" ? "/app/spaces" : `/app/spaces?${query}`;
 }
@@ -31,17 +34,24 @@ function href(params: { type?: string; sort?: string }): string {
 export default async function SpacesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string; sort?: string }>;
+  searchParams: Promise<{ type?: string; sort?: string; page?: string }>;
 }) {
-  const { type, sort } = await searchParams;
+  const { type, sort, page: pageInput } = await searchParams;
   const { workspace } = await requireWorkspace();
-  const activeType = type ?? "";
+  const parsedType = roomTypeSchema.safeParse(type);
+  const activeType = parsedType.success ? parsedType.data : "";
+  const page = z.coerce.number().int().min(1).max(100000).catch(1).parse(pageInput);
   const activeSort = sort === "oldest" ? "oldest" : "recent";
 
   const projects = await prisma.project.findMany({
-    where: { workspaceId: workspace.id, deletedAt: null },
+    where: {
+      workspaceId: workspace.id,
+      deletedAt: null,
+      ...(activeType !== "" ? { rooms: { some: { type: activeType } } } : {}),
+    },
     orderBy: { createdAt: activeSort === "oldest" ? "asc" : "desc" },
-    take: 24,
+    skip: (page - 1) * 9,
+    take: 10,
     include: {
       rooms: {
         orderBy: { createdAt: "asc" },
@@ -64,10 +74,7 @@ export default async function SpacesPage({
     },
   });
 
-  const filtered =
-    activeType === ""
-      ? projects
-      : projects.filter((project) => project.rooms.some((room) => room.type === activeType));
+  const filtered = projects.slice(0, 9);
 
   const covers = new Map<string, string>();
   for (const project of filtered.slice(0, 9)) {
@@ -189,6 +196,29 @@ export default async function SpacesPage({
           })}
         </ul>
       )}
+      <nav aria-label="Project pages" className="flex items-center justify-between gap-4 text-sm">
+        {page > 1 ? (
+          <Link
+            className="underline"
+            href={href({ type: activeType, sort: activeSort, page: page - 1 })}
+          >
+            Previous projects
+          </Link>
+        ) : (
+          <span />
+        )}
+        <span className="text-muted-foreground">Page {page}</span>
+        {projects.length > 9 ? (
+          <Link
+            className="underline"
+            href={href({ type: activeType, sort: activeSort, page: page + 1 })}
+          >
+            More projects
+          </Link>
+        ) : (
+          <span />
+        )}
+      </nav>
     </div>
   );
 }

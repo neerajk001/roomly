@@ -9,7 +9,8 @@ import { prisma } from "@roomdesigner/db";
 import { presignGet } from "@roomdesigner/storage";
 import { requireWorkspace } from "@/server/auth/session";
 import { getRoughEstimate } from "@/server/services/estimates";
-import { getRoom } from "@/server/services/rooms";
+import { getRoom, openingListSchema } from "@/server/services/rooms";
+import { RoomForm } from "@/components/projects/room-form";
 import { listRoomRenderJobs } from "@/server/services/render-history";
 import Link from "next/link";
 
@@ -94,6 +95,36 @@ export async function RoomDetailView({
       : "";
   const roomLabel = ROOM_LABELS[detail.room.type] ?? "Room";
   const dimensions = `${sizeLine}${ceilingLine}`;
+  const openings = openingListSchema.safeParse(detail.room.openings);
+  const roomEditor = (
+    <section id="room-details" aria-label="Room details">
+      <Card>
+        <CardHeader>
+          <CardTitle>Room details & measurements</CardTitle>
+          <CardDescription>
+            Update the room, dimensions and openings. Concept visuals use your photo; estimates use
+            these measurements.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <RoomForm
+            projectId={detail.project.id}
+            basePath={basePath}
+            unitSystem={workspace.unitSystem}
+            room={{
+              id: detail.room.id,
+              name: detail.room.name,
+              type: detail.room.type,
+              widthMm: detail.room.widthMm ?? undefined,
+              lengthMm: detail.room.lengthMm ?? undefined,
+              heightMm: detail.room.heightMm ?? undefined,
+              openings: openings.success ? openings.data : [],
+            }}
+          />
+        </CardContent>
+      </Card>
+    </section>
+  );
 
   if (basePath === "/app") {
     const [rough, projectMeta] = await Promise.all([
@@ -131,6 +162,7 @@ export async function RoomDetailView({
         />
         <nav aria-label="Room workflow" className="flex flex-wrap gap-3 text-sm underline">
           <Link href="#cost-breakdown">Cost breakdown & priorities</Link>
+          <Link href="#room-details">Edit room details</Link>
           <Link href={`/app/projects/${projectId}/rooms/${roomId}/shopping-list`}>
             Shopping list
           </Link>
@@ -139,6 +171,7 @@ export async function RoomDetailView({
         <section id="cost-breakdown" aria-label="Cost breakdown and priorities">
           <EstimateSection projectId={projectId} roomId={detail.room.id} />
         </section>
+        {roomEditor}
         {
           <Card>
             <CardHeader>
@@ -203,6 +236,8 @@ export async function RoomDetailView({
           </Button>
         </CardContent>
       </Card>
+
+      {roomEditor}
 
       <Card>
         <CardHeader>

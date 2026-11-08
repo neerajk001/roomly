@@ -13,6 +13,7 @@ interface ExistingPhoto {
 
 interface UploadItem {
   id: string;
+  assetId?: string;
   name: string;
   file: File;
   status: "uploading" | "error" | "done";
@@ -22,20 +23,20 @@ interface UploadItem {
 
 const MAX_PHOTOS = 3;
 
-export function RoomPhotos({
-  roomId,
-  photos,
-}: {
-  roomId: string;
-  photos: ExistingPhoto[];
-}) {
+export function RoomPhotos({ roomId, photos }: { roomId: string; photos: ExistingPhoto[] }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploads, setUploads] = useState<UploadItem[]>([]);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
-  const remaining = MAX_PHOTOS - photos.length - uploads.filter((u) => u.status !== "error").length;
+  const visibleUploads = uploads.filter(
+    (upload) =>
+      upload.assetId === undefined || !photos.some((photo) => photo.id === upload.assetId),
+  );
+  const remaining =
+    MAX_PHOTOS - photos.length - visibleUploads.filter((u) => u.status !== "error").length;
 
   const startUpload = (file: File) => {
     const item: UploadItem = {
@@ -51,7 +52,9 @@ export function RoomPhotos({
 
   const runUpload = async (item: UploadItem) => {
     setUploads((current) =>
-      current.map((u) => (u.id === item.id ? { ...u, status: "uploading", progress: 0, message: undefined } : u)),
+      current.map((u) =>
+        u.id === item.id ? { ...u, status: "uploading", progress: 0, message: undefined } : u,
+      ),
     );
     setError(null);
     try {
@@ -65,29 +68,32 @@ export function RoomPhotos({
         }),
       });
       if (!presignResponse.ok) {
-        const body = (await presignResponse.json().catch(() => null)) as
-          | { error?: { message?: string } }
-          | null;
+        const body = (await presignResponse.json().catch(() => null)) as {
+          error?: { message?: string };
+        } | null;
         throw new Error(body?.error?.message ?? "Upload could not start.");
       }
       const presign = (await presignResponse.json()) as {
         assetId: string;
         upload: UploadTarget;
       };
+      setUploads((current) =>
+        current.map((upload) =>
+          upload.id === item.id ? { ...upload, assetId: presign.assetId } : upload,
+        ),
+      );
 
       await uploadToStorage(presign.upload, item.file, (progress) => {
-        setUploads((current) =>
-          current.map((u) => (u.id === item.id ? { ...u, progress } : u)),
-        );
+        setUploads((current) => current.map((u) => (u.id === item.id ? { ...u, progress } : u)));
       });
 
       const confirmResponse = await fetch(`/api/uploads/${presign.assetId}/confirm`, {
         method: "POST",
       });
       if (!confirmResponse.ok) {
-        const body = (await confirmResponse.json().catch(() => null)) as
-          | { error?: { message?: string } }
-          | null;
+        const body = (await confirmResponse.json().catch(() => null)) as {
+          error?: { message?: string };
+        } | null;
         throw new Error(body?.error?.message ?? "Upload could not be confirmed.");
       }
 
@@ -142,6 +148,36 @@ export function RoomPhotos({
                 className="h-20 w-28 rounded-md border border-border object-cover"
                 loading="lazy"
               />
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                disabled={removingId !== null}
+                aria-label={`Remove room photo ${photos.indexOf(photo) + 1}`}
+                onClick={() => {
+                  if (
+                    !window.confirm(
+                      "Remove this room photo? Existing concept history will be kept.",
+                    )
+                  )
+                    return;
+                  setRemovingId(photo.id);
+                  setError(null);
+                  void fetch(`/api/uploads/${photo.id}`, { method: "DELETE" })
+                    .then((response) => {
+                      if (!response.ok)
+                        throw new Error("The photo could not be removed. Please try again.");
+                      setUploads((current) =>
+                        current.filter((upload) => upload.assetId !== photo.id),
+                      );
+                      router.refresh();
+                    })
+                    .catch(() => setError("The photo could not be removed. Please try again."))
+                    .finally(() => setRemovingId(null));
+                }}
+              >
+                {removingId === photo.id ? "Removing…" : "Remove photo"}
+              </Button>
             </li>
           ))}
         </ul>
@@ -201,9 +237,9 @@ export function RoomPhotos({
         </p>
       )}
 
-      {uploads.length > 0 && (
+      {visibleUploads.length > 0 && (
         <ul className="space-y-2">
-          {uploads.map((upload) => (
+          {visibleUploads.map((upload) => (
             <li key={upload.id} className="rounded-md border border-border p-2 text-xs">
               <div className="flex items-center justify-between gap-2">
                 <span className="truncate text-foreground">{upload.name}</span>
@@ -223,7 +259,10 @@ export function RoomPhotos({
                   aria-valuemin={0}
                   aria-valuemax={100}
                 >
-                  <div className="h-full bg-primary" style={{ width: `${String(upload.progress)}%` }} />
+                  <div
+                    className="h-full bg-primary"
+                    style={{ width: `${String(upload.progress)}%` }}
+                  />
                 </div>
               )}
               {upload.status === "error" && (

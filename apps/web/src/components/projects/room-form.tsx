@@ -1,6 +1,11 @@
 "use client";
 
-import { createRoomAction, type ProjectFormState } from "@/server/actions/projects";
+import {
+  createRoomAction,
+  updateRoomAction,
+  type ProjectFormState,
+} from "@/server/actions/projects";
+import type { RoomInput } from "@/server/services/rooms";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,7 +40,8 @@ const selectClass =
   "h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
 
 function toMm(value: string, unit: Unit): number | undefined {
-  const parsed = Number.parseFloat(value);
+  if (value.trim() === "") return undefined;
+  const parsed = Number(value);
   if (!Number.isFinite(parsed)) return undefined;
   return Math.round(unit === "metric" ? parsed * 1000 : parsed * 304.8);
 }
@@ -43,16 +49,34 @@ function toMm(value: string, unit: Unit): number | undefined {
 export function RoomForm({
   projectId,
   basePath,
+  room,
+  unitSystem = "METRIC",
 }: {
   projectId: string;
   basePath: "/app" | "/studio";
+  room?: RoomInput & { id: string };
+  unitSystem?: string;
 }) {
-  const [state, formAction, pending] = useActionState(createRoomAction, initialState);
-  const [unit, setUnit] = useState<Unit>("metric");
-  const [width, setWidth] = useState("");
-  const [length, setLength] = useState("");
-  const [height, setHeight] = useState("");
-  const [openings, setOpenings] = useState<OpeningRow[]>([]);
+  const [state, formAction, pending] = useActionState(
+    room === undefined ? createRoomAction : updateRoomAction,
+    initialState,
+  );
+  const initialUnit: Unit = unitSystem === "IMPERIAL" ? "imperial" : "metric";
+  const fromMm = (mm?: number) =>
+    mm === undefined ? "" : String(mm / (initialUnit === "metric" ? 1000 : 304.8));
+  const [unit, setUnit] = useState<Unit>(initialUnit);
+  const [width, setWidth] = useState(fromMm(room?.widthMm));
+  const [length, setLength] = useState(fromMm(room?.lengthMm));
+  const [height, setHeight] = useState(fromMm(room?.heightMm));
+  const [openings, setOpenings] = useState<OpeningRow[]>(() =>
+    (room?.openings ?? []).map((opening, index) => ({
+      id: `existing-${index}`,
+      type: opening.type,
+      width: fromMm(opening.widthMm),
+      height: fromMm(opening.heightMm),
+      qty: String(opening.qty),
+    })),
+  );
 
   const unitLabel = unit === "metric" ? "m" : "ft";
 
@@ -81,6 +105,7 @@ export function RoomForm({
   return (
     <form action={formAction} className="space-y-5">
       <input type="hidden" name="projectId" value={projectId} />
+      {room !== undefined && <input type="hidden" name="roomId" value={room.id} />}
       <input type="hidden" name="basePath" value={basePath} />
       <input type="hidden" name="widthMm" value={toMm(width, unit) ?? ""} />
       <input type="hidden" name="lengthMm" value={toMm(length, unit) ?? ""} />
@@ -92,20 +117,39 @@ export function RoomForm({
           {state.error}
         </p>
       )}
-      {state.fieldErrors?.openings?.map((message) => (
-        <p key={message} role="alert" className="text-xs text-destructive">
-          {message}
+      {state.notice !== undefined && (
+        <p role="status" className="text-sm text-emerald-700">
+          {state.notice}
         </p>
-      ))}
+      )}
+      {Object.values(state.fieldErrors ?? {})
+        .flat()
+        .map((message) => (
+          <p key={message} role="alert" className="text-xs text-destructive">
+            {message}
+          </p>
+        ))}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="room-name">Room name</Label>
-          <Input id="room-name" name="name" required maxLength={80} placeholder="Living room" />
+          <Input
+            id="room-name"
+            name="name"
+            required
+            maxLength={80}
+            defaultValue={room?.name}
+            placeholder="Living room"
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="room-type">Room type</Label>
-          <select id="room-type" name="type" defaultValue="LIVING_ROOM" className={selectClass}>
+          <select
+            id="room-type"
+            name="type"
+            defaultValue={room?.type ?? "LIVING_ROOM"}
+            className={selectClass}
+          >
             {ROOM_TYPES.map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
@@ -118,7 +162,11 @@ export function RoomForm({
       <fieldset className="space-y-3">
         <legend className="flex flex-wrap items-center justify-between gap-2 text-sm font-medium text-foreground">
           Measurements (optional)
-          <span className="inline-flex rounded-md border border-input p-0.5" role="group" aria-label="Units">
+          <span
+            className="inline-flex rounded-md border border-input p-0.5"
+            role="group"
+            aria-label="Units"
+          >
             <button
               type="button"
               aria-pressed={unit === "metric"}
@@ -180,17 +228,23 @@ export function RoomForm({
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          Skip if you don&apos;t know them — renders only use your photo. Sizes only improve estimates later.
+          Skip if you don&apos;t know them — renders only use your photo. Sizes only improve
+          estimates later.
         </p>
       </fieldset>
 
       <fieldset className="space-y-3">
-        <legend className="text-sm font-medium text-foreground">Doors and windows (optional)</legend>
+        <legend className="text-sm font-medium text-foreground">
+          Doors and windows (optional)
+        </legend>
         {openings.length === 0 && (
           <p className="text-xs text-muted-foreground">None added. You can add them later.</p>
         )}
         {openings.map((row, index) => (
-          <div key={row.id} className="grid items-end gap-3 rounded-lg border border-border p-3 sm:grid-cols-[1fr_1fr_1fr_5rem_auto]">
+          <div
+            key={row.id}
+            className="grid items-end gap-3 rounded-lg border border-border p-3 sm:grid-cols-[1fr_1fr_1fr_5rem_auto]"
+          >
             <div className="space-y-1">
               <Label htmlFor={`opening-type-${row.id}`} className="text-xs">
                 Kind
@@ -220,7 +274,9 @@ export function RoomForm({
                 value={row.width}
                 onChange={(event) => {
                   const value = event.target.value;
-                  setOpenings((rows) => rows.map((r, i) => (i === index ? { ...r, width: value } : r)));
+                  setOpenings((rows) =>
+                    rows.map((r, i) => (i === index ? { ...r, width: value } : r)),
+                  );
                 }}
               />
             </div>
@@ -234,7 +290,9 @@ export function RoomForm({
                 value={row.height}
                 onChange={(event) => {
                   const value = event.target.value;
-                  setOpenings((rows) => rows.map((r, i) => (i === index ? { ...r, height: value } : r)));
+                  setOpenings((rows) =>
+                    rows.map((r, i) => (i === index ? { ...r, height: value } : r)),
+                  );
                 }}
               />
             </div>
@@ -248,7 +306,9 @@ export function RoomForm({
                 value={row.qty}
                 onChange={(event) => {
                   const value = event.target.value;
-                  setOpenings((rows) => rows.map((r, i) => (i === index ? { ...r, qty: value } : r)));
+                  setOpenings((rows) =>
+                    rows.map((r, i) => (i === index ? { ...r, qty: value } : r)),
+                  );
                 }}
               />
             </div>
@@ -286,24 +346,17 @@ export function RoomForm({
       </fieldset>
 
       <Button type="submit" disabled={pending} aria-busy={pending}>
-        {pending ? "Adding…" : "Add room"}
+        {pending ? "Saving…" : room !== undefined ? "Save room details" : "Add room"}
       </Button>
     </form>
   );
 }
 
 function openningsPayload(rows: OpeningRow[], unit: Unit) {
-  return rows
-    .map((row) => ({
-      type: row.type,
-      widthMm: toMm(row.width, unit),
-      heightMm: toMm(row.height, unit),
-      qty: Number.parseInt(row.qty, 10),
-    }))
-    .filter(
-      (row) =>
-        Number.isFinite(row.widthMm) &&
-        Number.isFinite(row.heightMm) &&
-        Number.isFinite(row.qty),
-    );
+  return rows.map((row) => ({
+    type: row.type,
+    widthMm: toMm(row.width, unit),
+    heightMm: toMm(row.height, unit),
+    qty: Number(row.qty),
+  }));
 }

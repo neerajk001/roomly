@@ -479,3 +479,12 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
   totals are bounded to the existing integer database fields. Seven new tests
   cover exact parsing, deductions, missing sizes, version races and isolation.
 - Batch 2 typecheck, lint and tests pass across all 11 packages.
+- Batch 3 complete: room editing with visible validation and notices; scoped
+  photo removal detaches sources while preserving existing concept history.
+- Upload progress no longer double-counts confirmed files. Failed favorite
+  writes roll back visibly; projects and saved concepts have page navigation.
+- Remote DB latency caused 10-second setup-hook timeouts in unchanged suites.
+  Web integration files now run serially with a 30-second hook allowance;
+  all 41 web tests and all package typecheck/lint/test tasks then passed.
+- Saved concepts currently filter the full scoped metadata set before paging
+  to preserve style-label searching; SQL search optimization is deferred.

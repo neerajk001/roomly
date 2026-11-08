@@ -125,7 +125,12 @@ export async function createRender(
     }
     styleKey = input.styleKey;
     const photo = await db.asset.findFirst({
-      where: { roomId: room.id, kind: "ORIGINAL_PHOTO", confirmedAt: { not: null } },
+      where: {
+        workspaceId: ctx.workspaceId,
+        roomId: room.id,
+        kind: { in: ["ORIGINAL_PHOTO", "BRIEF_UPLOAD"] },
+        confirmedAt: { not: null },
+      },
       orderBy: { createdAt: "asc" },
       select: { id: true, width: true, height: true },
     });
@@ -135,8 +140,8 @@ export async function createRender(
     sourceAssetId = photo.id;
     sourceWidth = photo.width;
     sourceHeight = photo.height;
-    notes = sanitizeInstruction(input.notes ?? '').slice(0, 300);
-    if (notes === '') notes = null;
+    notes = sanitizeInstruction(input.notes ?? "").slice(0, 300);
+    if (notes === "") notes = null;
   } else {
     const cleaned = sanitizeInstruction(input.instruction ?? "");
     if (cleaned.length < 3) {

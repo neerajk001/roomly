@@ -47,7 +47,11 @@ export default async function SpacesPage({
         orderBy: { createdAt: "asc" },
         include: {
           assets: {
-            where: { kind: "ORIGINAL_PHOTO", confirmedAt: { not: null } },
+            where: {
+              workspaceId: workspace.id,
+              kind: { in: ["ORIGINAL_PHOTO", "BRIEF_UPLOAD"] },
+              confirmedAt: { not: null },
+            },
             orderBy: { createdAt: "asc" },
             take: 1,
             select: { storageKey: true },

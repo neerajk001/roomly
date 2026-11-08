@@ -10,6 +10,7 @@ import { presignGet } from "@roomdesigner/storage";
 import { requireWorkspace } from "@/server/auth/session";
 import { getRoughEstimate } from "@/server/services/estimates";
 import { getRoom } from "@/server/services/rooms";
+import { listRoomRenderJobs } from "@/server/services/render-history";
 import Link from "next/link";
 
 const ROOM_LABELS: Record<string, string> = {
@@ -51,20 +52,11 @@ export async function RoomDetailView({
     })),
   );
 
-  const jobsRaw = await prisma.renderJob.findMany({
-    where: { roomId: detail.room.id, workspaceId: workspace.id },
-    orderBy: { createdAt: "asc" },
-    take: 10,
-    include: {
-      outputs: {
-        orderBy: { index: "asc" },
-        include: {
-          asset: { select: { storageKey: true } },
-          thumbAsset: { select: { storageKey: true } },
-        },
-      },
-    },
-  });
+  const jobsRaw = await listRoomRenderJobs(
+    prisma,
+    { userId: user.id, workspaceId: workspace.id },
+    detail.room.id,
+  );
 
   const jobViews: RenderJobView[] = await Promise.all(
     jobsRaw.map(async (job) => ({

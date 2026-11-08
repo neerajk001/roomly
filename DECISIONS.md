@@ -448,3 +448,27 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
 - Verification passed: pnpm typecheck, pnpm lint and pnpm test (all 11 packages).
 - Existing route/component structure, user copy and event handlers are retained;
   only visual classes, theme variables and responsive sizing were changed.
+# 2026-11-08 — Core completion implementation plan (billing excluded)
+- Human approved starting the six-batch core-feature repair plan.
+- Preserve the current theme and existing Home/Studio navigation.
+- Work within V4 and repair shared earlier-phase behavior as needed.
+- Batch 1: usable brief photos, complete render history, safe proposal states.
+- Include duplicate brief submission protection and regression tests.
+- Batch 2: shared estimate calculations, exact input parsing, safe version saves.
+- Batch 3: editable rooms, accessible older work and recoverable operations.
+- Batch 4: rate-card grouping/order/units and saved/project estimates.
+- Batch 5: proposal editing/revisions, preview/PDF, client review/notifications.
+- Batch 6: both end-to-end journeys and isolation/regression verification.
+- Verify each batch with typecheck, lint and tests; commit separately.
+- Use fake providers in automated checks and never invoke paid generation.
+- Consult installed Next.js guides and official Prisma/API docs before changes.
+- Do not invent pricing, billing, hosting or other product gate decisions.
+- Only mark existing phase boxes complete when their full acceptance is met.
+- Stop for human review at V4 completion; report any external-test blockers.
+- Batch 1 complete: brief uploads work as source photos across project/room,
+  dashboards and sharing; full render history is loaded chronologically.
+- Public drafts/deleted projects are hidden; client actions require an open,
+  unexpired proposal and a name. Conditional transactional updates protect
+  approval/change requests and first-view tracking from concurrent overwrites.
+- Concurrent brief submissions create only one project. Six new regression
+  cases pass; typecheck, lint and tests pass across all 11 packages.

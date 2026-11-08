@@ -128,11 +128,7 @@ export async function updateRoom(
   return room;
 }
 
-export async function deleteRoom(
-  db: Prisma,
-  ctx: ServiceContext,
-  roomId: string,
-): Promise<void> {
+export async function deleteRoom(db: Prisma, ctx: ServiceContext, roomId: string): Promise<void> {
   const deleted = await db.room.deleteMany({
     where: { id: roomId, project: { workspaceId: ctx.workspaceId, deletedAt: null } },
   });
@@ -157,7 +153,11 @@ export async function getRoom(
     include: {
       project: { select: { id: true, name: true } },
       assets: {
-        where: { kind: "ORIGINAL_PHOTO", confirmedAt: { not: null } },
+        where: {
+          workspaceId: ctx.workspaceId,
+          kind: { in: ["ORIGINAL_PHOTO", "BRIEF_UPLOAD"] },
+          confirmedAt: { not: null },
+        },
         orderBy: { createdAt: "asc" },
         select: { id: true, width: true, height: true, storageKey: true },
       },

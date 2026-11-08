@@ -26,7 +26,9 @@ export async function createShareLink(
   if (project === null) throw new AppError("NOT_FOUND", "Project not found.", 404);
 
   const token =
-    project.shareToken !== null && options.regenerate !== true ? project.shareToken : newShareToken();
+    project.shareToken !== null && options.regenerate !== true
+      ? project.shareToken
+      : newShareToken();
 
   await db.project.update({
     where: { id: project.id },
@@ -84,7 +86,7 @@ export async function getSharedGallery(
           id: true,
           name: true,
           assets: {
-            where: { kind: "ORIGINAL_PHOTO", confirmedAt: { not: null } },
+            where: { kind: { in: ["ORIGINAL_PHOTO", "BRIEF_UPLOAD"] }, confirmedAt: { not: null } },
             orderBy: { createdAt: "asc" },
             take: 1,
             select: { storageKey: true },
@@ -119,8 +121,7 @@ export async function getSharedGallery(
     projectName: project.name,
     roomId: room?.id ?? null,
     roomName: room?.name ?? null,
-    beforeUrl:
-      room?.assets[0] !== undefined ? await signUrl(room.assets[0].storageKey) : null,
+    beforeUrl: room?.assets[0] !== undefined ? await signUrl(room.assets[0].storageKey) : null,
     outputs: await Promise.all(
       selected.map(async (output) => ({
         id: output.id,

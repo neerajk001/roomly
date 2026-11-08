@@ -34,7 +34,11 @@ export default async function StudioHomePage() {
           take: 1,
           include: {
             assets: {
-              where: { kind: "ORIGINAL_PHOTO", confirmedAt: { not: null } },
+              where: {
+                workspaceId: workspace.id,
+                kind: { in: ["ORIGINAL_PHOTO", "BRIEF_UPLOAD"] },
+                confirmedAt: { not: null },
+              },
               take: 1,
               select: { storageKey: true },
             },

@@ -20,9 +20,7 @@ export const briefAnswersSchema = z.object({
   clientName: z.string().trim().min(1, "Your name is required.").max(120),
   goals: z.string().trim().max(800).optional(),
   styleLikes: z.array(z.string().max(64)).max(3).optional(),
-  budgetBand: z
-    .enum(["under_1k", "1k_5k", "5k_15k", "15k_plus", "not_sure"])
-    .optional(),
+  budgetBand: z.enum(["under_1k", "1k_5k", "5k_15k", "15k_plus", "not_sure"]).optional(),
   timeline: z.string().trim().max(120).optional(),
   keepItems: z.string().trim().max(500).optional(),
   notes: z.string().trim().max(1000).optional(),
@@ -198,7 +196,8 @@ export async function submitBrief(
     },
   });
   if (link === null) throw new AppError("NOT_FOUND", "This brief link is not valid.", 404);
-  if (link.status !== "OPEN") throw new AppError("CLOSED", "This brief was already submitted.", 409);
+  if (link.status !== "OPEN")
+    throw new AppError("CLOSED", "This brief was already submitted.", 409);
   if (link.expiresAt !== null && link.expiresAt < new Date()) {
     throw new AppError("EXPIRED", "This brief link has expired.", 410);
   }
@@ -208,14 +207,29 @@ export async function submitBrief(
   const projectName = `${roomLabel} brief${answers.clientName !== "" ? ` — ${answers.clientName}` : ""}`;
 
   const result = await db.$transaction(async (tx) => {
+    const claimed = await tx.briefLink.updateMany({
+      where: {
+        id: link.id,
+        workspaceId: link.workspaceId,
+        status: "OPEN",
+        OR: [{ expiresAt: null }, { expiresAt: { gte: new Date() } }],
+      },
+      data: { status: "SUBMITTED" },
+    });
+    if (claimed.count !== 1)
+      throw new AppError("CLOSED", "This brief is closed or has expired.", 409);
     const project = await tx.project.create({
       data: {
         workspaceId: link.workspaceId,
         clientId: link.clientId,
         name: projectName,
-        keepList: answers.keepItems !== undefined && answers.keepItems !== ""
-          ? answers.keepItems.split(",").map((item) => item.trim()).filter((item) => item !== "")
-          : [],
+        keepList:
+          answers.keepItems !== undefined && answers.keepItems !== ""
+            ? answers.keepItems
+                .split(",")
+                .map((item) => item.trim())
+                .filter((item) => item !== "")
+            : [],
       },
     });
     const room = await tx.room.create({

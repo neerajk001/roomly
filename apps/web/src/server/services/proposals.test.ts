@@ -102,6 +102,64 @@ afterAll(async () => {
 });
 
 describe("proposal state machine", () => {
+  it("does not expose drafts or accept client actions before sending", async () => {
+    const draft = await createProposal(prisma, ctx(), {
+      projectId,
+      estimateId,
+      title: "Private draft",
+      options: [{ outputId }],
+    });
+    await expect(getPublicProposal(prisma, draft.publicToken, sign)).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+    await expect(
+      approveProposal(prisma, draft.publicToken, outputId, "Client"),
+    ).rejects.toMatchObject({ code: "INVALID_STATE" });
+    await expect(
+      requestChanges(prisma, draft.publicToken, "Client", "Changes please"),
+    ).rejects.toMatchObject({ code: "INVALID_STATE" });
+    await expect(
+      addProposalComment(prisma, draft.publicToken, "Client", "Comment"),
+    ).rejects.toMatchObject({ code: "INVALID_STATE" });
+  });
+
+  it("allows only one competing approval or change request to succeed", async () => {
+    const draft = await createProposal(prisma, ctx(), {
+      projectId,
+      estimateId,
+      title: "Concurrent actions",
+      options: [{ outputId }],
+    });
+    const sent = await sendProposal(prisma, ctx(), draft.id);
+    const results = await Promise.allSettled([
+      approveProposal(prisma, sent.token, outputId, "Client"),
+      requestChanges(prisma, sent.token, "Client", "Please revise"),
+    ]);
+    expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+    const stored = await prisma.proposal.findFirstOrThrow({
+      where: { id: draft.id, project: { workspaceId } },
+      include: { comments: true },
+    });
+    expect(stored.comments).toHaveLength(stored.status === "CHANGES_REQUESTED" ? 1 : 0);
+    if (stored.status === "APPROVED") expect(stored.approvedOutputId).toBe(outputId);
+  });
+
+  it("requires a client name", async () => {
+    const draft = await createProposal(prisma, ctx(), {
+      projectId,
+      estimateId,
+      title: "Named approval",
+      options: [{ outputId }],
+    });
+    const sent = await sendProposal(prisma, ctx(), draft.id);
+    await expect(approveProposal(prisma, sent.token, outputId, "  ")).rejects.toMatchObject({
+      code: "INVALID_INPUT",
+    });
+    await expect(addProposalComment(prisma, sent.token, "", "Hello")).rejects.toMatchObject({
+      code: "INVALID_INPUT",
+    });
+  });
+
   it("creates a draft, sends it and records the first view", async () => {
     const proposal = await createProposal(prisma, ctx(), {
       projectId,

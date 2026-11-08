@@ -95,7 +95,11 @@ export async function getProject(
         orderBy: { createdAt: "asc" },
         include: {
           assets: {
-            where: { kind: "ORIGINAL_PHOTO", confirmedAt: { not: null } },
+            where: {
+              workspaceId: ctx.workspaceId,
+              kind: { in: ["ORIGINAL_PHOTO", "BRIEF_UPLOAD"] },
+              confirmedAt: { not: null },
+            },
             orderBy: { createdAt: "asc" },
             select: { id: true, width: true, height: true, storageKey: true },
           },

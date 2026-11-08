@@ -22,6 +22,7 @@ export default async function StudioRateCardsPage() {
         </p>
       </div>
 
+      <RateCardControls cards={cards} />
       {cards.length === 0 ? (
         <Card className="border-dashed">
           <CardHeader>
@@ -60,3 +61,4 @@ export default async function StudioRateCardsPage() {
     </div>
   );
 }
+import { RateCardControls } from "@/components/studio/rate-card-controls";

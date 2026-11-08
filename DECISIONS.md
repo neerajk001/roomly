@@ -488,3 +488,11 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
   all 41 web tests and all package typecheck/lint/test tasks then passed.
 - Saved concepts currently filter the full scoped metadata set before paging
   to preserve style-label searching; SQL search optimization is deferred.
+- Batch 4 complete: grouped/reorderable responsive rate cards, create/default
+  controls, imperial prices/quantities with exact metric values retained when
+  untouched, and strict all-or-nothing CSV parsing (duplicate keys rejected).
+- Saved estimate versions open read-only and can be copied to a new version.
+  Exact/range presentation persists; project totals use the latest room versions
+  and keep different currencies separate. Starter-card creation is race-safe.
+- Unit, CSV and integration regressions pass; typecheck/lint/tests pass across
+  all 11 packages. Six completed V4 checklist items are now ticked.

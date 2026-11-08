@@ -4,6 +4,15 @@
  * integer minor units. See docs/spec/05-estimate-engine.md.
  */
 export { parseDecimalHundredths, formatDecimalHundredths } from "./decimal-input";
+export {
+  displayRateMinor,
+  parseDisplayRate,
+  storedRateMinor,
+  displayQuantity,
+  storedQuantity,
+  rateUnitLabel,
+  sumEstimateTotals,
+} from "./unit-display";
 
 export type Opening = {
   type: "DOOR" | "WINDOW";
@@ -67,6 +76,16 @@ export type EstimateResult = {
 function roundHalfUpDiv(numerator: number, denominator: number): number {
   if (denominator <= 0) throw new Error("roundHalfUpDiv: denominator must be positive");
   return Math.floor((numerator * 2 + denominator) / (2 * denominator));
+}
+
+export function rangeForTotal(
+  totalMinor: number,
+  rangeBps: number,
+): { lowMinor: number; highMinor: number } {
+  return {
+    lowMinor: roundHalfUpDiv(totalMinor * (10000 - rangeBps), 10000),
+    highMinor: roundHalfUpDiv(totalMinor * (10000 + rangeBps), 10000),
+  };
 }
 
 /** Quantities are kept as integer hundredths to avoid float drift. */

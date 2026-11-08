@@ -29,6 +29,7 @@ export default async function StudioRateCardPage({ params }: { params: Promise<{
         </CardHeader>
         <CardContent>
           <RateCardEditor
+            unitSystem={workspace.unitSystem}
             rateCardId={card.id}
             name={card.name}
             markupBps={card.markupBps}

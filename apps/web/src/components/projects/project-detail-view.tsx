@@ -10,6 +10,8 @@ import { presignGet } from "@roomdesigner/storage";
 import { requireWorkspace } from "@/server/auth/session";
 import { getProject } from "@/server/services/projects";
 import Link from "next/link";
+import { getProjectEstimateSummary } from "@/server/services/studio-estimates";
+import { formatMoney } from "@roomdesigner/shared";
 
 const ROOM_TYPE_LABELS: Record<string, string> = {
   LIVING_ROOM: "Living room",
@@ -58,6 +60,14 @@ export async function ProjectDetailView({
     })),
   );
 
+  const summary =
+    basePath === "/studio"
+      ? await getProjectEstimateSummary(
+          prisma,
+          { userId: user.id, workspaceId: workspace.id },
+          projectId,
+        )
+      : null;
   return (
     <div className="space-y-10">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -98,6 +108,9 @@ export async function ProjectDetailView({
             <Link href="/studio/rate-cards" className="underline">
               Set your rates
             </Link>
+            <a href="#estimates" className="underline">
+              Room estimates & project total
+            </a>
             <a href="#proposals" className="underline">
               3. Proposals & approval
             </a>
@@ -168,6 +181,46 @@ export async function ProjectDetailView({
           </ul>
         )}
       </section>
+      {basePath === "/studio" && (
+        <section id="estimates" aria-label="Project estimate summary">
+          <Card>
+            <CardHeader>
+              <CardTitle>Room estimates & project total</CardTitle>
+              <CardDescription>
+                Latest saved estimate for each room. Rooms without an estimate are excluded from
+                totals.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {summary?.rooms.length === 0 && (
+                <p className="text-sm text-muted-foreground">Add a room to start estimating.</p>
+              )}
+              <ul className="space-y-3">
+                {summary?.rooms.map((room) => (
+                  <li key={room.id} className="flex flex-wrap justify-between gap-2 text-sm">
+                    <Link
+                      className="underline"
+                      href={`/studio/projects/${projectId}/rooms/${room.id}/estimate${room.estimate !== null ? `?version=${room.estimate.id}` : ""}`}
+                    >
+                      {room.name}
+                    </Link>
+                    <span>
+                      {room.estimate !== null
+                        ? `${formatMoney(room.estimate.totalMinor, room.estimate.currency)} · v${room.estimate.version}`
+                        : "No estimate yet"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {summary?.totals.map((total) => (
+                <p key={total.currency} className="text-lg font-semibold">
+                  Project total: {formatMoney(total.totalMinor, total.currency)}
+                </p>
+              ))}
+            </CardContent>
+          </Card>
+        </section>
+      )}
       {basePath === "/studio" && (
         <section id="proposals" aria-label="Project proposals">
           <ProposalsPanel projectId={projectId} />

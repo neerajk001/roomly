@@ -25,10 +25,62 @@ export const rateCardInputSchema = z.object({
   name: z.string().trim().min(1, "Give the rate card a name.").max(120),
   markupBps: z.number().int().min(0).max(10_000),
   taxBps: z.number().int().min(0).max(10_000),
-  items: z.array(rateItemSchema).min(1, "Add at least one item."),
+  items: z
+    .array(rateItemSchema)
+    .min(1, "Add at least one item.")
+    .max(200)
+    .refine(
+      (items) => new Set(items.map((item) => item.key)).size === items.length,
+      "Item keys must be unique.",
+    ),
 });
 
 export type RateCardInput = z.infer<typeof rateCardInputSchema>;
+
+export async function createRateCard(db: Prisma, ctx: ServiceContext, name: string) {
+  const valid = z.string().trim().min(1).max(120).safeParse(name);
+  if (!valid.success)
+    throw new AppError("INVALID_INPUT", "Enter a rate-card name (up to 120 characters).", 400);
+  const workspace = await db.workspace.findFirstOrThrow({
+    where: { id: ctx.workspaceId },
+    select: { currency: true },
+  });
+  return db.rateCard.create({
+    data: {
+      workspaceId: ctx.workspaceId,
+      name: valid.data,
+      currency: workspace.currency,
+      items: {
+        create: defaultRateItems(workspace.currency).map((item, index) => ({
+          ...item,
+          sortOrder: index,
+        })),
+      },
+    },
+  });
+}
+
+export async function setDefaultRateCard(db: Prisma, ctx: ServiceContext, id: string) {
+  await db.$transaction(async (tx) => {
+    await tx.workspace.updateMany({
+      where: { id: ctx.workspaceId },
+      data: { updatedAt: new Date() },
+    });
+    const card = await tx.rateCard.findFirst({
+      where: { id, workspaceId: ctx.workspaceId },
+      select: { id: true },
+    });
+    if (card === null) throw new AppError("NOT_FOUND", "Rate card not found.", 404);
+    await tx.rateCard.updateMany({
+      where: { workspaceId: ctx.workspaceId, isDefault: true },
+      data: { isDefault: false },
+    });
+    await tx.rateCard.updateMany({
+      where: { id, workspaceId: ctx.workspaceId },
+      data: { isDefault: true },
+    });
+  });
+}
 
 export async function listRateCards(db: Prisma, ctx: ServiceContext) {
   return db.rateCard.findMany({
@@ -50,34 +102,50 @@ export async function listRateCards(db: Prisma, ctx: ServiceContext) {
 export async function ensureStarterRateCard(db: Prisma, ctx: ServiceContext) {
   const existing = await db.rateCard.findFirst({
     where: { workspaceId: ctx.workspaceId },
+    orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
     select: { id: true },
   });
   if (existing !== null) return existing.id;
 
-  const workspace = await db.workspace.findFirstOrThrow({
-    where: { id: ctx.workspaceId },
-    select: { currency: true },
-  });
-  const items = defaultRateItems(workspace.currency);
-  const card = await db.rateCard.create({
-    data: {
-      workspaceId: ctx.workspaceId,
-      name: "Starter rates (edit me)",
-      currency: workspace.currency,
-      isDefault: true,
-      items: {
-        create: items.map((item, index) => ({
-          key: item.key,
-          label: item.label,
-          category: item.category,
-          unit: item.unit,
-          unitPriceMinor: item.unitPriceMinor,
-          sortOrder: index,
-        })),
-      },
+  return db.$transaction(
+    async (tx) => {
+      await tx.workspace.updateMany({
+        where: { id: ctx.workspaceId },
+        data: { updatedAt: new Date() },
+      });
+      const alreadyCreated = await tx.rateCard.findFirst({
+        where: { workspaceId: ctx.workspaceId },
+        orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
+        select: { id: true },
+      });
+      if (alreadyCreated !== null) return alreadyCreated.id;
+      const workspace = await tx.workspace.findFirstOrThrow({
+        where: { id: ctx.workspaceId },
+        select: { currency: true },
+      });
+      const items = defaultRateItems(workspace.currency);
+      const card = await tx.rateCard.create({
+        data: {
+          workspaceId: ctx.workspaceId,
+          name: "Starter rates (edit me)",
+          currency: workspace.currency,
+          isDefault: true,
+          items: {
+            create: items.map((item, index) => ({
+              key: item.key,
+              label: item.label,
+              category: item.category,
+              unit: item.unit,
+              unitPriceMinor: item.unitPriceMinor,
+              sortOrder: index,
+            })),
+          },
+        },
+      });
+      return card.id;
     },
-  });
-  return card.id;
+    { timeout: 15000 },
+  );
 }
 
 export async function getRateCard(db: Prisma, ctx: ServiceContext, id: string) {

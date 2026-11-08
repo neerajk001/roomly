@@ -2,10 +2,12 @@ import type { Prisma } from "@roomdesigner/db";
 import {
   computeEstimate,
   recompute,
+  sumEstimateTotals,
   type EditableLine,
   type RateUnit,
 } from "@roomdesigner/estimate";
 import { openingListSchema } from "./rooms";
+import { ensureStarterRateCard } from "./rate-cards";
 import { z } from "zod";
 import { AppError } from "../app-error";
 import type { ServiceContext } from "./context";
@@ -175,6 +177,16 @@ export interface EstimateDraft {
     unitPriceMinor: number;
   }[];
   versions: { id: string; version: number; totalMinor: number; createdAt: Date }[];
+  selectedVersion?: {
+    id: string;
+    version: number;
+    sent: boolean;
+    subtotalMinor: number;
+    markupMinor: number;
+    taxMinor: number;
+    totalMinor: number;
+  };
+  rangeBps?: number;
 }
 
 /** Auto-fills an editable draft from the room scope and the chosen rate card. */
@@ -183,6 +195,7 @@ export async function getEstimateDraft(
   ctx: ServiceContext,
   roomId: string,
   rateCardId?: string,
+  versionId?: string,
 ): Promise<EstimateDraft> {
   const room = await db.room.findFirst({
     where: { id: roomId, project: { workspaceId: ctx.workspaceId, deletedAt: null } },
@@ -190,10 +203,28 @@ export async function getEstimateDraft(
   });
   if (room === null) throw new AppError("NOT_FOUND", "Room not found.", 404);
 
+  const selected =
+    versionId === undefined
+      ? null
+      : await db.estimate.findFirst({
+          where: {
+            id: versionId,
+            roomId: room.id,
+            project: { workspaceId: ctx.workspaceId, deletedAt: null },
+          },
+          include: {
+            lines: { orderBy: { sortOrder: "asc" } },
+            proposals: { where: { status: { not: "DRAFT" } }, select: { id: true } },
+          },
+        });
+  if (versionId !== undefined && selected === null)
+    throw new AppError("NOT_FOUND", "Estimate version not found.", 404);
+  const chosenCard = rateCardId ?? selected?.rateCardId ?? (await ensureStarterRateCard(db, ctx));
+
   const card = await db.rateCard.findFirst({
     where: {
       workspaceId: ctx.workspaceId,
-      ...(rateCardId !== undefined ? { id: rateCardId } : { isDefault: true }),
+      id: chosenCard,
     },
     include: { items: { orderBy: { sortOrder: "asc" } } },
     orderBy: { createdAt: "asc" },
@@ -205,7 +236,10 @@ export async function getEstimateDraft(
     defaultScopeFor(room.type, room.project.renterMode).map((item) => item.itemKey),
   );
 
-  if (room.widthMm === null || room.lengthMm === null || room.heightMm === null) {
+  if (
+    selected === null &&
+    (room.widthMm === null || room.lengthMm === null || room.heightMm === null)
+  ) {
     throw new AppError(
       "MEASUREMENTS_REQUIRED",
       "Add the room width, length and ceiling height before building an estimate.",
@@ -215,34 +249,90 @@ export async function getEstimateDraft(
   const openings = openingListSchema.safeParse(room.openings);
   if (!openings.success)
     throw new AppError("INVALID_INPUT", "Check the room doors and windows.", 400);
-  const lines = computeEstimate(
-    {
-      widthMm: room.widthMm,
-      lengthMm: room.lengthMm,
-      heightMm: room.heightMm,
-      openings: openings.data,
-    },
-    card.items,
-    [...scopeKeys].map((itemKey) => ({ itemKey })),
-    { currency: card.currency, markupBps: card.markupBps, taxBps: card.taxBps },
-  ).lines;
+  const lines =
+    selected !== null
+      ? selected.lines.map((line) => ({
+          label: line.label,
+          category: line.category,
+          unit: line.unit,
+          quantity: line.quantity.toNumber(),
+          unitPriceMinor: line.unitPriceMinor,
+        }))
+      : computeEstimate(
+          {
+            widthMm: room.widthMm ?? 0,
+            lengthMm: room.lengthMm ?? 0,
+            heightMm: room.heightMm ?? 0,
+            openings: openings.data,
+          },
+          card.items,
+          [...scopeKeys].map((itemKey) => ({ itemKey })),
+          { currency: card.currency, markupBps: card.markupBps, taxBps: card.taxBps },
+        ).lines;
 
   const versions = await db.estimate.findMany({
     where: { roomId: room.id, project: { workspaceId: ctx.workspaceId } },
     orderBy: { version: "desc" },
-    take: 10,
     select: { id: true, version: true, totalMinor: true, createdAt: true },
   });
 
   return {
     roomId: room.id,
     roomName: room.name,
-    currency: card.currency,
+    currency: selected?.currency ?? card.currency,
     markupBps: card.markupBps,
     taxBps: card.taxBps,
     rateCardId: card.id,
     rateCardName: card.name,
     lines,
     versions,
+    ...(selected !== null
+      ? {
+          selectedVersion: {
+            id: selected.id,
+            version: selected.version,
+            sent: selected.proposals.length > 0,
+            subtotalMinor: selected.subtotalMinor,
+            markupMinor: selected.markupMinor,
+            taxMinor: selected.taxMinor,
+            totalMinor: selected.totalMinor,
+          },
+          rangeBps: selected.rangeBps ?? 0,
+        }
+      : {}),
+  };
+}
+
+export async function getProjectEstimateSummary(
+  db: Prisma,
+  ctx: ServiceContext,
+  projectId: string,
+) {
+  const project = await db.project.findFirst({
+    where: { id: projectId, workspaceId: ctx.workspaceId, deletedAt: null },
+    select: { id: true },
+  });
+  if (project === null) throw new AppError("NOT_FOUND", "Project not found.", 404);
+  const rooms = await db.room.findMany({
+    where: { projectId, project: { workspaceId: ctx.workspaceId, deletedAt: null } },
+    orderBy: { createdAt: "asc" },
+    select: {
+      id: true,
+      name: true,
+      estimates: {
+        where: { project: { workspaceId: ctx.workspaceId } },
+        orderBy: [{ version: "desc" }, { createdAt: "desc" }],
+        take: 1,
+        select: { id: true, currency: true, totalMinor: true, version: true },
+      },
+    },
+  });
+  return {
+    rooms: rooms.map((room) => ({
+      id: room.id,
+      name: room.name,
+      estimate: room.estimates[0] ?? null,
+    })),
+    totals: sumEstimateTotals(rooms.flatMap((room) => room.estimates)),
   };
 }

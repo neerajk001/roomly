@@ -31,18 +31,18 @@
 ## 4. Rate cards
 
 - [x] On first Pro onboarding, create a default rate card with a starter set of items (paint walls, paint ceiling, flooring, skirting, lighting point, false ceiling, wardrobe per running metre, curtains, furniture package) at **placeholder prices clearly marked "edit me"**.
-- [ ] Rate card list and editor: items grouped by category, unit (area floor/ceiling/wall, perimeter length, per unit, lump sum), unit price, sort order, markup %, tax %.
+- [x] Rate card list and editor: items grouped by category, unit (area floor/ceiling/wall, perimeter length, per unit, lump sum), unit price, sort order, markup %, tax %.
 - [x] Multiple rate cards (e.g. "Standard", "Premium"); one default.
 - [x] CSV import and export (validate headers, show row-level errors before applying; never partially apply).
-- [ ] Imperial workspaces: show price per sq ft/ft, store per m²/m (see `05-estimate-engine.md`).
+- [x] Imperial workspaces: show price per sq ft/ft, store per m²/m (see `05-estimate-engine.md`).
 
 ## 5. Estimate builder
 
 - [x] From a room: choose a rate card → "Auto-fill from room" selects items by scope template (designer can save their own scope templates, V4 optional) → lines computed with `computeEstimate`.
 - [x] Editable table: change label, quantity, unit price; add custom line; delete line; reorder. Recalculate with `recompute` from `packages/estimate`. Totals show subtotal, markup, tax, total.
-- [ ] Multi-room projects: one estimate per room plus a project summary total.
+- [x] Multi-room projects: one estimate per room plus a project summary total.
 - [x] Save as a new **version**. Show version history with totals and dates. A version referenced by a sent proposal is read-only.
-- [ ] Estimate shown with exact values (no range) unless the designer turns on "show as range".
+- [x] Estimate shown with exact values (no range) unless the designer turns on "show as range".
 
 ## 6. Render workflow for Pro
 
@@ -76,8 +76,8 @@
 ## 10. Tests
 
 - [ ] Isolation tests for clients, rate cards, estimates, proposals, brief links (A cannot touch B).
-- [ ] Rate card CSV import: valid, invalid rows, no partial apply.
-- [ ] Estimate editing and versioning; immutability after send.
+- [x] Rate card CSV import: valid, invalid rows, no partial apply.
+- [x] Estimate editing and versioning; immutability after send.
 - [x] Proposal state machine: all valid transitions; invalid ones rejected (e.g. approve an expired proposal).
 - [x] Public pages: token validity, expiry, rate limits, no data leakage, honeypot.
 - [ ] PDF snapshot test (render to PDF, check page count, key text present).

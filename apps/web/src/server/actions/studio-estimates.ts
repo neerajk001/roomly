@@ -36,6 +36,7 @@ export async function saveEstimateAction(
         roomId: roomId.data,
         rateCardId: rateCardId.data,
         lines: lines as never,
+        rangeBps: Number(formData.get("rangeBps") ?? 0),
       },
     );
     revalidatePath(`/studio/projects/${saved.projectId}`);

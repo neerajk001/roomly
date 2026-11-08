@@ -5,9 +5,13 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireWorkspace } from "../auth/session";
 import { AppError } from "../app-error";
-import { rateCardInputSchema, updateRateCard } from "../services/rate-cards";
-import { parseCsv } from "../csv";
-import { RATE_UNITS } from "../services/rate-cards";
+import {
+  rateCardInputSchema,
+  updateRateCard,
+  createRateCard,
+  setDefaultRateCard,
+} from "../services/rate-cards";
+import { parseRateCardCsv } from "../rate-card-csv";
 import { parseDecimalHundredths } from "@roomdesigner/estimate";
 
 export interface RateCardState {
@@ -54,7 +58,6 @@ export async function saveRateCardAction(
   revalidatePath("/studio/rate-cards");
   return { notice: "Rate card saved." };
 }
-const HEADER = ["key", "label", "category", "unit", "price"];
 
 /** All-or-nothing CSV import: any invalid row rejects the whole file. */
 export async function importRateCardCsvAction(
@@ -65,44 +68,12 @@ export async function importRateCardCsvAction(
   if (!id.success) return { error: "Invalid rate card." };
 
   const csv = String(formData.get("csv") ?? "");
-  const rows = parseCsv(csv);
-  if (rows.length < 2) return { error: "The CSV needs a header and at least one row." };
-  const header = rows[0]?.map((value) => value.trim().toLowerCase()) ?? [];
-  const expected = HEADER.join(",");
-  if (header.join(",") !== expected) {
-    return { error: `Header must be exactly: ${expected}` };
-  }
-
-  const items: {
-    key: string;
-    label: string;
-    category: string;
-    unit: (typeof RATE_UNITS)[number];
-    unitPriceMinor: number;
-  }[] = [];
-  for (let index = 1; index < rows.length; index++) {
-    const row = rows[index] ?? [];
-    const [key = "", label = "", category = "", unit = "", price = ""] = row.map((value) =>
-      value.trim(),
-    );
-    const rowLabel = `Row ${String(index + 1)}`;
-    if (key === "" || label === "" || category === "") {
-      return { error: `${rowLabel}: key, label and category are required.` };
-    }
-    if (!RATE_UNITS.includes(unit as never)) {
-      return { error: `${rowLabel}: unknown unit "${unit}".` };
-    }
-    const priceValue = parseDecimalHundredths(price);
-    if (priceValue === null) {
-      return { error: `${rowLabel}: price must be non-negative with at most two decimal places.` };
-    }
-    items.push({
-      key,
-      label,
-      category,
-      unit: unit as (typeof RATE_UNITS)[number],
-      unitPriceMinor: priceValue,
-    });
+  let items: ReturnType<typeof parseRateCardCsv>;
+  try {
+    items = parseRateCardCsv(csv);
+  } catch (error) {
+    if (error instanceof AppError) return { error: error.message };
+    throw error;
   }
 
   const { user, workspace } = await requireWorkspace();
@@ -119,4 +90,33 @@ export async function importRateCardCsvAction(
   }
   revalidatePath(`/studio/rate-cards/${id.data}`);
   return { notice: `Imported ${String(items.length)} items.` };
+}
+
+export async function createRateCardAction(
+  _prev: RateCardState,
+  formData: FormData,
+): Promise<RateCardState> {
+  const parsed = z.string().trim().min(1).max(120).safeParse(formData.get("name"));
+  if (!parsed.success) return { error: "Enter a rate-card name (up to 120 characters)." };
+  const { user, workspace } = await requireWorkspace();
+  await createRateCard(prisma, { userId: user.id, workspaceId: workspace.id }, parsed.data);
+  revalidatePath("/studio/rate-cards");
+  return { notice: "Rate card created with placeholder rates. Open it to set your prices." };
+}
+
+export async function setDefaultRateCardAction(
+  _prev: RateCardState,
+  formData: FormData,
+): Promise<RateCardState> {
+  const id = z.string().min(1).safeParse(formData.get("rateCardId"));
+  if (!id.success) return { error: "Choose a rate card." };
+  const { user, workspace } = await requireWorkspace();
+  try {
+    await setDefaultRateCard(prisma, { userId: user.id, workspaceId: workspace.id }, id.data);
+  } catch (error) {
+    if (error instanceof AppError) return { error: error.message };
+    throw error;
+  }
+  revalidatePath("/studio/rate-cards");
+  return { notice: "Default rate card updated." };
 }

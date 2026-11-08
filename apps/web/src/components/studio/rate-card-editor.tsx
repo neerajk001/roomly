@@ -9,7 +9,12 @@ import {
   type RateCardState,
 } from "@/server/actions/rate-cards";
 import { useActionState, useState } from "react";
-import { parseDecimalHundredths, formatDecimalHundredths } from "@roomdesigner/estimate";
+import {
+  parseDisplayRate,
+  formatDecimalHundredths,
+  displayRateMinor,
+  rateUnitLabel,
+} from "@roomdesigner/estimate";
 
 interface Row {
   key: string;
@@ -17,6 +22,8 @@ interface Row {
   category: string;
   unit: string;
   price: string;
+  storedPrice: number;
+  priceEdited: boolean;
 }
 
 export function RateCardEditor({
@@ -26,6 +33,7 @@ export function RateCardEditor({
   taxBps,
   items,
   currency,
+  unitSystem = "METRIC",
 }: {
   rateCardId: string;
   name: string;
@@ -33,6 +41,7 @@ export function RateCardEditor({
   taxBps: number;
   items: { key: string; label: string; category: string; unit: string; unitPriceMinor: number }[];
   currency: string;
+  unitSystem?: string;
 }) {
   const [state, formAction, pending] = useActionState(saveRateCardAction, {} as RateCardState);
   const [csvState, csvAction, csvPending] = useActionState(
@@ -41,13 +50,19 @@ export function RateCardEditor({
   );
   const [csvText, setCsvText] = useState("");
   const [rows, setRows] = useState<Row[]>(() =>
-    items.map((item) => ({
-      key: item.key,
-      label: item.label,
-      category: item.category,
-      unit: item.unit,
-      price: formatDecimalHundredths(item.unitPriceMinor),
-    })),
+    items
+      .map((item) => ({
+        key: item.key,
+        label: item.label,
+        category: item.category,
+        unit: item.unit,
+        price: formatDecimalHundredths(
+          displayRateMinor(item.unitPriceMinor, item.unit, unitSystem),
+        ),
+        storedPrice: item.unitPriceMinor,
+        priceEdited: false,
+      }))
+      .sort((a, b) => a.category.localeCompare(b.category)),
   );
 
   const payload = rows.map((row) => ({
@@ -55,20 +70,34 @@ export function RateCardEditor({
     label: row.label,
     category: row.category,
     unit: row.unit,
-    unitPriceMinor: parseDecimalHundredths(row.price),
+    unitPriceMinor: !row.priceEdited
+      ? row.storedPrice
+      : parseDisplayRate(row.price, row.unit, unitSystem),
   }));
 
   const units = [
-    ["AREA_WALL", "per m² wall"],
-    ["AREA_FLOOR", "per m² floor"],
-    ["AREA_CEILING", "per m² ceiling"],
-    ["LENGTH_PERIMETER", "per m perimeter"],
+    ["AREA_WALL", `per ${rateUnitLabel("AREA_WALL", unitSystem)} wall`],
+    ["AREA_FLOOR", `per ${rateUnitLabel("AREA_FLOOR", unitSystem)} floor`],
+    ["AREA_CEILING", `per ${rateUnitLabel("AREA_CEILING", unitSystem)} ceiling`],
+    ["LENGTH_PERIMETER", `per ${rateUnitLabel("LENGTH_PERIMETER", unitSystem)} perimeter`],
     ["PER_UNIT", "per unit"],
     ["LUMP_SUM", "lump sum"],
   ] as const;
 
   const update = (index: number, patch: Partial<Row>) => {
-    setRows((current) => current.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+    setRows((current) =>
+      current
+        .map((row, i) =>
+          i === index
+            ? {
+                ...row,
+                ...patch,
+                ...(patch.price !== undefined ? { priceEdited: patch.priceEdited ?? true } : {}),
+              }
+            : row,
+        )
+        .sort((a, b) => a.category.localeCompare(b.category)),
+    );
   };
 
   return (
@@ -116,7 +145,7 @@ export function RateCardEditor({
       </div>
 
       <div className="space-y-2">
-        <div className="grid grid-cols-[1fr_1fr_1fr_7rem_auto] gap-2 text-xs font-medium text-muted-foreground">
+        <div className="hidden gap-2 text-xs font-medium text-muted-foreground lg:grid lg:grid-cols-[1fr_1fr_1fr_7rem_auto]">
           <span>Label</span>
           <span>Category</span>
           <span>Unit</span>
@@ -124,7 +153,15 @@ export function RateCardEditor({
           <span />
         </div>
         {rows.map((row, index) => (
-          <div key={row.key} className="grid grid-cols-[1fr_1fr_1fr_7rem_auto] items-center gap-2">
+          <div
+            key={row.key}
+            className="grid grid-cols-1 items-center gap-3 rounded-xl border border-border p-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_7rem_auto]"
+          >
+            {(index === 0 || rows[index - 1]?.category !== row.category) && (
+              <h3 className="col-span-full text-sm font-semibold">
+                {row.category || "Uncategorized"}
+              </h3>
+            )}
             <Input
               aria-label={`Label ${String(index + 1)}`}
               value={row.label}
@@ -143,7 +180,16 @@ export function RateCardEditor({
               aria-label={`Unit ${String(index + 1)}`}
               value={row.unit}
               onChange={(event) => {
-                update(index, { unit: event.target.value });
+                const metric = row.priceEdited
+                  ? (parseDisplayRate(row.price, row.unit, unitSystem) ?? 0)
+                  : row.storedPrice;
+                const unit = event.target.value;
+                update(index, {
+                  unit,
+                  price: formatDecimalHundredths(displayRateMinor(metric, unit, unitSystem)),
+                  storedPrice: metric,
+                  priceEdited: false,
+                });
               }}
               className="h-9 rounded-md border border-input bg-transparent px-2 text-sm"
             >
@@ -154,7 +200,7 @@ export function RateCardEditor({
               ))}
             </select>
             <Input
-              aria-label={`Price ${String(index + 1)}`}
+              aria-label={`Price ${String(index + 1)} (${currency} per ${rateUnitLabel(row.unit, unitSystem)})`}
               inputMode="decimal"
               value={row.price}
               onChange={(event) => {
@@ -171,6 +217,38 @@ export function RateCardEditor({
             >
               Remove
             </Button>
+            <div className="col-span-full flex gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={index === 0 || rows[index - 1]?.category !== row.category}
+                onClick={() =>
+                  setRows((current) => {
+                    const next = [...current];
+                    [next[index - 1], next[index]] = [next[index]!, next[index - 1]!];
+                    return next;
+                  })
+                }
+              >
+                Move up
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={index === rows.length - 1 || rows[index + 1]?.category !== row.category}
+                onClick={() =>
+                  setRows((current) => {
+                    const next = [...current];
+                    [next[index], next[index + 1]] = [next[index + 1]!, next[index]!];
+                    return next;
+                  })
+                }
+              >
+                Move down
+              </Button>
+            </div>
           </div>
         ))}
       </div>
@@ -181,16 +259,20 @@ export function RateCardEditor({
           size="sm"
           variant="outline"
           onClick={() => {
-            setRows((current) => [
-              ...current,
-              {
-                key: `custom-${crypto.randomUUID()}`,
-                label: "Custom item",
-                category: "custom",
-                unit: "LUMP_SUM",
-                price: "0.00",
-              },
-            ]);
+            setRows((current) =>
+              [
+                ...current,
+                {
+                  key: `custom-${crypto.randomUUID()}`,
+                  label: "Custom item",
+                  category: "custom",
+                  unit: "LUMP_SUM",
+                  price: "0.00",
+                  storedPrice: 0,
+                  priceEdited: false,
+                },
+              ].sort((a, b) => a.category.localeCompare(b.category)),
+            );
           }}
         >
           Add item
@@ -200,8 +282,10 @@ export function RateCardEditor({
         </Button>
       </div>
       <p className="text-xs text-muted-foreground">
-        Prices are stored per m² / m / unit in your workspace currency. Imperial display is coming
-        with the estimate builder.
+        {unitSystem === "IMPERIAL"
+          ? "Prices are displayed per sq ft / ft."
+          : "Prices are displayed per m² / m."}{" "}
+        Storage and CSV imports use metric rates. Unedited prices retain their exact stored value.
       </p>
 
       <div className="space-y-2 border-t border-border pt-4">

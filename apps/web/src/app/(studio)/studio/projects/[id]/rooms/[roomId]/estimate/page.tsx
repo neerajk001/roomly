@@ -4,6 +4,7 @@ import { prisma } from "@roomdesigner/db";
 import { requireWorkspace } from "@/server/auth/session";
 import { getEstimateDraft } from "@/server/services/studio-estimates";
 import Link from "next/link";
+import { AppError } from "@/server/app-error";
 
 export const metadata = { title: "Estimate" };
 
@@ -14,7 +15,33 @@ export default async function StudioEstimatePage({
 }) {
   const { id, roomId } = await params;
   const { user, workspace } = await requireWorkspace();
-  const draft = await getEstimateDraft(prisma, { userId: user.id, workspaceId: workspace.id }, roomId);
+  const draft = await getEstimateDraft(
+    prisma,
+    { userId: user.id, workspaceId: workspace.id },
+    roomId,
+  ).catch((error: unknown) => {
+    if (error instanceof AppError && error.code === "MEASUREMENTS_REQUIRED") return null;
+    throw error;
+  });
+  if (draft === null)
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Add room measurements</CardTitle>
+          <CardDescription>
+            Enter the width, length and ceiling height to calculate an estimate from your rates.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Link
+            className="text-sm underline"
+            href={`/studio/projects/${id}/rooms/${roomId}#room-details`}
+          >
+            Back to room details
+          </Link>
+        </CardContent>
+      </Card>
+    );
 
   return (
     <div className="space-y-6">

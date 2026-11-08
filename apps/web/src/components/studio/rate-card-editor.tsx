@@ -9,6 +9,7 @@ import {
   type RateCardState,
 } from "@/server/actions/rate-cards";
 import { useActionState, useState } from "react";
+import { parseDecimalHundredths, formatDecimalHundredths } from "@roomdesigner/estimate";
 
 interface Row {
   key: string;
@@ -45,7 +46,7 @@ export function RateCardEditor({
       label: item.label,
       category: item.category,
       unit: item.unit,
-      price: (item.unitPriceMinor / 100).toFixed(2),
+      price: formatDecimalHundredths(item.unitPriceMinor),
     })),
   );
 
@@ -54,7 +55,7 @@ export function RateCardEditor({
     label: row.label,
     category: row.category,
     unit: row.unit,
-    unitPriceMinor: Math.round((Number.parseFloat(row.price) || 0) * 100),
+    unitPriceMinor: parseDecimalHundredths(row.price),
   }));
 
   const units = [
@@ -81,7 +82,10 @@ export function RateCardEditor({
         </p>
       )}
       {state.notice !== undefined && (
-        <p role="status" className="rounded-md bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700">
+        <p
+          role="status"
+          className="rounded-md bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700"
+        >
           {state.notice}
         </p>
       )}
@@ -97,7 +101,7 @@ export function RateCardEditor({
             id="rate-markup"
             name="markupPercent"
             inputMode="decimal"
-            defaultValue={(markupBps / 100).toString()}
+            defaultValue={formatDecimalHundredths(markupBps)}
           />
         </div>
         <div className="space-y-2">
@@ -106,7 +110,7 @@ export function RateCardEditor({
             id="rate-tax"
             name="taxPercent"
             inputMode="decimal"
-            defaultValue={(taxBps / 100).toString()}
+            defaultValue={formatDecimalHundredths(taxBps)}
           />
         </div>
       </div>

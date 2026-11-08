@@ -3,6 +3,7 @@
  * All quantities are computed in hundredths (2 decimal places) and money in
  * integer minor units. See docs/spec/05-estimate-engine.md.
  */
+export { parseDecimalHundredths, formatDecimalHundredths } from "./decimal-input";
 
 export type Opening = {
   type: "DOOR" | "WINDOW";
@@ -19,12 +20,7 @@ export type RoomInput = {
 };
 
 export type RateUnit =
-  | "AREA_FLOOR"
-  | "AREA_CEILING"
-  | "AREA_WALL"
-  | "LENGTH_PERIMETER"
-  | "PER_UNIT"
-  | "LUMP_SUM";
+  "AREA_FLOOR" | "AREA_CEILING" | "AREA_WALL" | "LENGTH_PERIMETER" | "PER_UNIT" | "LUMP_SUM";
 
 export type RateItem = {
   key: string;
@@ -274,7 +270,8 @@ export function rankChanges(
         label: line.label,
         category: line.category,
         estimatedCostMinor: cost,
-        impactPerCostBps: cost === 0 ? Number.MAX_SAFE_INTEGER : roundHalfUpDiv(impact * 10_000, cost),
+        impactPerCostBps:
+          cost === 0 ? Number.MAX_SAFE_INTEGER : roundHalfUpDiv(impact * 10_000, cost),
         fitsBudget: false,
       };
     })

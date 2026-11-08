@@ -472,3 +472,10 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
   approval/change requests and first-view tracking from concurrent overwrites.
 - Concurrent brief submissions create only one project. Six new regression
   cases pass; typecheck, lint and tests pass across all 11 packages.
+- Batch 2 complete: Pro drafts use computeEstimate including opening deductions;
+  missing dimensions show guidance rather than zero-price estimates. Decimal money
+  and percentages are parsed exactly; malformed CSV prices are rejected.
+- Estimate versions serialize per room without mutating older versions; saved
+  totals are bounded to the existing integer database fields. Seven new tests
+  cover exact parsing, deductions, missing sizes, version races and isolation.
+- Batch 2 typecheck, lint and tests pass across all 11 packages.

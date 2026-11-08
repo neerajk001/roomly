@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { saveEstimateAction, type SaveEstimateState } from "@/server/actions/studio-estimates";
 import { formatMoney } from "@roomdesigner/shared";
-import { recompute } from "@roomdesigner/estimate";
+import { recompute, parseDecimalHundredths, formatDecimalHundredths } from "@roomdesigner/estimate";
 import { useActionState, useMemo, useState } from "react";
 
 interface Line {
@@ -33,7 +33,13 @@ export function EstimateBuilder({
   currency: string;
   markupBps: number;
   taxBps: number;
-  lines: { label: string; category: string; unit: string; quantity: number; unitPriceMinor: number }[];
+  lines: {
+    label: string;
+    category: string;
+    unit: string;
+    quantity: number;
+    unitPriceMinor: number;
+  }[];
   versions: { id: string; version: number; totalMinor: number; createdAt: string }[];
 }) {
   const [state, formAction, pending] = useActionState(saveEstimateAction, {} as SaveEstimateState);
@@ -44,7 +50,7 @@ export function EstimateBuilder({
       category: line.category,
       unit: line.unit,
       quantity: line.quantity.toFixed(2),
-      price: (line.unitPriceMinor / 100).toFixed(2),
+      price: formatDecimalHundredths(line.unitPriceMinor),
     })),
   );
 
@@ -55,8 +61,13 @@ export function EstimateBuilder({
           label: row.label,
           category: row.category,
           unit: row.unit as never,
-          quantity: Number.parseFloat(row.quantity) || 0,
-          unitPriceMinor: Math.round((Number.parseFloat(row.price) || 0) * 100),
+          quantity:
+            Number.isFinite(Number(row.quantity)) &&
+            Number(row.quantity) >= 0 &&
+            Number(row.quantity) <= 100000
+              ? Number(row.quantity)
+              : 0,
+          unitPriceMinor: parseDecimalHundredths(row.price) ?? 0,
         })),
         { currency, markupBps, taxBps },
       ),
@@ -67,8 +78,8 @@ export function EstimateBuilder({
     label: row.label,
     category: row.category,
     unit: row.unit,
-    quantity: Number.parseFloat(row.quantity) || 0,
-    unitPriceMinor: Math.round((Number.parseFloat(row.price) || 0) * 100),
+    quantity: Number(row.quantity),
+    unitPriceMinor: parseDecimalHundredths(row.price),
   }));
 
   const update = (index: number, patch: Partial<Line>) => {
@@ -87,7 +98,10 @@ export function EstimateBuilder({
         </p>
       )}
       {state.notice !== undefined && (
-        <p role="status" className="rounded-md bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700">
+        <p
+          role="status"
+          className="rounded-md bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700"
+        >
           {state.notice}
         </p>
       )}

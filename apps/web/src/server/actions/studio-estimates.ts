@@ -38,7 +38,8 @@ export async function saveEstimateAction(
         lines: lines as never,
       },
     );
-    revalidatePath(`/studio/projects`);
+    revalidatePath(`/studio/projects/${saved.projectId}`);
+    revalidatePath(`/studio/projects/${saved.projectId}/rooms/${roomId.data}/estimate`);
     return { notice: `Saved estimate v${String(saved.version)}` };
   } catch (error) {
     if (error instanceof AppError) return { error: error.message };

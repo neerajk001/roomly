@@ -8,6 +8,7 @@ import { AppError } from "../app-error";
 import { rateCardInputSchema, updateRateCard } from "../services/rate-cards";
 import { parseCsv } from "../csv";
 import { RATE_UNITS } from "../services/rate-cards";
+import { parseDecimalHundredths } from "@roomdesigner/estimate";
 
 export interface RateCardState {
   error?: string;
@@ -29,8 +30,8 @@ export async function saveRateCardAction(
   }
   const parsed = rateCardInputSchema.safeParse({
     name: String(formData.get("name") ?? ""),
-    markupBps: Math.round(Number(formData.get("markupPercent") ?? 0) * 100),
-    taxBps: Math.round(Number(formData.get("taxPercent") ?? 0) * 100),
+    markupBps: parseDecimalHundredths(String(formData.get("markupPercent") ?? "0")),
+    taxBps: parseDecimalHundredths(String(formData.get("taxPercent") ?? "0")),
     items,
   });
   if (!parsed.success) {
@@ -81,7 +82,9 @@ export async function importRateCardCsvAction(
   }[] = [];
   for (let index = 1; index < rows.length; index++) {
     const row = rows[index] ?? [];
-    const [key = "", label = "", category = "", unit = "", price = ""] = row.map((value) => value.trim());
+    const [key = "", label = "", category = "", unit = "", price = ""] = row.map((value) =>
+      value.trim(),
+    );
     const rowLabel = `Row ${String(index + 1)}`;
     if (key === "" || label === "" || category === "") {
       return { error: `${rowLabel}: key, label and category are required.` };
@@ -89,32 +92,27 @@ export async function importRateCardCsvAction(
     if (!RATE_UNITS.includes(unit as never)) {
       return { error: `${rowLabel}: unknown unit "${unit}".` };
     }
-    const priceValue = Number.parseFloat(price);
-    if (!Number.isFinite(priceValue) || priceValue < 0) {
-      return { error: `${rowLabel}: price must be a non-negative number.` };
+    const priceValue = parseDecimalHundredths(price);
+    if (priceValue === null) {
+      return { error: `${rowLabel}: price must be non-negative with at most two decimal places.` };
     }
     items.push({
       key,
       label,
       category,
       unit: unit as (typeof RATE_UNITS)[number],
-      unitPriceMinor: Math.round(priceValue * 100),
+      unitPriceMinor: priceValue,
     });
   }
 
   const { user, workspace } = await requireWorkspace();
   try {
-    await updateRateCard(
-      prisma,
-      { userId: user.id, workspaceId: workspace.id },
-      id.data,
-      {
-        name: String(formData.get("name") ?? ""),
-        markupBps: Math.round(Number(formData.get("markupPercent") ?? 0) * 100),
-        taxBps: Math.round(Number(formData.get("taxPercent") ?? 0) * 100),
-        items,
-      },
-    );
+    await updateRateCard(prisma, { userId: user.id, workspaceId: workspace.id }, id.data, {
+      name: String(formData.get("name") ?? ""),
+      markupBps: parseDecimalHundredths(String(formData.get("markupPercent") ?? "0")) ?? -1,
+      taxBps: parseDecimalHundredths(String(formData.get("taxPercent") ?? "0")) ?? -1,
+      items,
+    });
   } catch (error) {
     if (error instanceof AppError) return { error: error.message };
     throw error;

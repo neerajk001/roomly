@@ -23,6 +23,7 @@ export {
 export { buildStorageKey, extensionForMime } from "./keys";
 export type { HeadResult, PresignPutInput, PutObjectInput } from "./types";
 export { applyWatermark } from "./watermark";
+export { fingerprintImage, compareFingerprints, duplicatePairs } from "./image-similarity";
 
 function usesCloudinary(): boolean {
   return getServerEnv().STORAGE_PROVIDER === "cloudinary";

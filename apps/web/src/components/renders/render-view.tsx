@@ -65,6 +65,7 @@ export function RenderView({
         outputs: incoming.outputs,
         label,
         styleKey: incoming.styleKey,
+        similarConcepts: incoming.similarConcepts ?? false,
       };
       return previous.some((job) => job.id === view.id)
         ? previous.map((job) => (job.id === view.id ? view : job))
@@ -260,6 +261,12 @@ export function RenderView({
         </div>
       )}
 
+      {current?.status === "SUCCEEDED" && current.similarConcepts && (
+        <p role="status" className="rounded-lg border border-border bg-muted p-3 text-sm">
+          Some concepts are visually similar. The automatic variation check has finished; no extra
+          credits were charged.
+        </p>
+      )}
       {current !== null && current.status === "SUCCEEDED" && (
         <div className="flex flex-wrap items-end gap-2">
           <div className="space-y-1">
@@ -406,6 +413,11 @@ export function RenderView({
                     className="aspect-[4/3] w-full object-cover transition-transform group-hover:scale-[1.02]"
                   />
                 </button>
+                {output.directionLabel && (
+                  <p className="border-t border-border px-2 py-1.5 text-xs font-medium">
+                    {output.directionLabel}
+                  </p>
+                )}
                 <div className="flex items-center justify-between gap-1 border-t border-border p-1.5">
                   <button
                     type="button"

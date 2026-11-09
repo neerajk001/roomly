@@ -87,6 +87,7 @@ export function HomeRoomResults({
         outputs: incoming.outputs,
         label,
         styleKey: incoming.styleKey,
+        similarConcepts: incoming.similarConcepts ?? false,
       };
       return previous.some((job) => job.id === view.id)
         ? previous.map((job) => (job.id === view.id ? view : job))
@@ -442,8 +443,17 @@ export function HomeRoomResults({
               Choose your favourite design
             </h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              {outputs.length} unique concepts based on your room, style and budget.
+              {outputs.length} concept visuals based on your room, style and budget.
             </p>
+            {current.similarConcepts && (
+              <p
+                role="status"
+                className="mt-3 rounded-lg border border-border bg-muted p-3 text-sm"
+              >
+                Some concepts are visually similar. The automatic variation check has finished; no
+                extra credits were charged.
+              </p>
+            )}
             <ul className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {outputs.map((output, index) => {
                 const label = styleLabelFor(output.styleKey ?? styleKey);
@@ -505,6 +515,9 @@ export function HomeRoomResults({
                         <p className="text-sm font-semibold text-foreground">
                           {String(index + 1).padStart(2, "0")} · {label}
                         </p>
+                        {output.directionLabel && (
+                          <p className="mt-1 text-xs font-medium">{output.directionLabel}</p>
+                        )}
                         <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
                           {styleDescription(output.styleKey ?? styleKey)}
                         </p>

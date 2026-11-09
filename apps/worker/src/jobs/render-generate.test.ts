@@ -2,6 +2,7 @@ import { createFakeProvider, ProviderError, type ImageProvider } from "@roomdesi
 import { prisma } from "@roomdesigner/db";
 import { describe, expect, it } from "vitest";
 import { processRenderJob, type RenderJobDeps } from "./render-generate";
+import { claimDiversityRetry, recordDiversityResult } from "./diversity-retry";
 
 interface Fixture {
   workspaceId: string;
@@ -138,6 +139,54 @@ async function balance(workspaceId: string): Promise<number> {
 }
 
 describe("processRenderJob", () => {
+  it("claims only one diversity retry across concurrent workers and respects spend headroom", async () => {
+    const fixture = await createFixture();
+    const params = {
+      providerQuality: "low" as const,
+      size: "1024x1024" as const,
+      diversityRetryUsed: false,
+    };
+    const claim = {
+      jobId: fixture.jobId,
+      workspaceId: fixture.workspaceId,
+      params,
+      initialCostMicros: 0,
+      limitMicros: 1_000_000_000,
+    };
+    try {
+      await prisma.renderJob.update({
+        where: { id: fixture.jobId, workspaceId: fixture.workspaceId },
+        data: { status: "RUNNING", params },
+      });
+      expect(
+        await claimDiversityRetry(prisma, { ...claim, workspaceId: "another-workspace" }),
+      ).toBe(false);
+      expect(await claimDiversityRetry(prisma, { ...claim, limitMicros: 1 })).toBe(false);
+      const results = await Promise.all([
+        claimDiversityRetry(prisma, claim),
+        claimDiversityRetry(prisma, claim),
+      ]);
+      expect(results.filter(Boolean)).toHaveLength(1);
+      await recordDiversityResult(prisma, {
+        jobId: fixture.jobId,
+        workspaceId: fixture.workspaceId,
+        extraCostMicros: 120,
+        report: { similarConcepts: true, retryUsed: false },
+      });
+      expect(await claimDiversityRetry(prisma, claim)).toBe(false);
+      const job = await prisma.renderJob.findFirstOrThrow({
+        where: { id: fixture.jobId, workspaceId: fixture.workspaceId },
+      });
+      expect(job.params).toMatchObject({ diversityRetryUsed: true });
+      expect(job.params).toMatchObject({
+        diversityReport: { similarConcepts: true, retryUsed: true },
+      });
+      expect(job.costMicros).toBe(120);
+    } finally {
+      await cleanup(fixture);
+    }
+  }, 90_000);
+
   it("uses every selected style while preserving notes, room constraints and budget", async () => {
     const fixture = await createFixture();
     const prompts: string[] = [];

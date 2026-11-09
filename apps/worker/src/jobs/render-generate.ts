@@ -2,7 +2,8 @@ import {
   buildEditPrompt,
   buildRestylePrompt,
   ProviderError,
-  variationPrompt,
+  buildConceptPrompt,
+  CONSERVATIVE_IMAGE_COST_MICROS,
   type EditResult,
   type ImageQuality,
   type ImageProvider,
@@ -11,14 +12,11 @@ import {
 import { refundCredits, type Prisma } from "@roomdesigner/db";
 import { makeThumbnail, makeWebVersion, buildStorageKey } from "@roomdesigner/storage";
 import { getServerEnv } from "@roomdesigner/config/env";
-import {
-  BUDGET_TIERS,
-  designPreferencesSchema,
-  getStyle,
-  outputStyleKey,
-} from "@roomdesigner/shared";
+import { BUDGET_TIERS, conceptDirectionFor, getStyle, outputStyleKey } from "@roomdesigner/shared";
 import { randomUUID } from "node:crypto";
-import { z } from "zod";
+import { renderParamsSchema, type RenderParams } from "./render-params";
+import { improveConceptDiversity } from "./concept-diversity";
+import { claimDiversityRetry, recordDiversityResult } from "./diversity-retry";
 
 const ROOM_TYPE_LABELS: Record<string, string> = {
   LIVING_ROOM: "living room",
@@ -33,35 +31,7 @@ const ROOM_TYPE_LABELS: Record<string, string> = {
   OTHER: "room",
 };
 
-export const renderParamsSchema = z
-  .object({
-    ...designPreferencesSchema.shape,
-    providerQuality: z.enum(["low", "medium", "high"]),
-    size: z.enum(["1024x1024", "1536x1024", "1024x1536", "auto"]),
-    notes: z.string().max(300).optional(),
-    stagingItems: z
-      .array(
-        z.enum([
-          "sofa",
-          "dining-table",
-          "rug",
-          "flooring",
-          "curtains",
-          "plants",
-          "art",
-          "lighting",
-          "storage",
-        ]),
-      )
-      .max(9)
-      .optional(),
-  })
-  .refine(
-    (value) => designPreferencesSchema.safeParse(value).success,
-    "Invalid design preferences.",
-  );
-
-export type RenderParams = z.infer<typeof renderParamsSchema>;
+export { renderParamsSchema } from "./render-params";
 
 /** Storage is injected so worker tests can run without S3. */
 export interface RenderJobDeps {
@@ -144,18 +114,29 @@ export async function processRenderJob(
       return "ok";
     }
 
-    const prompts = Array.from({ length: job.variations }, (_, index) =>
-      buildPromptForJob(
+    const directions = Array.from({ length: job.variations }, (_, index) =>
+      conceptDirectionFor(outputStyleKey(params.data, job.styleKey, index), index),
+    );
+    const prompts = Array.from({ length: job.variations }, (_, index) => {
+      const base = buildPromptForJob(
         { ...job, styleKey: outputStyleKey(params.data, job.styleKey, index) },
         params.data,
-      ),
-    );
+      );
+      const direction = directions[index];
+      return job.kind === "RESTYLE" && direction
+        ? buildConceptPrompt(
+            base,
+            direction,
+            directions.filter((_, slot) => slot !== index),
+          )
+        : base;
+    });
     const prompt = prompts[0] ?? buildPromptForJob(job, params.data);
     const source = await deps.download(job.sourceAsset.storageKey);
 
     // One call per variation with a distinct emphasis: a single n=4 call
     // returns four near-identical images. EDIT jobs stay a single image.
-    const result =
+    let result =
       job.kind === "RESTYLE" && job.variations > 1
         ? await editVariations(deps, {
             source,
@@ -173,6 +154,65 @@ export async function processRenderJob(
             quality: params.data.providerQuality,
             signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
           });
+
+    const initialCostMicros = result.costMicros;
+    await db.renderJob.update({
+      where: { id: job.id, workspaceId: job.workspaceId },
+      data: { costMicros: { increment: initialCostMicros } },
+    });
+    if (result.images.length !== job.variations) {
+      throw new ProviderError(
+        "PROVIDER_COUNT",
+        "The image service returned an incomplete set. Please try again.",
+        "transient",
+      );
+    }
+    let diversityReport: { similarConcepts: boolean; retryUsed: boolean } | undefined;
+    if (job.kind === "RESTYLE" && job.variations > 1) {
+      const improved = await improveConceptDiversity({
+        result,
+        provider: deps.provider,
+        claimRetry: () =>
+          claimDiversityRetry(db, {
+            jobId: job.id,
+            workspaceId: job.workspaceId,
+            params: params.data,
+            initialCostMicros: 0,
+            limitMicros: Math.round(getServerEnv().MAX_DAILY_SPEND_USD * 1_000_000),
+          }),
+        replacementInput: (index) => ({
+          image: source,
+          mime: job.sourceAsset.mime,
+          prompt: buildConceptPrompt(
+            buildPromptForJob(
+              { ...job, styleKey: outputStyleKey(params.data, job.styleKey, index) },
+              params.data,
+            ),
+            directions[index] ?? conceptDirectionFor(job.styleKey, index),
+            directions.filter((_, slot) => slot !== index),
+            true,
+          ),
+          n: 1,
+          size: params.data.size,
+          quality: params.data.providerQuality,
+          signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
+        }),
+        failedCallCostMicros: deps.provider.name === "fake" ? 0 : CONSERVATIVE_IMAGE_COST_MICROS,
+      });
+      result = improved.result;
+      diversityReport = {
+        ...improved.report,
+        retryUsed: params.data.diversityRetryUsed === true || improved.report.retryUsed,
+      };
+    }
+    // Persist all returned usage before uploads, including discarded diversity attempts.
+    if (job.kind === "RESTYLE")
+      await recordDiversityResult(db, {
+        jobId: job.id,
+        workspaceId: job.workspaceId,
+        extraCostMicros: result.costMicros - initialCostMicros,
+        report: diversityReport,
+      });
 
     await db.renderOutput.deleteMany({ where: { jobId: job.id } });
 
@@ -226,7 +266,6 @@ export async function processRenderJob(
       data: {
         status: "SUCCEEDED",
         finishedAt: deps.now(),
-        costMicros: result.costMicros,
         model: result.model,
         errorCode: null,
         errorMessage: null,
@@ -346,11 +385,11 @@ async function editVariations(
   },
 ): Promise<EditResult> {
   const results = await Promise.all(
-    input.prompts.map((prompt, index) =>
+    input.prompts.map((prompt) =>
       deps.provider.edit({
         image: input.source,
         mime: input.mime,
-        prompt: variationPrompt(prompt, index),
+        prompt,
         n: 1,
         size: input.size,
         quality: input.quality,

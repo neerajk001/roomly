@@ -1,4 +1,5 @@
 export interface RenderOutputView {
+  directionLabel?: string;
   styleKey?: string | null;
   id: string;
   index: number;
@@ -8,6 +9,7 @@ export interface RenderOutputView {
 }
 
 export interface RenderJobView {
+  similarConcepts?: boolean;
   id: string;
   kind: "RESTYLE" | "EDIT";
   status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED" | "CANCELED";
@@ -19,6 +21,7 @@ export interface RenderJobView {
 }
 
 export interface RenderJobStatusResponse {
+  similarConcepts?: boolean;
   id: string;
   kind: "RESTYLE" | "EDIT";
   status: RenderJobView["status"];

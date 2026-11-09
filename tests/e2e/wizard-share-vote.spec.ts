@@ -31,6 +31,25 @@ test("wizard renders, favorite, create share link, vote anonymously", async ({ p
   // Tradition first, then room-specific looks. Every selected look gets a concept.
   await expect(page.getByRole("heading", { name: "Find your design direction" })).toBeVisible();
   await page.getByRole("button", { name: /^India / }).click();
+  await page.getByRole("button", { name: "Choose contrasting looks for me" }).click();
+  await expect(page.getByRole("button", { name: /^Indian/, pressed: true })).toHaveCount(3);
+  await expect(page.getByRole("button", { name: /^Indian heritage/ })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(page.getByRole("button", { name: /^Indian minimal/ })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  for (const label of [
+    "Indian contemporary",
+    "Indian heritage",
+    "Indian minimal",
+    "Indian craft",
+  ]) {
+    const look = page.getByRole("button", { name: new RegExp(`^${label}`) });
+    if ((await look.getAttribute("aria-pressed")) === "true") await look.click();
+  }
   await page.getByRole("button", { name: /^Indian contemporary/ }).click();
   await page.getByRole("button", { name: /^Indian minimal/ }).click();
   await page.getByRole("button", { name: /^Indian craft/ }).click();
@@ -65,6 +84,23 @@ test("wizard renders, favorite, create share link, vote anonymously", async ({ p
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.screenshot({ path: "test-results/guided-review-desktop.png", fullPage: true });
   // Final step: generate
+  // Exercise the similar-results feedback independently of the fake provider's tint choices.
+  await page.route("**/api/renders/*", async (route) => {
+    if (route.request().method() !== "GET") {
+      await route.continue();
+      return;
+    }
+    const response = await route.fetch();
+    const body: unknown = await response.json();
+    if (
+      typeof body === "object" &&
+      body !== null &&
+      "status" in body &&
+      body.status === "SUCCEEDED"
+    ) {
+      await route.fulfill({ response, json: { ...body, similarConcepts: true } });
+    } else await route.fulfill({ response });
+  });
   await page
     .getByRole("button", { name: /Generate 3 concepts/ })
     .first()
@@ -77,6 +113,26 @@ test("wizard renders, favorite, create share link, vote anonymously", async ({ p
   await expect(page.getByText("01 · Indian contemporary", { exact: true })).toBeVisible();
   await expect(page.getByText("02 · Indian minimal", { exact: true })).toBeVisible();
   await expect(page.getByText("03 · Indian craft", { exact: true })).toBeVisible();
+  for (const direction of ["Light & open", "Warm & tactile", "Bold & expressive"])
+    await expect(page.getByText(direction, { exact: true })).toBeVisible();
+  await expect(page.getByText(/Some concepts are visually similar/)).toBeVisible();
+  await page.setViewportSize({ width: 375, height: 812 });
+  for (let index = 1; index <= 3; index++) {
+    const image = page.getByAltText(`Concept ${index}`, { exact: true });
+    await image.scrollIntoViewIfNeeded();
+    await expect
+      .poll(() =>
+        image.evaluate(
+          (element) =>
+            element instanceof HTMLImageElement && element.complete && element.naturalWidth > 0,
+        ),
+      )
+      .toBe(true);
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await page.screenshot({ path: "test-results/batch-2-results-mobile.png", fullPage: true });
 
   // Favorite the first concept. The UI updates optimistically, so wait for the
   // PATCH to actually persist: the share link defaults to "favorites only"

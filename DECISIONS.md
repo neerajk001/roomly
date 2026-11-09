@@ -655,3 +655,23 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
 - Reused packages/estimate's exact money parser rather than the wizard's previous floating-point conversion.
 - Checked installed Next.js server/client component documentation and [Prisma JSON field docs](https://www.prisma.io/docs/orm/v7/prisma-client/special-fields-and-types/working-with-json-fields); plain validated JSON objects match the current implementation.
 - Batch 1 validation: typecheck, lint and tests pass across all 11 packages; all six Playwright journeys pass with fake generation, including Home chat, Pro approval and the revised mobile wizard. Reviewed screenshots and verified all 25 atlas assets. Later batches remain unstarted.
+
+## 2026-11-09 — Guided design batch 2
+
+- Implement the approved concept-diversity improvement as one integrated task within the current phase.
+- Preserve all 25 existing preview assets; generate no new marketing/style imagery.
+- Choose maximally contrasting looks from the selected tradition using palette and design attributes.
+- Give every concept explicit palette, materials, furniture-form, textile and lighting directions.
+- Keep the user's selected styles, notes, budget, keep-items and architecture/renter restrictions authoritative.
+- Vary movable furnishings, not the camera, room geometry, built-ins or floor.
+- Detect near-duplicates conservatively using normalized colour thumbnails and perceptual structure; this is not semantic AI judging.
+- Allow at most one diversity replacement call per multi-concept job, across queue retries.
+- Persist and atomically claim that allowance in job JSON; legacy jobs without the allowance remain compatible.
+- Check daily spend headroom for the extra call and account for discarded/replacement provider costs.
+- Keep original valid outputs if a replacement fails or is less distinct, and disclose remaining visual similarity.
+- Keep existing credit charges, quality controls and EDIT behavior unchanged.
+- Add synthetic image, prompt, selection and fake-provider worker tests; no paid provider tests or G2 decisions.
+- Verify typecheck, lint, tests and browser flows, then commit the completed integrated batch and stop for review.
+- Consult installed Next.js docs, Prisma ORM v7 JSON/update docs and current Sharp resize/raw-output docs; retain the installed Prisma v7 API rather than the newer unversioned documentation examples.
+- Validation: typecheck, lint and tests pass in all 11 packages. All six Playwright journeys pass with fake generation, including Home chat and Pro approval. Synthetic image tests cover re-encoded duplicates, changed furnishings, bounded retries, failed replacements and cost accounting; database tests cover competing retry claims, tenant scoping and spend denial.
+- Reviewed the mobile results with all three images loaded, mood labels and similarity feedback. The focused wizard rerun passes; dedicated test data is cleaned up. No preview assets changed; batch 3 remains unstarted.

@@ -6,7 +6,7 @@ import {
   type Prisma,
   type RenderJob,
 } from "@roomdesigner/db";
-import { sanitizeInstruction } from "@roomdesigner/ai";
+import { CONSERVATIVE_IMAGE_COST_MICROS, sanitizeInstruction } from "@roomdesigner/ai";
 import { designPreferencesSchema, getStyle, totalCreditCost } from "@roomdesigner/shared";
 import { z } from "zod";
 import { AppError } from "../app-error";
@@ -201,7 +201,11 @@ export async function createRender(
   }
 
   const cost = totalCreditCost(input.quality, input.variations);
-  await assertDailySpendOk(db, 250_000 * input.variations);
+  const diversityAllowance = input.kind === "RESTYLE" && input.variations > 1 ? 1 : 0;
+  await assertDailySpendOk(
+    db,
+    CONSERVATIVE_IMAGE_COST_MICROS * (input.variations + diversityAllowance),
+  );
 
   const env = getServerEnv();
 
@@ -218,6 +222,9 @@ export async function createRender(
           instruction,
           params: {
             ...pickRenderParams(input.quality, sourceWidth, sourceHeight),
+            ...(input.kind === "RESTYLE"
+              ? { conceptPlanVersion: 1, diversityRetryUsed: false }
+              : {}),
             ...(input.kind === "RESTYLE"
               ? {
                   ...(input.styleKeys ? { styleKeys: input.styleKeys } : {}),

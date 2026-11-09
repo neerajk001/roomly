@@ -6,7 +6,7 @@ import { createRenderAction } from "@/server/actions/renders";
 import {
   BUDGET_TIERS,
   getStyle,
-  stylesForTradition,
+  recommendContrastingStyles,
   typicalSizeFor,
   totalCreditCost,
   type UploadTarget,
@@ -193,9 +193,7 @@ export function GuidedWizard({
   const chosenStyles =
     draft.styles.length > 0
       ? draft.styles
-      : stylesForTradition(draft.traditionKey)
-          .slice(0, 3)
-          .map((style) => style.key);
+      : recommendContrastingStyles(draft.traditionKey, Math.min(3, Number(draft.variations)));
   const chosenStyle = chosenStyles[0] ?? "modern";
   const chosenStyleDefinition = getStyle(chosenStyle);
   const variationCount = Math.min(4, Math.max(1, Number(draft.variations) || 3));
@@ -975,9 +973,10 @@ export function GuidedWizard({
               onToggle={toggleStyle}
               onExplore={() =>
                 patch({
-                  styles: stylesForTradition(draft.traditionKey)
-                    .slice(0, 3)
-                    .map((style) => style.key),
+                  styles: recommendContrastingStyles(
+                    draft.traditionKey,
+                    Math.min(3, Number(draft.variations)),
+                  ),
                 })
               }
             />
@@ -1035,6 +1034,10 @@ export function GuidedWizard({
 
               <section className="relative rounded-xl border border-border bg-card p-4 pt-6">
                 <StepBadge>1. Design direction</StepBadge>
+                <p className="mb-4 text-sm text-muted-foreground">
+                  Each concept explores a different palette, furniture form and lighting mood within
+                  your chosen looks. Your kept items and room constraints stay in place.
+                </p>
                 <div className="grid gap-4 sm:grid-cols-3">
                   {chosenStyles.map((key) => {
                     const style = getStyle(key);

@@ -18,13 +18,16 @@ export interface ModelPricing {
   readonly fallbackMicrosPerImage: number;
 }
 
+/** Existing conservative per-image guard estimate; includes optional diversity replacements. */
+export const CONSERVATIVE_IMAGE_COST_MICROS = 250_000;
+
 export const PRICING: readonly ModelPricing[] = [
   {
     model: "gpt-image-2.5-sunburst",
     imageInputMicrosPerToken: 8,
     imageOutputMicrosPerToken: 30,
     textInputMicrosPerToken: 5,
-    fallbackMicrosPerImage: 250_000,
+    fallbackMicrosPerImage: CONSERVATIVE_IMAGE_COST_MICROS,
   },
   {
     model: "gpt-image-2.5-flare",

@@ -1,4 +1,4 @@
-import { outputStyleKey } from "@roomdesigner/shared";
+import { outputConceptLabel, readDiversityReport, outputStyleKey } from "@roomdesigner/shared";
 import { prisma } from "@roomdesigner/db";
 import { presignGet } from "@roomdesigner/storage";
 import { requireApiWorkspace } from "@/server/auth/session";
@@ -35,6 +35,11 @@ export async function GET(
         id: output.id,
         index: output.index,
         styleKey: outputStyleKey(job.params, job.styleKey, output.index),
+        directionLabel: outputConceptLabel(
+          job.params,
+          outputStyleKey(job.params, job.styleKey, output.index),
+          output.index,
+        ),
         isFavorite: output.isFavorite,
         url: await presignGet(output.asset.storageKey),
         thumbUrl: await presignGet(output.thumbAsset?.storageKey ?? output.asset.storageKey),
@@ -48,6 +53,7 @@ export async function GET(
       errorMessage: job.errorMessage,
       creditsCharged: job.creditsCharged,
       styleKey: job.styleKey,
+      similarConcepts: readDiversityReport(job.params)?.similarConcepts ?? false,
       createdAt: job.createdAt,
       outputs,
     });

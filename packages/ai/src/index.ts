@@ -19,8 +19,14 @@ export function getImageProvider(): ImageProvider {
 }
 
 export { createFakeProvider } from "./fake";
+export { buildConceptPrompt, type ConceptDirection } from "./concept-prompts";
 export { classifyProviderError, createOpenAIProvider } from "./openai";
-export { PRICING, computeCostMicros, pricingForModel } from "./pricing";
+export {
+  PRICING,
+  computeCostMicros,
+  pricingForModel,
+  CONSERVATIVE_IMAGE_COST_MICROS,
+} from "./pricing";
 export {
   MAX_INSTRUCTION_LENGTH,
   VARIATION_EMPHASES,
@@ -29,4 +35,11 @@ export {
   sanitizeInstruction,
   variationPrompt,
 } from "./prompts";
-export { ProviderError, type EditInput, type EditResult, type ImageProvider, type ImageQuality, type ImageSize } from "./types";
+export {
+  ProviderError,
+  type EditInput,
+  type EditResult,
+  type ImageProvider,
+  type ImageQuality,
+  type ImageSize,
+} from "./types";

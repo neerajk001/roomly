@@ -20,7 +20,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
     room: "Living Room",
     style: "Modern · Warm · Cozy",
     category: "Living Room",
-    beforeImg: "/demo/redesign/living-before.webp",
+    beforeImg: "/demo/redesign/living-before-unfinished.webp",
     afterImg: "/demo/redesign/hero-after-modern.webp",
   },
   {
@@ -28,7 +28,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
     room: "Bedroom",
     style: "Minimal · Calm · Elegant",
     category: "Bedroom",
-    beforeImg: "/demo/redesign/bedroom-before.webp",
+    beforeImg: "/demo/redesign/bedroom-before-unfinished.webp",
     afterImg: "/demo/redesign/bedroom-after.webp",
   },
   {
@@ -36,7 +36,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
     room: "Kitchen",
     style: "Modern · Functional · Bright",
     category: "Kitchen",
-    beforeImg: "/demo/redesign/kitchen-before.webp",
+    beforeImg: "/demo/redesign/kitchen-before-unfinished.webp",
     afterImg: "/demo/redesign/kitchen-after.webp",
   },
   {
@@ -44,7 +44,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
     room: "Home Office",
     style: "Productive · Stylish · Minimal",
     category: "Home Office",
-    beforeImg: "/demo/redesign/office-before.webp",
+    beforeImg: "/demo/redesign/office-before-unfinished.webp",
     afterImg: "/demo/redesign/office-after.webp",
   },
   {
@@ -52,7 +52,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
     room: "Dining Room",
     style: "Modern · Earthy · Inviting",
     category: "Living Room",
-    beforeImg: "/demo/redesign/dining-before.webp",
+    beforeImg: "/demo/redesign/dining-before-unfinished.webp",
     afterImg: "/demo/redesign/dining-after.webp",
   },
   {
@@ -60,7 +60,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
     room: "Bathroom",
     style: "Spa-like · Clean · Premium",
     category: "Bathroom",
-    beforeImg: "/demo/redesign/bath-before.webp",
+    beforeImg: "/demo/redesign/bath-before-unfinished.webp",
     afterImg: "/demo/redesign/bath-after.webp",
   },
 ];
@@ -85,8 +85,8 @@ export function GallerySection() {
           See what&apos;s possible.
         </h2>
         <p className="mx-auto mt-3 max-w-lg text-sm text-muted-foreground">
-          Start with a room photo, then explore a new style. Each pair shows the same room before
-          and after an illustrative redesign.
+          From cluttered, unfinished rooms to considered design concepts. Each pair shows the same
+          room and viewpoint before and after an illustrative redesign.
         </p>
 
         {/* Category filter tabs */}
@@ -122,7 +122,7 @@ export function GallerySection() {
             <BeforeAfterSlider
               beforeImage={item.beforeImg}
               afterImage={item.afterImg}
-              beforeAlt={`${item.room} before transformation`}
+              beforeAlt={`${item.room} with clutter and unfinished styling before redesign`}
               afterAlt={`${item.room} AI redesign concept`}
               aspectRatio="aspect-[16/10]"
               enableScrollEffect={true}

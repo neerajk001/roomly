@@ -1,32 +1,39 @@
 # Landing room concepts
 
 Generated with the built-in imagegen tool for the landing-page demonstration.
-These are illustrative source scenes and redesign concepts, not customer projects
-or a measured benchmark of the application's image provider.
+These are illustrative scenes and redesign concepts, not customer projects or
+a benchmark of the application's image provider.
 
 Final files: `apps/web/public/demo/redesign/` (16 WebP assets, 1440 × 1080).
-Full generation and edit prompts: [landing-image-prompts.json](landing-image-prompts.json).
+Full prompts and source history: [landing-image-prompts.json](landing-image-prompts.json).
 
-| Source scene          | Redesign concepts                                                                                      | Uses                                                       |
-| --------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
-| `living-before.webp`  | `hero-after-modern.webp`, `hero-after-minimal.webp`, `hero-after-boho.webp`, `hero-after-classic.webp` | Hero, living-room gallery, process, homeowner feature, CTA |
-| `bedroom-before.webp` | `bedroom-after.webp`                                                                                   | Bedroom gallery and concept card                           |
-| `kitchen-before.webp` | `kitchen-after.webp`                                                                                   | Kitchen gallery and concept card                           |
-| `office-before.webp`  | `office-after.webp`                                                                                    | Office gallery and professional feature                    |
-| `dining-before.webp`  | `dining-after.webp`                                                                                    | Dining gallery                                             |
-| `bath-before.webp`    | `bath-after.webp`                                                                                      | Bathroom gallery and concept card                          |
+The ten approved clean-design files remain byte-for-byte unchanged. The six
+current before scenes were edited from those finished designs to show realistic
+clutter, mismatched furnishings and unfinished styling. The camera, room shape,
+windows and doors were specified as invariants for aligned comparisons.
 
-Each after image was edited from its paired source image with camera position,
-room proportions, windows and doors specified as invariants. Furniture, decor,
-paint and finishes provide the redesign. The hero's style choices all use the
-same source room; the process illustrations reuse that room's original and results.
+| Current before                   | Approved clean design                                                                                  | Uses                          |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------- |
+| `living-before-unfinished.webp`  | `hero-after-modern.webp`, `hero-after-minimal.webp`, `hero-after-boho.webp`, `hero-after-classic.webp` | Hero, living gallery, process |
+| `bedroom-before-unfinished.webp` | `bedroom-after.webp`                                                                                   | Bedroom gallery               |
+| `kitchen-before-unfinished.webp` | `kitchen-after.webp`                                                                                   | Kitchen gallery               |
+| `office-before-unfinished.webp`  | `office-after.webp`                                                                                    | Office gallery                |
+| `dining-before-unfinished.webp`  | `dining-after.webp`                                                                                    | Dining gallery                |
+| `bath-before-unfinished.webp`    | `bath-after.webp`                                                                                      | Bathroom gallery              |
 
-The process's final step uses `living-refined.webp`, edited from the modern concept
-with the displayed request: “Make the walls sage green and add a floor lamp.”
-It shows a refinement of the same concept rather than an unrelated room.
+Clean concepts are also reused in feature cards and the final CTA. The process's
+last step uses the unchanged `living-refined.webp`, showing sage walls and a floor
+lamp added to the modern concept to match the displayed chat request.
 
-The original generated PNGs remain in Codex's generated-images directory. Project
-assets are optimized WebP encodings with identical dimensions and no added labels
-or cropping. UI labels provide before/after context. Old stock files are no longer
-referenced as room examples; existing small profile avatars remain separate from
-the room-transformation demonstrations.
+The six earlier ordinary before images were removed from the project. Their
+historical generation prompts remain under `supersededSourcePrompts`, since the
+approved clean designs were originally generated from those earlier scenes.
+Current before prompts explicitly name the approved clean image used as reference.
+
+Seven unused legacy stock files were also removed, including the unrelated dress
+photo. Older photos still referenced by onboarding, the wizard or inspiration
+remain in place; profile avatars are separate from room demonstrations.
+
+Original imagegen PNGs remain in Codex's generated-images directory. Project
+WebPs preserve the full 4:3 frame without cropping or baked-in UI labels. New
+before filenames avoid browsers showing a cached superseded scene.

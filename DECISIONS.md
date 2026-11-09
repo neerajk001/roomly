@@ -608,3 +608,27 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
 - Desktop and 375px mobile screenshots reviewed. All images load; four hero
   styles, keyboard slider control and gallery filters pass. JSX tags are unchanged.
 - pnpm typecheck, pnpm lint and pnpm test pass across all 11 packages.
+
+# 2026-11-09 — Clearly unfinished before scenes
+- Keep every approved clean redesign image unchanged.
+- Edit those finished designs into six clearly unfinished before scenes.
+- Use realistic clutter, mismatched furnishings or incomplete styling.
+- Preserve the same camera, windows, doors and room architecture.
+- Keep rooms habitable; avoid damage, extreme squalor or exaggerated decay.
+- Replace hero, gallery and process before-image references consistently.
+- Save new before files with distinct names to avoid stale image caches.
+- Remove superseded before assets and unreferenced older stock room photos.
+- Retain small profile-avatar assets and all approved redesigns.
+- Record new prompts and their clean-design references.
+- Verify the pairs, responsive browser behavior and required checks.
+- Commit the finished replacement separately.
+- Generated six unfinished before scenes with built-in imagegen, referencing each
+  approved clean design. All ten approved after/refinement files are byte-identical.
+- Replaced hero, gallery and process before URLs with new cache-safe filenames.
+- Removed six superseded before WebPs and seven unreferenced legacy JPGs after
+  checking source references. Legacy photos still used outside landing are retained.
+- Updated the asset map and prompt provenance, retaining earlier source prompts
+  as historical records rather than current before-image definitions.
+- Desktop and 375px screenshots reviewed; all 16 assets load, four hero styles,
+  six gallery pairs, filters and keyboard slider checks pass. Components preserved.
+- pnpm typecheck, pnpm lint and pnpm test pass across all 11 packages.

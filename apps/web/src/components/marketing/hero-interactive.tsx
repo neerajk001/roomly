@@ -43,9 +43,9 @@ export function HeroInteractive() {
         <div className="rounded-xl border border-border">
           <BeforeAfterSlider
             key={activeStyle.id}
-            beforeImage="/demo/redesign/living-before.webp"
+            beforeImage="/demo/redesign/living-before-unfinished.webp"
             afterImage={activeStyle.afterImage}
-            beforeAlt="Illustrative original living room before redesign"
+            beforeAlt="Cluttered living room with mismatched furniture before redesign"
             afterAlt={`${activeStyle.name} concept of the same living room`}
             aspectRatio="aspect-[4/3]"
             enableScrollEffect={true}

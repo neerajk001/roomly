@@ -495,7 +495,7 @@ export default function LandingPage() {
                 <div className="relative mt-5 rounded-xl border border-border">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/demo/redesign/living-before.webp"
+                    src="/demo/redesign/living-before-unfinished.webp"
                     alt="Original room photo"
                     className="h-56 w-full object-cover"
                   />

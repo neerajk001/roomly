@@ -104,6 +104,10 @@ afterAll(async () => {
 
 describe("proposal state machine", () => {
   it("freezes content and branding and queues first-view notification once", async () => {
+    await prisma.estimate.updateMany({
+      where: { id: estimateId, project: { workspaceId } },
+      data: { rangeBps: 1000 },
+    });
     const draft = await createProposal(prisma, ctx(), {
       projectId,
       estimateId,
@@ -121,6 +125,8 @@ describe("proposal state machine", () => {
     });
     const after = await getPublicProposal(prisma, draft.publicToken, sign);
     expect(after.brandName).toBe(before.brandName);
+    expect(before.estimate.lowMinor).toBe(103500);
+    expect(after.estimate.highMinor).toBe(126500);
     expect(
       await prisma.proposalEmail.count({
         where: { workspaceId, proposalId: draft.id, kind: "VIEWED" },
@@ -138,6 +144,9 @@ describe("proposal state machine", () => {
     });
     const input = { projectId, estimateId, title: "Updated draft", options: [{ outputId }] };
     await updateProposalDraft(prisma, ctx(), draft.id, input, draft.updatedAt.toISOString());
+    await expect(sendProposal(prisma, ctx(), draft.id, "stale-prepared.pdf")).rejects.toMatchObject(
+      { code: "INVALID_STATE" },
+    );
     await expect(
       updateProposalDraft(prisma, ctx(), draft.id, input, draft.updatedAt.toISOString()),
     ).rejects.toMatchObject({ code: "INVALID_STATE" });

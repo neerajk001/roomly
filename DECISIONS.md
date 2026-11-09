@@ -509,3 +509,42 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
   Generation remains on-demand in the web app as the previously recorded deviation;
   email delivery uses the worker. Both PDF fixture pages were visually inspected.
 - Typecheck, lint and all 11 package test tasks pass (49 web tests, 8 worker tests).
+- Batch 6 adds keyboard-accessible Studio project tabs with project-wide concepts
+  and proposal activity. Home keeps its sharing workflow and room creation remains
+  visible. New rooms respect workspace measurement units.
+- Added Pro tenant read/write isolation coverage and an explicit client approval
+  confirmation. Proposal snapshots and PDFs now retain optional estimate ranges.
+- Browser tests use a separate .next-e2e build directory, fake images and console
+  email, avoiding collisions with normal development. Next.js generated its matching
+  TypeScript includes; ESLint ignores this additional generated directory.
+- E2E accounts are recorded in an exact-email manifest; teardown removes only
+  those accounts, their owned workspaces and associated storage objects.
+- Human real-provider fidelity approval (G2) and the unassisted 20-minute timing
+  exercise remain acceptance gates; billing and production launch are excluded.
+- Final review found that shared display formatting rounded cents away and the
+  Pro editors/CSV assumed two decimal currency units for JPY. Formatting now keeps
+  cents, while whole-yen editing/import/export and PDF output use JPY minor units.
+  Added money, CSV and PDF regressions for these supported-currency cases.
+- The stronger chat completion check exposed a missing Home history control:
+  old jobs were loaded but could not be reopened. Added a compact labelled history
+  selector; browser coverage switches between the original set and completed edit.
+- Consecutive browser journeys shared the auth IP throttle. Test auth requests
+  now use a distinct simulated private IP per user; production throttles remain
+  enabled and unchanged. Storage uploads keep their original request headers.
+
+# 2026-11-09 — Core completion verification
+- Completed the six approved non-billing batches and retained the shared minimal
+  orange/blue-gray theme and existing Home/Studio controls.
+- Required checks pass: pnpm typecheck, pnpm lint and pnpm test across all 11
+  packages (51 web tests, 22 estimate tests, 2 PDF tests and existing package suites).
+- All six Playwright journeys pass together with fake image generation and console
+  email. Coverage includes both onboardings, mobile Home rendering/edit/history,
+  anonymous voting, and designer brief-to-PDF-to-client approval.
+- Verified mobile Home, Studio and public-proposal screenshots at 375px; Studio
+  tabs wrap so every section stays visible. Inspected both PDF fixture pages.
+- Recorded E2E accounts and their generated storage objects are cleaned after runs.
+- No billing, paid image generation, deployment or launch work was performed.
+- V4 remains open only for human acceptance: real-provider fidelity/model decision,
+  an unassisted timed designer walkthrough, and CI verification outside this local run.
+- PDF generation remains on-demand in the web app (recorded deviation), with
+  immutable stored PDFs and worker-based email delivery/retries.

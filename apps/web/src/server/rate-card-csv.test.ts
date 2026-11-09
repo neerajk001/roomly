@@ -2,6 +2,14 @@ import { describe, expect, it } from "vitest";
 import { parseRateCardCsv } from "./rate-card-csv";
 const header = "key,label,category,unit,price\n";
 describe("rate-card CSV validation", () => {
+  it("imports JPY as whole yen and rejects fractional yen", () => {
+    expect(
+      parseRateCardCsv(header + "wall,Paint,paint,AREA_WALL,1500", "JPY")[0]?.unitPriceMinor,
+    ).toBe(1500);
+    expect(() => parseRateCardCsv(header + "wall,Paint,paint,AREA_WALL,15.50", "JPY")).toThrow(
+      "whole yen",
+    );
+  });
   it("parses exact prices and quoted labels", () => {
     expect(
       parseRateCardCsv(header + 'wall,"Paint, walls",paint,AREA_WALL,1.15')[0]?.unitPriceMinor,

@@ -71,8 +71,8 @@ export async function sendProposalAction(formData: FormData): Promise<void> {
   const projectId = z.string().min(1).parse(formData.get("projectId"));
   const { user, workspace } = await requireWorkspace();
   const ctx = { userId: user.id, workspaceId: workspace.id };
-  await storeProposalPdf(prisma, ctx, id);
-  await sendProposal(prisma, ctx, id);
+  const pdfKey = await storeProposalPdf(prisma, ctx, id);
+  await sendProposal(prisma, ctx, id, pdfKey);
 
   revalidatePath(`/studio/projects/${projectId}`);
 }

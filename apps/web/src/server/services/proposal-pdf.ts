@@ -35,6 +35,8 @@ export async function buildProposalPdf(db: Prisma, ctx: ServiceContext, proposal
       markupMinor: document.estimate.markupMinor,
       taxMinor: document.estimate.taxMinor,
       totalMinor: document.estimate.totalMinor,
+      lowMinor: document.estimate.lowMinor,
+      highMinor: document.estimate.highMinor,
       options,
     });
     return { buffer, proposal, document };

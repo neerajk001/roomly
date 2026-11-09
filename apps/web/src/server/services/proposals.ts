@@ -128,10 +128,17 @@ export async function sendProposal(
   db: Prisma,
   ctx: ServiceContext,
   proposalId: string,
+  expectedPdfStorageKey?: string,
 ): Promise<{ token: string }> {
   return db.$transaction(
     async (tx) => {
       const { proposal, document } = await loadProposalDocument(tx, ctx.workspaceId, proposalId);
+      if (expectedPdfStorageKey !== undefined && proposal.pdfStorageKey !== expectedPdfStorageKey)
+        throw new AppError(
+          "INVALID_STATE",
+          "The proposal changed after its PDF was prepared. Review it and send again.",
+          409,
+        );
       if (proposal.status !== "DRAFT") {
         throw new AppError("INVALID_STATE", "Only draft proposals can be sent.", 409);
       }
@@ -292,6 +299,8 @@ export interface PublicProposal {
     markupMinor: number;
     taxMinor: number;
     totalMinor: number;
+    lowMinor?: number;
+    highMinor?: number;
     lines: { label: string; quantity: number; unitPriceMinor: number; totalMinor: number }[];
   };
   options: {
@@ -415,6 +424,8 @@ export async function getPublicProposal(
       markupMinor: document.estimate.markupMinor,
       taxMinor: document.estimate.taxMinor,
       totalMinor: document.estimate.totalMinor,
+      lowMinor: document.estimate.lowMinor,
+      highMinor: document.estimate.highMinor,
       lines: document.estimate.lines.map((line) => ({
         label: line.label,
         quantity: line.quantity,

@@ -12,6 +12,7 @@ import { useActionState, useState } from "react";
 import {
   parseDisplayRate,
   formatDecimalHundredths,
+  formatMoneyInput,
   displayRateMinor,
   rateUnitLabel,
 } from "@roomdesigner/estimate";
@@ -56,8 +57,9 @@ export function RateCardEditor({
         label: item.label,
         category: item.category,
         unit: item.unit,
-        price: formatDecimalHundredths(
+        price: formatMoneyInput(
           displayRateMinor(item.unitPriceMinor, item.unit, unitSystem),
+          currency,
         ),
         storedPrice: item.unitPriceMinor,
         priceEdited: false,
@@ -72,7 +74,7 @@ export function RateCardEditor({
     unit: row.unit,
     unitPriceMinor: !row.priceEdited
       ? row.storedPrice
-      : parseDisplayRate(row.price, row.unit, unitSystem),
+      : parseDisplayRate(row.price, row.unit, unitSystem, currency),
   }));
 
   const units = [
@@ -181,12 +183,12 @@ export function RateCardEditor({
               value={row.unit}
               onChange={(event) => {
                 const metric = row.priceEdited
-                  ? (parseDisplayRate(row.price, row.unit, unitSystem) ?? 0)
+                  ? (parseDisplayRate(row.price, row.unit, unitSystem, currency) ?? 0)
                   : row.storedPrice;
                 const unit = event.target.value;
                 update(index, {
                   unit,
-                  price: formatDecimalHundredths(displayRateMinor(metric, unit, unitSystem)),
+                  price: formatMoneyInput(displayRateMinor(metric, unit, unitSystem), currency),
                   storedPrice: metric,
                   priceEdited: false,
                 });

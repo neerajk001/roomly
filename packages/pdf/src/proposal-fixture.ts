@@ -21,6 +21,8 @@ export async function proposalFixture(): Promise<ProposalPdfData> {
     markupMinor: 7011,
     taxMinor: 0,
     totalMinor: 77121,
+    lowMinor: 69409,
+    highMinor: 84833,
     options: [{ caption: "Warm minimal concept", image, beforeImage: image }],
   };
 }

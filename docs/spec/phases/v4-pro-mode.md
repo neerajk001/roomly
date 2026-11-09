@@ -71,17 +71,17 @@
 ## 9. Designer dashboard
 
 - [x] `/studio` home: pipeline columns by proposal status (Draft, Sent, Viewed, Approved, Changes requested) with counts and recent activity.
-- [ ] Project page: tabs Rooms, Renders, Estimate, Proposals, Activity.
+- [x] Project page: tabs Rooms, Renders, Estimate, Proposals, Activity.
 
 ## 10. Tests
 
-- [ ] Isolation tests for clients, rate cards, estimates, proposals, brief links (A cannot touch B).
+- [x] Isolation tests for clients, rate cards, estimates, proposals, brief links (A cannot touch B).
 - [x] Rate card CSV import: valid, invalid rows, no partial apply.
 - [x] Estimate editing and versioning; immutability after send.
 - [x] Proposal state machine: all valid transitions; invalid ones rejected (e.g. approve an expired proposal).
 - [x] Public pages: token validity, expiry, rate limits, no data leakage, honeypot.
 - [x] PDF snapshot test (render to PDF, check page count, key text present).
-- [ ] Playwright: designer creates client → brief link → client submits in an incognito context → designer builds estimate → sends proposal → client approves.
+- [x] Playwright: designer creates client → brief link → client submits in an incognito context → designer builds estimate → sends proposal → client approves.
 
 ## Definition of Done for V4
 

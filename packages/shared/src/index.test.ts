@@ -18,8 +18,12 @@ describe("formatting", () => {
   });
 
   it("formats money from minor units", () => {
-    expect(formatMoney(100612, "USD")).toBe("$1,006");
+    expect(formatMoney(100612, "USD")).toBe("$1,006.12");
+    expect(formatMoney(123450, "INR")).toBe("₹1,234.50");
     expect(formatMoney(1500, "JPY")).toBe("¥1,500");
+    expect(defaultRateItems("JPY").find((item) => item.key === "wall-paint")?.unitPriceMinor).toBe(
+      1800,
+    );
   });
 });
 
@@ -55,8 +59,10 @@ describe("defaultRateItems", () => {
   });
 
   it("scales prices per currency", () => {
-    const usd = defaultRateItems("USD").find((item) => item.key === "wall-paint")?.unitPriceMinor ?? 0;
-    const inr = defaultRateItems("INR").find((item) => item.key === "wall-paint")?.unitPriceMinor ?? 0;
+    const usd =
+      defaultRateItems("USD").find((item) => item.key === "wall-paint")?.unitPriceMinor ?? 0;
+    const inr =
+      defaultRateItems("INR").find((item) => item.key === "wall-paint")?.unitPriceMinor ?? 0;
     expect(usd).toBeGreaterThan(0);
     expect(inr).toBeGreaterThan(usd);
   });

@@ -345,6 +345,29 @@ export function HomeRoomResults({
         </div>
       </div>
 
+      {jobs.length > 1 && (
+        <label className="block max-w-md space-y-2 text-sm font-medium">
+          Design history
+          <select
+            value={currentId ?? ""}
+            onChange={(event) => {
+              setCurrentId(event.target.value);
+              setLightbox(null);
+              setEditingOutputId(null);
+              setEditError(null);
+            }}
+            className="block h-11 w-full min-w-0 rounded-lg border border-input bg-card px-3 text-sm"
+          >
+            {jobs.map((job, index) => (
+              <option key={job.id} value={job.id}>
+                {job.kind === "EDIT" ? `Edit: ${job.label}` : `Design set ${index + 1}`} ·{" "}
+                {job.status.toLowerCase()}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+
       {panelError !== null && (
         <p role="alert" className="border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
           {panelError}

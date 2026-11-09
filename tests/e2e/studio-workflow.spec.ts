@@ -1,0 +1,97 @@
+import { expect, test } from "@playwright/test";
+import { signInWithOtp, uniqueEmail } from "./auth-helpers";
+
+test("designer brief, concept, estimate, proposal and anonymous approval", async ({
+  page,
+  browser,
+  context,
+}) => {
+  test.setTimeout(420_000);
+  await signInWithOtp(page, { name: "E2E Designer", email: uniqueEmail("e2e-studio") });
+  await page.waitForURL("**/onboarding");
+  await page.getByRole("button", { name: /Continue as professional/ }).click();
+  await page.getByLabel("Studio name").fill("E2E Design Studio");
+  await page.getByRole("button", { name: "Open my design studio" }).click();
+  await page.waitForURL("**/studio");
+  await page.goto("/studio/clients");
+  await page.getByLabel("Name", { exact: true }).fill("E2E Client");
+  await page.getByRole("button", { name: "Add client", exact: true }).click();
+  await page.waitForURL(/\/studio\/clients\/[^/]+$/);
+  const clientUrl = page.url();
+  await page.getByRole("button", { name: "Create brief link" }).click();
+  const briefLink = page.getByText(/http.*\/brief\/[A-Za-z0-9_-]+/);
+  await expect(briefLink).toBeVisible();
+  const briefUrl = (await briefLink.textContent())?.trim() ?? "";
+  const anonymous = await browser.newContext({ viewport: { width: 375, height: 812 } });
+  try {
+    const client = await anonymous.newPage();
+    await client.goto(briefUrl);
+    await client.getByLabel("Your name").fill("E2E Client");
+    await client
+      .getByLabel("What do you want to change?")
+      .fill("A calm living room with warm lighting");
+    await client.getByRole("button", { name: "Modern", exact: true }).click();
+    await client.locator('input[type="file"]').setInputFiles("tests/e2e/fixtures/room.jpg");
+    await expect(client.getByText("Uploaded", { exact: true })).toBeVisible({ timeout: 45_000 });
+    await client.getByRole("button", { name: "Send brief" }).click();
+    await expect(client.getByRole("heading", { name: "Thank you!" })).toBeVisible();
+    await page.goto(clientUrl);
+    await page.getByRole("link", { name: /Living room brief/ }).click();
+    await page.waitForURL(/\/studio\/projects\/[^/]+$/);
+    const projectUrl = page.url();
+    await page.getByRole("link", { name: "Open room", exact: true }).click();
+    await page.waitForURL(/\/rooms\/[^/]+$/);
+    const roomUrl = page.url();
+    await expect(page.getByAltText("Room photo")).toBeVisible();
+    await page.getByLabel("Width (m)", { exact: true }).fill("4");
+    await page.getByLabel("Length (m)", { exact: true }).fill("5");
+    await page.getByLabel("Ceiling height (m)", { exact: true }).fill("2.7");
+    await page.getByRole("button", { name: "Save room details" }).click();
+    await expect(page.getByText("Room details saved.", { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Generate 3 concepts" }).click();
+    await expect(page.getByAltText("Concept 3")).toBeVisible({ timeout: 120_000 });
+    await page.goto(`${roomUrl}/estimate`);
+    await page.getByRole("button", { name: "Save as new version" }).click();
+    await expect(page.getByText("Saved estimate v1", { exact: true })).toBeVisible();
+    await page.goto(projectUrl);
+    await page.getByRole("tab", { name: "Renders", exact: true }).click();
+    await expect(page.getByAltText(/Concept visual for/).first()).toBeVisible();
+    await page.getByRole("tab", { name: "Proposals", exact: true }).click();
+    await page.getByRole("link", { name: "New proposal", exact: true }).click();
+    await page.getByRole("checkbox").first().check();
+    await page.getByRole("button", { name: "Create draft proposal" }).click();
+    await page.waitForURL(/\/studio\/projects\/[^/]+$/);
+    await page.getByRole("tab", { name: "Proposals", exact: true }).click();
+    const preview = page.getByRole("link", { name: "Preview PDF" });
+    const pdf = await context.request.get((await preview.getAttribute("href")) ?? "");
+    expect(pdf.headers()["content-type"]).toContain("application/pdf");
+    expect((await pdf.body()).subarray(0, 4).toString()).toBe("%PDF");
+    await page.getByRole("button", { name: "Send to client", exact: true }).click();
+    await expect(page.getByText("SENT", { exact: true })).toBeVisible({ timeout: 90_000 });
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await page.getByRole("button", { name: "Copy client link" }).click();
+    const proposalUrl = await page.evaluate(() => navigator.clipboard.readText());
+    await client.goto(proposalUrl);
+    expect(
+      await client.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
+    await client.screenshot({ path: "test-results/proposal-mobile.png", fullPage: true });
+    await client.getByLabel("Your name").fill("E2E Client");
+    await client.getByRole("radio").first().check();
+    client.once("dialog", (dialog) => void dialog.accept());
+    await client.getByRole("button", { name: /Approve/ }).click();
+    await expect(client.getByText(/Approved by E2E Client/)).toBeVisible();
+    await page.goto(projectUrl);
+    await page.getByRole("tab", { name: "Proposals", exact: true }).click();
+    await expect(page.getByText("APPROVED", { exact: true })).toBeVisible();
+    await page.getByRole("tab", { name: "Activity", exact: true }).click();
+    await expect(page.getByText(/Design proposal · approved/)).toBeVisible();
+    await page.setViewportSize({ width: 375, height: 812 });
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
+    await page.screenshot({ path: "test-results/studio-mobile.png", fullPage: true });
+  } finally {
+    await anonymous.close();
+  }
+});

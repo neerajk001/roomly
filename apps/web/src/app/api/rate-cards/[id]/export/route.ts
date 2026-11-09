@@ -4,6 +4,7 @@ import { requireApiWorkspace } from "@/server/auth/session";
 import { errorResponse } from "@/server/http";
 import { toCsv } from "@/server/csv";
 import { getRateCard } from "@/server/services/rate-cards";
+import { formatMoneyInput } from "@roomdesigner/estimate";
 
 export async function GET(
   _request: Request,
@@ -12,7 +13,11 @@ export async function GET(
   try {
     const ctx = await requireApiWorkspace();
     const { id } = await params;
-    const card = await getRateCard(prisma, { userId: ctx.user.id, workspaceId: ctx.workspace.id }, id);
+    const card = await getRateCard(
+      prisma,
+      { userId: ctx.user.id, workspaceId: ctx.workspace.id },
+      id,
+    );
     const rows: (string | number)[][] = [
       ["key", "label", "category", "unit", "price"],
       ...card.items.map((item) => [
@@ -20,7 +25,7 @@ export async function GET(
         item.label,
         item.category,
         item.unit,
-        (item.unitPriceMinor / 100).toFixed(2),
+        formatMoneyInput(item.unitPriceMinor, card.currency),
       ]),
     ];
     void presignGet; // keep storage import tree-shaken out of this route's type surface

@@ -22,8 +22,13 @@ export function storedRateMinor(value: number, unit: string, system: string): nu
   return value;
 }
 
-export function parseDisplayRate(value: string, unit: string, system: string): number | null {
-  const parsed = parseDecimalHundredths(value);
+export function parseDisplayRate(
+  value: string,
+  unit: string,
+  system: string,
+  currency = "USD",
+): number | null {
+  const parsed = parseMoneyInput(value, currency);
   if (parsed === null || parsed > 1000000000) return null;
   const stored = storedRateMinor(parsed, unit, system);
   return stored <= 1000000000 ? stored : null;
@@ -61,4 +66,4 @@ export function sumEstimateTotals(
   }
   return [...totals].map(([currency, totalMinor]) => ({ currency, totalMinor }));
 }
-import { parseDecimalHundredths } from "./decimal-input";
+import { parseMoneyInput } from "./decimal-input";

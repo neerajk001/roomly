@@ -1,6 +1,7 @@
 import type { Prisma, TransactionClient } from "@roomdesigner/db";
 import { z } from "zod";
 import { AppError } from "../app-error";
+import { rangeForTotal } from "@roomdesigner/estimate";
 
 export const proposalSnapshotSchema = z.object({
   title: z.string(),
@@ -20,6 +21,8 @@ export const proposalSnapshotSchema = z.object({
     markupMinor: z.number().int(),
     taxMinor: z.number().int(),
     totalMinor: z.number().int(),
+    lowMinor: z.number().int().optional(),
+    highMinor: z.number().int().optional(),
     lines: z.array(
       z.object({
         label: z.string(),
@@ -113,6 +116,9 @@ export async function loadProposalDocument(
       markupMinor: proposal.estimate.markupMinor,
       taxMinor: proposal.estimate.taxMinor,
       totalMinor: proposal.estimate.totalMinor,
+      ...(proposal.estimate.rangeBps
+        ? rangeForTotal(proposal.estimate.totalMinor, proposal.estimate.rangeBps)
+        : {}),
       lines: proposal.estimate.lines.map((line) => ({
         label: line.label,
         quantity: line.quantity.toNumber(),

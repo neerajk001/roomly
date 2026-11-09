@@ -10,6 +10,7 @@ import {
   updateRateCard,
   createRateCard,
   setDefaultRateCard,
+  getRateCard,
 } from "../services/rate-cards";
 import { parseRateCardCsv } from "../rate-card-csv";
 import { parseDecimalHundredths } from "@roomdesigner/estimate";
@@ -68,15 +69,16 @@ export async function importRateCardCsvAction(
   if (!id.success) return { error: "Invalid rate card." };
 
   const csv = String(formData.get("csv") ?? "");
+  const { user, workspace } = await requireWorkspace();
   let items: ReturnType<typeof parseRateCardCsv>;
   try {
-    items = parseRateCardCsv(csv);
+    const card = await getRateCard(prisma, { userId: user.id, workspaceId: workspace.id }, id.data);
+    items = parseRateCardCsv(csv, card.currency);
   } catch (error) {
     if (error instanceof AppError) return { error: error.message };
     throw error;
   }
 
-  const { user, workspace } = await requireWorkspace();
   try {
     await updateRateCard(prisma, { userId: user.id, workspaceId: workspace.id }, id.data, {
       name: String(formData.get("name") ?? ""),

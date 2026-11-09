@@ -48,7 +48,7 @@ const USD_ITEMS: DefaultRateItem[] = [
 
 function roundMinor(value: number, currency: string): number {
   // JPY has no minor unit in practice; keep whole yen.
-  if (currency === "JPY") return Math.round(value / 100) * 100;
+  if (currency === "JPY") return Math.round(value / 100);
   return Math.round(value / 10) * 10;
 }
 

@@ -4,6 +4,11 @@ import { AppError } from "../app-error";
 import { getProject, renameProject, softDeleteProject } from "./projects";
 import { createRoom, deleteRoom, getRoom, updateRoom } from "./rooms";
 import { createRender } from "./renders";
+import { createClient, getClient, updateClient, softDeleteClient } from "./clients";
+import { createBriefLink, listBriefLinks } from "./briefs";
+import { createRateCard, getRateCard, setDefaultRateCard, updateRateCard } from "./rate-cards";
+import { getEstimateDraft, saveStudioEstimate } from "./studio-estimates";
+import { createProposal, listProposals, sendProposal, updateProposalDraft } from "./proposals";
 
 const suffix = crypto.randomUUID();
 let userA = "";
@@ -75,6 +80,11 @@ beforeAll(async () => {
 
 afterAll(async () => {
   const workspaceIds = [workspaceA, workspaceB];
+  await prisma.proposal.deleteMany({ where: { project: { workspaceId: { in: workspaceIds } } } });
+  await prisma.estimate.deleteMany({ where: { project: { workspaceId: { in: workspaceIds } } } });
+  await prisma.briefLink.deleteMany({ where: { workspaceId: { in: workspaceIds } } });
+  await prisma.client.deleteMany({ where: { workspaceId: { in: workspaceIds } } });
+  await prisma.rateCard.deleteMany({ where: { workspaceId: { in: workspaceIds } } });
   await prisma.renderJob.deleteMany({ where: { workspaceId: { in: workspaceIds } } });
   await prisma.creditLedger.deleteMany({ where: { workspaceId: { in: workspaceIds } } });
   await prisma.asset.deleteMany({ where: { workspaceId: { in: workspaceIds } } });
@@ -87,6 +97,96 @@ afterAll(async () => {
 });
 
 describe("tenant isolation (V2 services)", () => {
+  it("isolates Pro clients, brief links, rate cards, estimates and proposals", async () => {
+    const client = await createClient(prisma, ctxB(), { name: "Private B client" });
+    await expect(getClient(prisma, ctxA(), client.id)).rejects.toBeInstanceOf(AppError);
+    await expect(
+      updateClient(prisma, ctxA(), client.id, { name: "Stolen" }),
+    ).rejects.toBeInstanceOf(AppError);
+    await expect(softDeleteClient(prisma, ctxA(), client.id)).rejects.toBeInstanceOf(AppError);
+    const brief = await createBriefLink(prisma, ctxB(), { clientId: client.id });
+    await expect(createBriefLink(prisma, ctxA(), { clientId: client.id })).rejects.toBeInstanceOf(
+      AppError,
+    );
+    expect(await listBriefLinks(prisma, ctxA(), client.id)).toEqual([]);
+    expect((await listBriefLinks(prisma, ctxB(), client.id))[0]?.id).toBe(brief.id);
+    const card = await createRateCard(prisma, ctxB(), "B private rates");
+    await expect(getRateCard(prisma, ctxA(), card.id)).rejects.toBeInstanceOf(AppError);
+    await expect(setDefaultRateCard(prisma, ctxA(), card.id)).rejects.toBeInstanceOf(AppError);
+    await expect(
+      updateRateCard(prisma, ctxA(), card.id, {
+        name: "Stolen",
+        markupBps: 0,
+        taxBps: 0,
+        items: [
+          { key: "test", label: "Test", category: "Test", unit: "LUMP_SUM", unitPriceMinor: 1 },
+        ],
+      }),
+    ).rejects.toBeInstanceOf(AppError);
+    const estimateInput = {
+      roomId: roomB,
+      rateCardId: card.id,
+      lines: [
+        {
+          label: "Private line",
+          category: "Test",
+          unit: "LUMP_SUM" as const,
+          quantity: 1,
+          unitPriceMinor: 100,
+        },
+      ],
+    };
+    const estimate = await saveStudioEstimate(prisma, ctxB(), estimateInput);
+    await expect(getEstimateDraft(prisma, ctxA(), roomB)).rejects.toBeInstanceOf(AppError);
+    await expect(saveStudioEstimate(prisma, ctxA(), estimateInput)).rejects.toBeInstanceOf(
+      AppError,
+    );
+    await expect(
+      saveStudioEstimate(prisma, ctxA(), { ...estimateInput, roomId: roomA }),
+    ).rejects.toBeInstanceOf(AppError);
+    const asset = await prisma.asset.create({
+      data: {
+        workspaceId: workspaceB,
+        roomId: roomB,
+        kind: "RENDER",
+        storageKey: `test/${suffix}/private.jpg`,
+        mime: "image/jpeg",
+        sizeBytes: 10,
+        confirmedAt: new Date(),
+      },
+    });
+    const job = await prisma.renderJob.create({
+      data: {
+        workspaceId: workspaceB,
+        roomId: roomB,
+        kind: "RESTYLE",
+        status: "SUCCEEDED",
+        params: {},
+        sourceAssetId: asset.id,
+        variations: 1,
+        provider: "fake",
+        creditsCharged: 0,
+      },
+    });
+    const output = await prisma.renderOutput.create({
+      data: { jobId: job.id, assetId: asset.id, index: 0 },
+    });
+    const input = {
+      projectId: projectB,
+      estimateId: estimate.id,
+      title: "Private B proposal",
+      options: [{ outputId: output.id }],
+    };
+    const proposal = await createProposal(prisma, ctxB(), input);
+    expect(await listProposals(prisma, ctxA(), projectB)).toEqual([]);
+    await expect(createProposal(prisma, ctxA(), input)).rejects.toBeInstanceOf(AppError);
+    await expect(sendProposal(prisma, ctxA(), proposal.id)).rejects.toBeInstanceOf(AppError);
+    await expect(
+      updateProposalDraft(prisma, ctxA(), proposal.id, input, proposal.updatedAt.toISOString()),
+    ).rejects.toBeInstanceOf(AppError);
+    expect((await getClient(prisma, ctxB(), client.id)).client.name).toBe("Private B client");
+    expect((await getRateCard(prisma, ctxB(), card.id)).name).toBe("B private rates");
+  }, 60_000);
   it("projects cannot be read, renamed or deleted across workspaces", async () => {
     await expect(getProject(prisma, ctxA(), projectB)).rejects.toBeInstanceOf(AppError);
     await expect(renameProject(prisma, ctxA(), projectB, "Hijacked")).rejects.toBeInstanceOf(

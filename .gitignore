@@ -1,5 +1,6 @@
 # dependencies
 node_modules/
+**/.next-e2e/
 .pnpm-store/
 
 # build outputs

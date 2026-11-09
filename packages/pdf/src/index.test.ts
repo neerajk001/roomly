@@ -19,6 +19,11 @@ function extractedText(buffer: Buffer): string {
 }
 
 describe("proposal PDF", () => {
+  it("formats JPY totals in whole yen", async () => {
+    const fixture = await proposalFixture();
+    const pdf = await renderProposalPdf({ ...fixture, currency: "JPY", totalMinor: 1500 });
+    expect(extractedText(pdf)).toContain("JPY1500");
+  });
   it("includes branding, estimate text, totals and concept pages", async () => {
     const pdf = await renderProposalPdf(await proposalFixture());
     expect(pdf.subarray(0, 5).toString()).toBe("%PDF-");
@@ -27,6 +32,8 @@ describe("proposal PDF", () => {
     expect(text).toContain("LivingRoomProposal");
     expect(text).toContain("Wallpaint");
     expect(text).toContain("771.21");
+    expect(text).toContain("Estimatedrange:");
+    expect(text).toContain("848.33");
     expect(text).toContain("Warmminimalconcept");
     expect(pdf.toString("latin1")).toContain("/Subtype /Image");
   });

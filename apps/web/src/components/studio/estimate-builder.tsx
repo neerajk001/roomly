@@ -8,7 +8,7 @@ import { formatMoney } from "@roomdesigner/shared";
 import {
   recompute,
   parseDisplayRate,
-  formatDecimalHundredths,
+  formatMoneyInput,
   displayRateMinor,
   displayQuantity,
   storedQuantity,
@@ -81,7 +81,10 @@ export function EstimateBuilder({
       category: line.category,
       unit: line.unit,
       quantity: displayQuantity(line.quantity, line.unit, unitSystem).toFixed(2),
-      price: formatDecimalHundredths(displayRateMinor(line.unitPriceMinor, line.unit, unitSystem)),
+      price: formatMoneyInput(
+        displayRateMinor(line.unitPriceMinor, line.unit, unitSystem),
+        currency,
+      ),
       originalQuantity: line.quantity,
       originalPriceMinor: line.unitPriceMinor,
       quantityEdited: false,
@@ -98,7 +101,7 @@ export function EstimateBuilder({
       ? storedQuantity(Number(row.quantity), row.unit, unitSystem)
       : row.originalQuantity,
     unitPriceMinor: row.priceEdited
-      ? parseDisplayRate(row.price, row.unit, unitSystem)
+      ? parseDisplayRate(row.price, row.unit, unitSystem, currency)
       : row.originalPriceMinor,
   });
 

@@ -3,7 +3,12 @@
  * All quantities are computed in hundredths (2 decimal places) and money in
  * integer minor units. See docs/spec/05-estimate-engine.md.
  */
-export { parseDecimalHundredths, formatDecimalHundredths } from "./decimal-input";
+export {
+  parseDecimalHundredths,
+  formatDecimalHundredths,
+  parseMoneyInput,
+  formatMoneyInput,
+} from "./decimal-input";
 export {
   displayRateMinor,
   parseDisplayRate,

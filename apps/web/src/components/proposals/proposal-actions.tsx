@@ -40,6 +40,13 @@ export function ProposalActions({
       setError("Choose an option to approve.");
       return;
     }
+    if (
+      kind === "approve" &&
+      !window.confirm(
+        "Approve this concept option? Your designer will be notified and this proposal will be closed.",
+      )
+    )
+      return;
     if (kind !== "approve" && message.trim().length < 3) {
       setError("Add a short message.");
       return;

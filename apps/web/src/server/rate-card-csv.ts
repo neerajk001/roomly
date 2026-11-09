@@ -1,9 +1,9 @@
 import { parseCsv } from "./csv";
-import { parseDecimalHundredths } from "@roomdesigner/estimate";
+import { parseMoneyInput } from "@roomdesigner/estimate";
 import { rateItemSchema, type RateCardInput } from "./services/rate-cards";
 import { AppError } from "./app-error";
 
-export function parseRateCardCsv(csv: string): RateCardInput["items"] {
+export function parseRateCardCsv(csv: string, currency = "USD"): RateCardInput["items"] {
   const rows = parseCsv(csv);
   if (
     rows.length < 2 ||
@@ -22,12 +22,12 @@ export function parseRateCardCsv(csv: string): RateCardInput["items"] {
       label,
       category,
       unit,
-      unitPriceMinor: parseDecimalHundredths(price),
+      unitPriceMinor: parseMoneyInput(price, currency),
     });
     if (row.length !== 5 || !parsed.success)
       throw new AppError(
         "INVALID_INPUT",
-        `Row ${index + 2}: check required fields, unit and price (at most two decimals).`,
+        `Row ${index + 2}: check required fields, unit and price (${currency === "JPY" ? "whole yen" : "at most two decimals"}).`,
         400,
       );
     return parsed.data;

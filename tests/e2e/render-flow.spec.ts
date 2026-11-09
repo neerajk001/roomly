@@ -9,7 +9,7 @@ async function signUpAndOnboardHome(page: Page): Promise<void> {
   await page.waitForURL("**/app");
 }
 
-test("full render flow: project, room, photo, 4 concepts, favorite, chat edit", async ({
+test("full render flow: project, room, photo, 3 concepts, favorite, chat edit", async ({
   page,
 }) => {
   test.setTimeout(240_000);
@@ -56,5 +56,28 @@ test("full render flow: project, room, photo, 4 concepts, favorite, chat edit", 
     .getByPlaceholder("E.g. make the sofa a deep green, keep everything else the same")
     .fill("make the sofa deep green");
   await page.getByRole("button", { name: "Apply change" }).click();
-  await expect(page.getByAltText("Concept 1")).toBeVisible({ timeout: 90_000 });
+  await expect(page.getByText("1 concepts ready", { exact: true })).toBeVisible({
+    timeout: 90_000,
+  });
+  await expect(page.getByAltText("Concept 1")).toBeVisible();
+  const history = page.getByLabel("Design history");
+  const editedId = await history.inputValue();
+  const originalId = await history.locator("option").first().getAttribute("value");
+  await history.selectOption(originalId ?? "");
+  await expect(page.getByAltText("Concept 3")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Remove from favorites" }).first()).toBeVisible();
+  await history.selectOption(editedId);
+  await expect(page.getByText("1 concepts ready", { exact: true })).toBeVisible();
+  await page.getByAltText("Concept 1").scrollIntoViewIfNeeded();
+  await expect
+    .poll(() =>
+      page
+        .getByAltText("Concept 1")
+        .evaluate((element) => (element as HTMLImageElement).naturalWidth),
+    )
+    .toBeGreaterThan(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await page.screenshot({ path: "test-results/home-room-mobile.png", fullPage: true });
 });

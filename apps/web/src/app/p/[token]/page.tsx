@@ -116,7 +116,9 @@ export default async function PublicProposalPage({
         <details className="rounded-xl rounded-xl border border-border bg-background p-5">
           <summary className="cursor-pointer text-sm font-medium">
             Estimate (v{proposal.estimate.version}) —{" "}
-            {formatMoney(proposal.estimate.totalMinor, proposal.currency)}
+            {proposal.estimate.lowMinor !== undefined && proposal.estimate.highMinor !== undefined
+              ? `${formatMoney(proposal.estimate.lowMinor, proposal.currency)} – ${formatMoney(proposal.estimate.highMinor, proposal.currency)}`
+              : formatMoney(proposal.estimate.totalMinor, proposal.currency)}
           </summary>
           <table className="mt-3 w-full text-sm">
             <thead className="text-left text-xs text-muted-foreground">

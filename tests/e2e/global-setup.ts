@@ -12,6 +12,7 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
     env: {
       ...process.env,
       IMAGE_PROVIDER: "fake",
+      EMAIL_PROVIDER: "console",
       AUTH_REQUIRE_EMAIL_VERIFICATION: "false",
       // Keep the E2E worker from colliding with a local dev worker's probe.
       WORKER_HEALTH_PORT: "0",
@@ -61,5 +62,9 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
     } catch {
       // Already gone.
     }
+    execSync("pnpm --filter @roomdesigner/db exec tsx ../../apps/web/scripts/cleanup-e2e.mts", {
+      cwd: process.cwd(),
+      stdio: "inherit",
+    });
   };
 }

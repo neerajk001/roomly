@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  distDir: process.env.E2E === "1" ? ".next-e2e" : ".next",
   poweredByHeader: false,
   reactStrictMode: true,
   // sharp and the Prisma runtime are native/server modules: keep them out of

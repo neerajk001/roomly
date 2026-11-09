@@ -7,6 +7,7 @@ export default defineConfig({
   testDir: "./tests/e2e",
   globalSetup: "./tests/e2e/global-setup.ts",
   timeout: 90_000,
+  expect: { timeout: 20_000 },
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
@@ -14,6 +15,8 @@ export default defineConfig({
   reporter: process.env.CI ? "github" : "list",
   use: {
     baseURL,
+    actionTimeout: 30_000,
+    navigationTimeout: 45_000,
     trace: "on-first-retry",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
@@ -29,6 +32,8 @@ export default defineConfig({
       E2E: "1",
       // Never inherit the local dev auth bypass: the E2E tests exercise real auth.
       DEV_AUTH_BYPASS: "false",
+      IMAGE_PROVIDER: "fake",
+      EMAIL_PROVIDER: "console",
     },
   },
 });

@@ -23,6 +23,8 @@ export interface ProposalPdfData {
   markupMinor: number;
   taxMinor: number;
   totalMinor: number;
+  lowMinor?: number;
+  highMinor?: number;
   options: ProposalPdfOption[];
 }
 
@@ -61,6 +63,7 @@ const styles = StyleSheet.create({
 });
 
 function money(minor: number, currency: string): string {
+  if (currency === "JPY") return `${currency} ${minor}`;
   return `${currency} ${Math.floor(minor / 100)}.${String(minor % 100).padStart(2, "0")}`;
 }
 
@@ -126,6 +129,12 @@ export async function renderProposalPdf(data: ProposalPdfData): Promise<Buffer> 
             <Text style={styles.cellQty} />
             <Text style={styles.cellTotal}>{money(data.totalMinor, data.currency)}</Text>
           </View>
+          {data.lowMinor !== undefined && data.highMinor !== undefined && (
+            <Text style={[styles.muted, { marginTop: 8 }]}>
+              Estimated range: {money(data.lowMinor, data.currency)} –{" "}
+              {money(data.highMinor, data.currency)}
+            </Text>
+          )}
         </View>
 
         {data.terms !== null && (

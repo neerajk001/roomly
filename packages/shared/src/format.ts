@@ -33,7 +33,8 @@ export function formatMoney(minor: number, currency: string, locale = "en-US"): 
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: minor % Math.pow(10, exponent) === 0 ? 0 : exponent,
+    maximumFractionDigits: exponent,
   }).format(value);
 }
 

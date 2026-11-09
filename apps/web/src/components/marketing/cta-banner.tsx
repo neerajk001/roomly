@@ -27,7 +27,7 @@ export function CtaBanner() {
               <div className="absolute -bottom-3 right-0 h-12 w-12 bg-foreground" aria-hidden="true" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/demo/homeowner-feature.jpg"
+                src="/demo/redesign/hero-after-boho.webp"
                 alt="Room redesign preview"
                 className="relative h-40 w-60 rounded-xl border border-border object-cover"
               />

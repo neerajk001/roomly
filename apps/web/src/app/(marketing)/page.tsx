@@ -201,7 +201,7 @@ export default function LandingPage() {
               Beautiful spaces. Happier people.
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
-              Real stories from homeowners, renters and professional designers who use RoomDesigner.
+              Illustrative room concepts for homeowners, renters and professional designers.
             </p>
           </div>
 
@@ -212,7 +212,7 @@ export default function LandingPage() {
                 <div className="hidden w-1/2 sm:block">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/demo/living-after.jpg"
+                    src="/demo/redesign/hero-after-modern.webp"
                     alt="Redesigned living room"
                     className="h-full w-full object-cover"
                   />
@@ -262,7 +262,7 @@ export default function LandingPage() {
               <div className="h-28 w-full overflow-hidden border-b border-border">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/demo/bedroom-after.jpg"
+                  src="/demo/redesign/bedroom-after.webp"
                   alt="Redesigned bedroom"
                   className="h-full w-full object-cover"
                 />
@@ -383,7 +383,7 @@ export default function LandingPage() {
                 <div className="order-1 h-36 w-full overflow-hidden border-b border-border sm:order-2 sm:h-auto sm:w-1/2 sm:border-b-0 sm:border-l">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/demo/kitchen-after.jpg"
+                    src="/demo/redesign/kitchen-after.webp"
                     alt="Redesigned kitchen"
                     className="h-full w-full object-cover"
                   />
@@ -436,7 +436,7 @@ export default function LandingPage() {
                 <div className="relative hidden w-1/2 sm:block">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/demo/bath-after.jpg"
+                    src="/demo/redesign/bath-after.webp"
                     alt="Redesigned bathroom"
                     className="h-full w-full object-cover"
                   />
@@ -495,7 +495,7 @@ export default function LandingPage() {
                 <div className="relative mt-5 rounded-xl border border-border">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/demo/living-before.jpg"
+                    src="/demo/redesign/living-before.webp"
                     alt="Original room photo"
                     className="h-56 w-full object-cover"
                   />
@@ -571,10 +571,10 @@ export default function LandingPage() {
                   <p className="mt-4 text-xs font-semibold text-foreground">Style</p>
                   <div className="mt-2 grid grid-cols-4 gap-1.5">
                     {[
-                      { name: "Modern", src: "/demo/hero-after-modern.jpg" },
-                      { name: "Minimal", src: "/demo/hero-after-minimal.jpg" },
-                      { name: "Boho", src: "/demo/hero-after-boho.jpg" },
-                      { name: "Classic", src: "/demo/hero-after-classic.jpg" },
+                      { name: "Modern", src: "/demo/redesign/hero-after-modern.webp" },
+                      { name: "Minimal", src: "/demo/redesign/hero-after-minimal.webp" },
+                      { name: "Boho", src: "/demo/redesign/hero-after-boho.webp" },
+                      { name: "Classic", src: "/demo/redesign/hero-after-classic.webp" },
                     ].map((style) => (
                       <div
                         key={style.name}
@@ -618,7 +618,7 @@ export default function LandingPage() {
                       <div className="relative">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src="/demo/living-after.jpg"
+                          src="/demo/redesign/hero-after-modern.webp"
                           alt="AI generated concept"
                           className="h-44 w-full object-cover"
                         />
@@ -631,9 +631,9 @@ export default function LandingPage() {
 
                   <div className="mt-2 grid grid-cols-3 gap-2">
                     {[
-                      "/demo/hero-after-modern.jpg",
-                      "/demo/hero-after-boho.jpg",
-                      "/demo/hero-after-classic.jpg",
+                      "/demo/redesign/hero-after-modern.webp",
+                      "/demo/redesign/hero-after-boho.webp",
+                      "/demo/redesign/hero-after-classic.webp",
                     ].map((src) => (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -673,8 +673,8 @@ export default function LandingPage() {
                   <div className="mt-2 rounded-xl border border-border">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src="/demo/living-after.jpg"
-                      alt="Refined AI concept"
+                      src="/demo/redesign/living-refined.webp"
+                      alt="Same living room refined with sage walls and a floor lamp"
                       className="h-36 w-full object-cover"
                     />
                   </div>
@@ -764,7 +764,7 @@ export default function LandingPage() {
                 <div className="rounded-xl border border-border">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/demo/homeowner-feature.jpg"
+                    src="/demo/redesign/hero-after-boho.webp"
                     alt="Home interior redesign"
                     className="h-72 w-full object-cover"
                   />
@@ -846,8 +846,8 @@ export default function LandingPage() {
                 <div className="rounded-xl border border-border">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/demo/pro-feature.jpg"
-                    alt="Professional studio kitchen"
+                    src="/demo/redesign/office-after.webp"
+                    alt="Home office concept for a designer's client project"
                     className="h-72 w-full object-cover"
                   />
                   <div className="flex items-center gap-2 border-t border-border bg-foreground px-3 py-2 text-[11px] font-semibold text-white">

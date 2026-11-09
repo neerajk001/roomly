@@ -7,30 +7,30 @@ const STYLES = [
   {
     id: "modern",
     name: "Modern",
-    afterImage: "/demo/hero-after-modern.jpg",
-    thumb: "/demo/hero-after-modern.jpg",
+    afterImage: "/demo/redesign/hero-after-modern.webp",
+    thumb: "/demo/redesign/hero-after-modern.webp",
     desc: "Warm wood, layered textures & ambient lighting",
   },
   {
     id: "minimal",
     name: "Minimal",
-    afterImage: "/demo/hero-after-minimal.jpg",
-    thumb: "/demo/hero-after-minimal.jpg",
+    afterImage: "/demo/redesign/hero-after-minimal.webp",
+    thumb: "/demo/redesign/hero-after-minimal.webp",
     desc: "Clean Japandi calm, neutral hues & soft daylight",
   },
   {
     id: "boho",
     name: "Boho",
-    afterImage: "/demo/hero-after-boho.jpg",
-    thumb: "/demo/hero-after-boho.jpg",
+    afterImage: "/demo/redesign/hero-after-boho.webp",
+    thumb: "/demo/redesign/hero-after-boho.webp",
     desc: "Earthy rattan, cozy greenery & textured decor",
   },
   {
     id: "classic",
     name: "Classic",
-    afterImage: "/demo/hero-after-classic.jpg",
-    thumb: "/demo/hero-after-classic.jpg",
-    desc: "Timeless moulding, crisp linen & warm elegance",
+    afterImage: "/demo/redesign/hero-after-classic.webp",
+    thumb: "/demo/redesign/hero-after-classic.webp",
+    desc: "Walnut furniture, cream textiles & framed artwork",
   },
 ];
 
@@ -43,10 +43,10 @@ export function HeroInteractive() {
         <div className="rounded-xl border border-border">
           <BeforeAfterSlider
             key={activeStyle.id}
-            beforeImage="/demo/hero-before.jpg"
+            beforeImage="/demo/redesign/living-before.webp"
             afterImage={activeStyle.afterImage}
-            beforeAlt="Messy unmade bedroom before redesign"
-            afterAlt={`AI concept redesign in ${activeStyle.name} style`}
+            beforeAlt="Illustrative original living room before redesign"
+            afterAlt={`${activeStyle.name} concept of the same living room`}
             aspectRatio="aspect-[4/3]"
             enableScrollEffect={true}
             variant="block"
@@ -57,7 +57,7 @@ export function HeroInteractive() {
         <div className="mt-3">
           <div className="mb-2 flex min-w-0 flex-wrap items-center justify-between gap-2 px-0.5">
             <span className="text-[11px] font-semibold tracking-normal text-foreground">
-              Select AI Style Concept:
+              Demo: one room, four styles
             </span>
             <span className="min-w-0 truncate text-[11px] text-foreground">
               <span className="font-semibold uppercase">{activeStyle.name}</span>

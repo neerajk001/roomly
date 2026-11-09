@@ -20,48 +20,48 @@ const GALLERY_ITEMS: GalleryItem[] = [
     room: "Living Room",
     style: "Modern · Warm · Cozy",
     category: "Living Room",
-    beforeImg: "/demo/living-before.jpg",
-    afterImg: "/demo/living-after.jpg",
+    beforeImg: "/demo/redesign/living-before.webp",
+    afterImg: "/demo/redesign/hero-after-modern.webp",
   },
   {
     id: "bedroom",
     room: "Bedroom",
     style: "Minimal · Calm · Elegant",
     category: "Bedroom",
-    beforeImg: "/demo/bedroom-before.jpg",
-    afterImg: "/demo/bedroom-after.jpg",
+    beforeImg: "/demo/redesign/bedroom-before.webp",
+    afterImg: "/demo/redesign/bedroom-after.webp",
   },
   {
     id: "kitchen",
     room: "Kitchen",
     style: "Modern · Functional · Bright",
     category: "Kitchen",
-    beforeImg: "/demo/kitchen-before.jpg",
-    afterImg: "/demo/kitchen-after.jpg",
+    beforeImg: "/demo/redesign/kitchen-before.webp",
+    afterImg: "/demo/redesign/kitchen-after.webp",
   },
   {
     id: "office",
     room: "Home Office",
     style: "Productive · Stylish · Minimal",
     category: "Home Office",
-    beforeImg: "/demo/office-before.jpg",
-    afterImg: "/demo/office-after.jpg",
+    beforeImg: "/demo/redesign/office-before.webp",
+    afterImg: "/demo/redesign/office-after.webp",
   },
   {
     id: "dining",
     room: "Dining Room",
     style: "Modern · Earthy · Inviting",
     category: "Living Room",
-    beforeImg: "/demo/dining-before.jpg",
-    afterImg: "/demo/dining-after.jpg",
+    beforeImg: "/demo/redesign/dining-before.webp",
+    afterImg: "/demo/redesign/dining-after.webp",
   },
   {
     id: "bathroom",
     room: "Bathroom",
     style: "Spa-like · Clean · Premium",
     category: "Bathroom",
-    beforeImg: "/demo/bath-before.jpg",
-    afterImg: "/demo/bath-after.jpg",
+    beforeImg: "/demo/redesign/bath-before.webp",
+    afterImg: "/demo/redesign/bath-after.webp",
   },
 ];
 
@@ -79,13 +79,14 @@ export function GallerySection() {
     <section id="examples" className="mx-auto max-w-6xl px-4 py-20">
       <div className="text-center">
         <span className="inline-block rounded-xl border border-border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-foreground">
-          Real Spaces. Real Transformations.
+          Same Room. New Possibilities.
         </span>
         <h2 className="mt-5 text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
           See what&apos;s possible.
         </h2>
         <p className="mx-auto mt-3 max-w-lg text-sm text-muted-foreground">
-          From everyday rooms to dream spaces, explore AI redesigns created by our users.
+          Start with a room photo, then explore a new style. Each pair shows the same room before
+          and after an illustrative redesign.
         </p>
 
         {/* Category filter tabs */}
@@ -137,7 +138,8 @@ export function GallerySection() {
       </div>
 
       <p className="mt-8 text-center text-xs text-muted-foreground">
-        AI renders are concept visuals, actual results may vary.
+        AI-generated demo scenes and redesign concepts. Actual results vary; visuals are not to
+        scale.
       </p>
     </section>
   );

@@ -584,3 +584,27 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
 - Desktop and 375px mobile previews reviewed; no horizontal overflow. Gallery
   filters and FAQ interactions pass; both edited TSX files preserve their JSX tags.
 - pnpm typecheck, pnpm lint and pnpm test pass across all 11 packages.
+
+# 2026-11-09 — Coherent room transformation assets
+- Replace unrelated landing photography with purpose-made interior concepts.
+- Generate original room photos, then edit those same photos into redesigns.
+- Preserve camera position, windows, doors and room geometry in each pair.
+- Give the hero four style variants of one living room.
+- Replace all six gallery pairs with matching room transformations.
+- Reuse the matching assets throughout process, feature and CTA sections.
+- Keep the white/light-gray theme and existing component layout.
+- Label generated examples as illustrative concept visuals.
+- Use built-in imagegen, independently of the app's fake-provider test setting.
+- Save final assets and prompt provenance inside the repository.
+- Verify images, desktop/mobile rendering, slider/filter behavior and checks.
+- Commit the completed replacement as one focused task.
+- Delivered 16 optimized 1440x1080 WebP assets (~2.8 MB total): six source rooms,
+  four living-room styles, five other room redesigns and one matching chat edit.
+- Hero, six gallery pairs, process previews, feature cards and final CTA now use
+  the coherent generated rooms; unrelated dress/cooking photos are no longer used.
+- The refinement image matches its displayed sage-wall/floor-lamp instruction.
+- Saved prompt/source provenance in docs/design/landing-image-prompts.json and
+  an asset map in docs/design/landing-imagery.md. Examples are labelled illustrative.
+- Desktop and 375px mobile screenshots reviewed. All images load; four hero
+  styles, keyboard slider control and gallery filters pass. JSX tags are unchanged.
+- pnpm typecheck, pnpm lint and pnpm test pass across all 11 packages.

@@ -1,5 +1,6 @@
 import { createFakeProvider, ProviderError, type ImageProvider } from "@roomdesigner/ai";
 import { prisma } from "@roomdesigner/db";
+import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 import { processRenderJob, type RenderJobDeps } from "./render-generate";
 import { claimDiversityRetry, recordDiversityResult } from "./diversity-retry";
@@ -139,6 +140,80 @@ async function balance(workspaceId: string): Promise<number> {
 }
 
 describe("processRenderJob", () => {
+  it("sends an aligned mask and preserves protected pixels in a targeted edit", async () => {
+    const fixture = await createFixture(3);
+    const editTarget = { label: "Sofa", region: { left: 200, top: 250, right: 600, bottom: 750 } };
+    const source = await sharp({
+      create: { width: 100, height: 80, channels: 3, background: "red" },
+    })
+      .png()
+      .toBuffer();
+    const generated = await sharp({
+      create: { width: 100, height: 80, channels: 3, background: "blue" },
+    })
+      .png()
+      .toBuffer();
+    const uploaded = new Map<string, Buffer>();
+    let calls = 0;
+    const provider: ImageProvider = {
+      name: "fake",
+      edit: async (input) => {
+        calls++;
+        expect(input.mask).toBeDefined();
+        expect(input.mime).toBe("image/png");
+        expect(input.size).toBe("auto");
+        expect(input.prompt).toContain("selected masked area");
+        const mask = await sharp(input.mask).metadata();
+        expect([mask.width, mask.height]).toEqual([100, 80]);
+        return { images: [{ data: generated, mime: "image/png" }], costMicros: 0, model: "fake" };
+      },
+    };
+    try {
+      await prisma.renderJob.update({
+        where: { id: fixture.jobId, workspaceId: fixture.workspaceId },
+        data: {
+          kind: "EDIT",
+          variations: 1,
+          instruction: "Make the sofa blue",
+          params: {
+            providerQuality: "high",
+            size: "auto",
+            sourceOutputId: "authorized-by-service",
+            editTarget,
+          },
+        },
+      });
+      const outcome = await processRenderJob(
+        {
+          db: prisma,
+          provider,
+          download: async () => source,
+          upload: async ({ key, body }) => {
+            uploaded.set(key, body);
+          },
+          now: () => new Date(),
+        },
+        { jobId: fixture.jobId, retryCount: 0, retryLimit: 0 },
+      );
+      expect(outcome).toBe("ok");
+      expect(calls).toBe(1);
+      const output = await prisma.renderOutput.findFirstOrThrow({
+        where: { jobId: fixture.jobId, job: { workspaceId: fixture.workspaceId } },
+        include: { asset: true },
+      });
+      expect(output.asset.mime).toBe("image/png");
+      expect([output.asset.width, output.asset.height]).toEqual([100, 80]);
+      const stored = uploaded.get(output.asset.storageKey);
+      expect(stored).toBeDefined();
+      const pixels = await sharp(stored).removeAlpha().raw().toBuffer();
+      expect([...pixels.subarray(0, 3)]).toEqual([255, 0, 0]);
+      expect([...pixels.subarray((30 * 100 + 30) * 3, (30 * 100 + 30) * 3 + 3)]).toEqual([
+        0, 0, 255,
+      ]);
+    } finally {
+      await cleanup(fixture);
+    }
+  });
   it("claims only one diversity retry across concurrent workers and respects spend headroom", async () => {
     const fixture = await createFixture();
     const params = {

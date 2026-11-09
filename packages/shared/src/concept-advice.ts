@@ -1,6 +1,8 @@
 import { z } from "zod";
+import { editTargetSchema } from "./edit-target";
 
 export const conceptAdviceContentSchema = z.object({
+  objects: z.array(editTargetSchema).max(8).optional(),
   summary: z.string().min(1).max(400),
   suggestions: z
     .array(
@@ -12,6 +14,10 @@ export const conceptAdviceContentSchema = z.object({
       }),
     )
     .max(3),
+});
+/** Required object list for new structured vision calls; legacy caches may omit it. */
+export const conceptAnalysisSchema = conceptAdviceContentSchema.extend({
+  objects: z.array(editTargetSchema).max(8),
 });
 export const conceptAdviceSchema = conceptAdviceContentSchema.extend({
   source: z.enum(["demo", "ai"]),

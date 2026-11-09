@@ -695,3 +695,27 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
 - Verify isolation, source-image targeting, cache/race handling, history and mobile flows with fake generation, then commit and stop for review.
 - Validation complete: typecheck, lint and tests pass in all 11 packages (64 web tests). The six browser journeys pass across the suite and focused rerun; the final 375px refinement rerun also passes with editor focus, per-image drafts, remembered selection, exact edit-source ID and concept-specific history. Mobile screenshots reviewed and test accounts cleaned up.
 - Suggestions remain an explicitly labelled demo by default. The real adapter requires an approved configured model; no paid calls, new images, dependencies or migrations were used. Batch 4 and the existing G2 fidelity review remain pending.
+
+## 2026-11-09 — Guided design batch 4 plan
+
+- Implement one integrated object/area editing task in the current phase, without billing or new preview assets.
+- Extend opt-in image analysis with up to eight approximate object bounds; demo mode returns no invented detections.
+- Reuse the authorized, cached advice request and its existing timeout, rate limit and spend guard.
+- Keep old advice caches valid and allow manual selection even when analysis is unavailable.
+- Show selectable object labels and an adjustable rectangular area on the exact concept being edited.
+- Support pointer drawing, touch and labelled keyboard controls with clear reset and whole-image options.
+- Store each concept's target separately from its text draft and require an explicit Apply change click.
+- Validate integer normalized coordinates at the form, service and worker boundaries; reject invalid/non-edit selections.
+- Resolve image bytes only from the authorized source output; never accept a client mask URL or file.
+- Build an aligned transparent PNG mask server-side and pass it through the existing image provider interface.
+- Composite only the selected rectangle from the returned image onto the original source; keep outside pixels and dimensions.
+- Keep targeted output lossless so an extra JPEG encoding does not modify protected pixels.
+- Persist the target in edit job metadata and expose it in version history.
+- Test bounds, mask alpha, outside preservation, provider forwarding, tenant isolation and mobile selection/edit lineage.
+- Use fake/mocked providers only; no default model change or paid calls. G2 real-model fidelity remains pending.
+- Run required checks, commit the integrated task and stop for review.
+- Implementation uses approximate rectangular bounds from the existing opt-in vision analysis, with manual pointer/touch and keyboard selection always available. No segmentation model or freehand brush was added; users review the bounds, and real-model accuracy/boundary quality remains G2 review.
+- The existing Sharp version is declared as a worker dev dependency: the initial test accidentally resolved an unrelated Sharp 0.34 install above the repository and conflicted with the project's 0.35 native DLL. The lockfile changed only to declare the already-installed 0.35.5 library; no new version or production dependency was added.
+- The initial parallel Vitest run encountered a Windows shared-cache startup collision. Validation is rerun sequentially with `pnpm test --concurrency=1`; typecheck and lint still run across all packages.
+- Batch 4 validation complete: typecheck and lint pass in all 11 packages; the full sequential test run passes, including 66 web, 17 worker, 21 AI, 25 shared and 19 storage tests. Both Home/Pro browser journeys pass at mobile width, including drawing/keyboard bounds, per-concept selection, exact submitted region/source, reset and the existing Pro approval flow. Screenshots reviewed and two browser-test accounts cleaned up.
+- Targeted calls use automatic sizing from the normalized image and store its original pixel dimensions. Mask and worker tests confirm transparency alignment and outside-pixel preservation in lossless PNG output. No paid calls or default model changes were made; G2 real detection and boundary-quality review remains open. Stop after this batch for human review.

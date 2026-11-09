@@ -1,4 +1,4 @@
-import type { ConceptAdvice } from "@roomdesigner/shared";
+import type { ConceptAdvice, EditTarget } from "@roomdesigner/shared";
 
 export interface RenderOutputView {
   advice?: ConceptAdvice;
@@ -13,6 +13,7 @@ export interface RenderOutputView {
 
 export interface RenderJobView {
   sourceOutputId?: string | null;
+  editTarget?: EditTarget;
   similarConcepts?: boolean;
   id: string;
   kind: "RESTYLE" | "EDIT";
@@ -26,6 +27,7 @@ export interface RenderJobView {
 
 export interface RenderJobStatusResponse {
   sourceOutputId?: string | null;
+  editTarget?: EditTarget;
   label?: string;
   similarConcepts?: boolean;
   id: string;

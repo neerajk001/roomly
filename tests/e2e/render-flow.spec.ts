@@ -90,6 +90,32 @@ test("full render flow: project, room, photo, 3 concepts, favorite, chat edit", 
   await expect(composer).toHaveValue("make the sofa deep green");
   await expect(page.getByText(/^Editing concept 2/)).toBeVisible();
   await expect(composer).toBeFocused();
+  await page.getByText("Choose an object or area (optional)", { exact: true }).click();
+  await page.getByRole("button", { name: "Find objects", exact: true }).click();
+  await expect(
+    page.getByText("Demo mode: object detection is disabled. Mark an area manually."),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Mark an area", exact: true }).click();
+  await expect(page.getByAltText("Concept area selection")).toBeVisible();
+  const selection = page.getByRole("group", { name: "Draw editable area", exact: true });
+  await selection.scrollIntoViewIfNeeded();
+  const box = await selection.boundingBox();
+  expect(box).not.toBeNull();
+  if (!box) throw new Error("Selection image is missing.");
+  await page.mouse.move(box.x + box.width * 0.25, box.y + box.height * 0.25);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width * 0.75, box.y + box.height * 0.75, { steps: 5 });
+  await page.mouse.up();
+  const leftEdge = page.getByRole("slider", { name: "left edge", exact: true });
+  await leftEdge.focus();
+  await leftEdge.press("ArrowRight");
+  await expect(leftEdge).toHaveValue("260");
+  await page.getByRole("button", { name: "Select concept 1", exact: true }).click();
+  await page.getByRole("button", { name: "Edit this design", exact: true }).first().click();
+  await page.getByText("Choose an object or area (optional)", { exact: true }).click();
+  await expect(page.getByRole("button", { name: "Use whole image", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Edit this design", exact: true }).nth(1).click();
+  await expect(leftEdge).toHaveValue("260");
   await page.screenshot({ path: "test-results/concept-2-refinement-mobile.png", fullPage: true });
 
   // Favorite the first concept
@@ -106,6 +132,10 @@ test("full render flow: project, room, photo, 3 concepts, favorite, chat edit", 
   await expect(page.getByAltText("Concept 1")).toBeVisible();
   const edited = renderJobStatusSchema.parse(await (await editCompleted).json());
   expect(edited.sourceOutputId).toBe(second?.id);
+  expect(edited.editTarget).toEqual({
+    label: "Selected area",
+    region: { left: 260, top: 250, right: 750, bottom: 750 },
+  });
   const family = page
     .locator("details")
     .filter({ has: page.getByText(/^Changes for this concept/) });

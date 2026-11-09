@@ -65,6 +65,9 @@ export function createOpenAIProvider(options: OpenAIProviderOptions): ImageProvi
           {
             model: options.model,
             image: file,
+            ...(input.mask
+              ? { mask: await toFile(input.mask, "selection.png", { type: "image/png" }) }
+              : {}),
             prompt: input.prompt,
             n: input.n,
             size: input.size,
@@ -93,7 +96,11 @@ export function createOpenAIProvider(options: OpenAIProviderOptions): ImageProvi
         images.push({ data: Buffer.from(item.b64_json, "base64"), mime: "image/png" });
       }
       if (images.length === 0) {
-        throw new ProviderError("PROVIDER_EMPTY", "The image service returned no images.", "transient");
+        throw new ProviderError(
+          "PROVIDER_EMPTY",
+          "The image service returned no images.",
+          "transient",
+        );
       }
 
       const usage = usageFromResponse((response as { usage?: unknown }).usage);

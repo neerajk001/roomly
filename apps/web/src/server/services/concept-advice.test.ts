@@ -14,6 +14,7 @@ const outputIds: string[] = [];
 const assetIds: string[] = [];
 const ctx = () => ({ userId, workspaceId, emailVerified: true });
 const content = {
+  objects: [{ label: "Portable lamp", region: { left: 100, top: 200, right: 400, bottom: 700 } }],
   summary: "A considered room.",
   suggestions: [
     {
@@ -225,11 +226,16 @@ describe("image-specific advice service", () => {
     expect(selected.suggest).not.toHaveBeenCalled();
   });
   it("edits the selected output asset and inherits the selected style and room direction", async () => {
+    const editTarget = {
+      label: "Portable lamp",
+      region: { left: 100, top: 200, right: 400, bottom: 700 },
+    };
     const created = await createRender(prisma, ctx(), {
       roomId,
       kind: "EDIT",
       sourceOutputId: outputIds[1],
       instruction: "Add a portable reading lamp",
+      editTarget,
       quality: "final",
       variations: 1,
     });
@@ -242,8 +248,28 @@ describe("image-specific advice service", () => {
     expect(edit.params).toMatchObject({
       sourceOutputId: outputIds[1],
       sourceDirectionLabel: "Warm & tactile",
+      editTarget,
       budgetTier: "budget",
       notes: "Leave a reading corner",
     });
+  });
+  it("rejects another workspace's target image without charging credits", async () => {
+    const ledgerBefore = await prisma.creditLedger.count({ where: { workspaceId } });
+    await expect(
+      createRender(
+        prisma,
+        { ...ctx(), workspaceId: "another-workspace" },
+        {
+          roomId,
+          kind: "EDIT",
+          sourceOutputId: outputIds[1],
+          instruction: "Change only this area",
+          quality: "final",
+          variations: 1,
+          editTarget: { label: "Sofa", region: { left: 100, top: 200, right: 600, bottom: 700 } },
+        },
+      ),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(await prisma.creditLedger.count({ where: { workspaceId } })).toBe(ledgerBefore);
   });
 });

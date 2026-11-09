@@ -10,7 +10,13 @@ import {
   type ImageSize,
 } from "@roomdesigner/ai";
 import { refundCredits, type Prisma } from "@roomdesigner/db";
-import { makeThumbnail, makeWebVersion, buildStorageKey } from "@roomdesigner/storage";
+import {
+  makeThumbnail,
+  makeWebVersion,
+  buildStorageKey,
+  prepareMaskedEdit,
+  compositeSelectedArea,
+} from "@roomdesigner/storage";
 import { getServerEnv } from "@roomdesigner/config/env";
 import { BUDGET_TIERS, conceptDirectionFor, getStyle, outputStyleKey } from "@roomdesigner/shared";
 import { randomUUID } from "node:crypto";
@@ -109,7 +115,12 @@ export async function processRenderJob(
 
   try {
     const params = renderParamsSchema.safeParse(job.params);
-    if (!params.success || (params.data.styleKeys?.length ?? 0) > job.variations) {
+    if (
+      !params.success ||
+      (params.data.styleKeys?.length ?? 0) > job.variations ||
+      (params.data.editTarget &&
+        (job.kind !== "EDIT" || job.variations !== 1 || !params.data.sourceOutputId))
+    ) {
       await finalizeFailure(deps, job, "INVALID_JOB", "This render request is invalid.");
       return "ok";
     }
@@ -133,6 +144,9 @@ export async function processRenderJob(
     });
     const prompt = prompts[0] ?? buildPromptForJob(job, params.data);
     const source = await deps.download(job.sourceAsset.storageKey);
+    const targeted = params.data.editTarget
+      ? await prepareMaskedEdit(source, params.data.editTarget.region)
+      : null;
 
     // One call per variation with a distinct emphasis: a single n=4 call
     // returns four near-identical images. EDIT jobs stay a single image.
@@ -146,11 +160,12 @@ export async function processRenderJob(
             quality: params.data.providerQuality,
           })
         : await deps.provider.edit({
-            image: source,
-            mime: job.sourceAsset.mime,
+            image: targeted?.image ?? source,
+            mime: targeted ? "image/png" : job.sourceAsset.mime,
+            ...(targeted ? { mask: targeted.mask } : {}),
             prompt,
             n: job.variations,
-            size: params.data.size,
+            size: targeted ? "auto" : params.data.size,
             quality: params.data.providerQuality,
             signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
           });
@@ -218,15 +233,20 @@ export async function processRenderJob(
 
     let index = 0;
     for (const image of result.images) {
-      const web = await makeWebVersion(image.data, webPreviewMaxPx());
+      const web = params.data.editTarget
+        ? {
+            data: await compositeSelectedArea(source, image.data, params.data.editTarget.region),
+            mime: "image/png",
+          }
+        : await makeWebVersion(image.data, webPreviewMaxPx());
       const webAsset = await createAsset(db, {
         workspaceId: job.workspaceId,
         roomId: job.roomId,
         kind: "RENDER",
         mime: web.mime,
         sizeBytes: web.data.byteLength,
-        width: null,
-        height: null,
+        width: targeted?.width ?? null,
+        height: targeted?.height ?? null,
       });
       await deps.upload({ key: webAsset.storageKey, body: web.data, contentType: web.mime });
 
@@ -300,6 +320,11 @@ function buildPromptForJob(
     const budget = BUDGET_TIERS.find((tier) => tier.key === params.budgetTier);
     return [
       base,
+      ...(params.editTarget
+        ? [
+            `Edit only the selected masked area (${JSON.stringify(params.editTarget.label)}). The rest of the image is protected. Keep the target's position and scale unless explicitly asked otherwise.`,
+          ]
+        : []),
       ...(params.notes ? [`Original room notes: ${params.notes}`] : []),
       ...(budget ? [`Budget direction: ${budget.hint}`] : []),
     ].join("\n");

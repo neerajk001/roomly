@@ -169,6 +169,9 @@ importers:
       eslint-config-prettier:
         specifier: 'catalog:'
         version: 10.1.8(eslint@9.39.5(jiti@2.7.0))
+      sharp:
+        specifier: ^0.35.5
+        version: 0.35.5(@types/node@26.6.5)
       tsx:
         specifier: 'catalog:'
         version: 4.23.15

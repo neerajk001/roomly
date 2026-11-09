@@ -10,6 +10,8 @@ import {
 import { CONSERVATIVE_IMAGE_COST_MICROS, sanitizeInstruction } from "@roomdesigner/ai";
 import {
   designPreferencesSchema,
+  editTargetSchema,
+  type EditTarget,
   getStyle,
   outputStyleKey,
   outputConceptLabel,
@@ -52,8 +54,15 @@ export const createRenderSchema = z
       .optional(),
     /** EDIT only: the render output the user wants to change. */
     sourceOutputId: z.string().min(1).optional(),
+    editTarget: editTargetSchema.optional(),
   })
   .superRefine((input, ctx) => {
+    if (input.editTarget && input.kind !== "EDIT")
+      ctx.addIssue({
+        code: "custom",
+        path: ["editTarget"],
+        message: "Choose an area only when editing a concept.",
+      });
     if (input.kind === "EDIT" && input.variations !== 1)
       ctx.addIssue({
         code: "custom",
@@ -158,6 +167,7 @@ export async function createRender(
   let notes: string | null = null;
   let parentJobId: string | null = null;
   let editContext: {
+    editTarget?: EditTarget;
     sourceOutputId?: string;
     sourceDirectionLabel?: string;
     budgetTier?: "budget" | "mid" | "premium";
@@ -228,6 +238,7 @@ export async function createRender(
     styleKey = outputStyleKey(output.job.params, output.job.styleKey, output.index);
     notes = inherited.notes ?? null;
     editContext = {
+      ...(input.editTarget ? { editTarget: input.editTarget } : {}),
       sourceOutputId: output.id,
       budgetTier: inherited.budgetTier,
       traditionKey: inherited.traditionKey,

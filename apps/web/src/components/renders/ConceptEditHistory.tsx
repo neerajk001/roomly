@@ -31,6 +31,7 @@ export function ConceptEditHistory({
               className={`w-full rounded-lg border px-3 py-2 text-left text-sm ${output.id === outputId ? "border-foreground bg-muted" : "border-border"}`}
             >
               {job.kind === "EDIT" ? job.label : `Original concept ${output.index + 1}`}{" "}
+              {job.editTarget ? `· Area: ${job.editTarget.label} ` : ""}
               {output.id === outputId ? "· Selected" : ""}
             </button>
           </li>

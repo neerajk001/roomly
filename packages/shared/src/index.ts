@@ -60,3 +60,4 @@ export {
   type RoomNeed,
   type RoomNeedsInput,
 } from "./room-needs";
+export * from "./edit-target";

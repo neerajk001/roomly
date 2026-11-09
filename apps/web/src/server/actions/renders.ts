@@ -26,6 +26,7 @@ const formSchema = z.object({
   variations: z.coerce.number().int().min(1).max(4).default(4),
   quality: z.enum(["draft", "final"]).default("draft"),
   sourceOutputId: z.string().optional(),
+  editTarget: z.string().max(1000).optional(),
 });
 
 export async function createRenderAction(
@@ -45,6 +46,7 @@ export async function createRenderAction(
     variations: formData.get("variations") ?? undefined,
     quality: formData.get("quality") ?? undefined,
     sourceOutputId: formData.get("sourceOutputId") ?? undefined,
+    editTarget: formData.get("editTarget") ?? undefined,
   });
   if (!parsed.success) {
     return { error: "Check the render options." };
@@ -58,15 +60,18 @@ export async function createRenderAction(
     }
   }
   let styleKeys: unknown;
+  let editTarget: unknown;
   try {
+    editTarget = parsed.data.editTarget ? JSON.parse(parsed.data.editTarget) : undefined;
     styleKeys = parsed.data.styleKeys ? JSON.parse(parsed.data.styleKeys) : undefined;
   } catch {
-    return { error: "Check your selected styles." };
+    return { error: "Check your selected styles or edit area." };
   }
   const input = createRenderSchema.safeParse({
     ...parsed.data,
     stagingItems,
     styleKeys,
+    editTarget,
   });
   if (!input.success) {
     return { error: input.error.issues[0]?.message ?? "Check the render options." };

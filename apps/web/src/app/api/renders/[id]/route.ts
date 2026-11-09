@@ -4,6 +4,7 @@ import {
   outputStyleKey,
   savedConceptAdvice,
   renderSourceOutputId,
+  savedEditTarget,
 } from "@roomdesigner/shared";
 import { prisma } from "@roomdesigner/db";
 import { presignGet } from "@roomdesigner/storage";
@@ -63,6 +64,7 @@ export async function GET(
       styleKey: job.styleKey,
       similarConcepts: readDiversityReport(job.params)?.similarConcepts ?? false,
       sourceOutputId: renderSourceOutputId(job.params),
+      editTarget: savedEditTarget(job.params),
       createdAt: job.createdAt,
       outputs,
     });

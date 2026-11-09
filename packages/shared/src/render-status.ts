@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { editTargetSchema } from "./edit-target";
 import { conceptAdviceSchema } from "./concept-advice";
 
 export const renderOutputViewSchema = z.object({
@@ -20,6 +21,7 @@ export const renderJobStatusSchema = z.object({
   outputs: z.array(renderOutputViewSchema),
   styleKey: z.string().nullable(),
   sourceOutputId: z.string().nullable().optional(),
+  editTarget: editTargetSchema.optional(),
   label: z.string().optional(),
   similarConcepts: z.boolean().optional(),
 });

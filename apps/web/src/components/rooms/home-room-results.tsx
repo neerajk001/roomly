@@ -1,9 +1,10 @@
 "use client";
 
+import { ConceptTargetEditor } from "@/components/renders/ConceptTargetEditor";
 import { useConceptSelection } from "@/components/renders/use-concept-selection";
 import { ConceptAdvicePanel } from "@/components/renders/ConceptAdvicePanel";
 import { ConceptEditHistory } from "@/components/renders/ConceptEditHistory";
-import type { ConceptAdvice } from "@roomdesigner/shared";
+import type { ConceptAdvice, EditTarget } from "@roomdesigner/shared";
 import { createRenderAction } from "@/server/actions/renders";
 import { saveFavorite } from "@/lib/save-favorite";
 import type {
@@ -65,6 +66,7 @@ export function HomeRoomResults({
   const [currentId, setCurrentId] = useState<string | null>(initialJob?.id ?? null);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [editingOutputId, setEditingOutputId] = useState<string | null>(null);
+  const [targets, setTargets] = useState<Record<string, EditTarget | undefined>>({});
   const editorRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     if (!editingOutputId) return;
@@ -134,6 +136,7 @@ export function HomeRoomResults({
         outputs: incoming.outputs,
         label: incoming.label ?? label,
         sourceOutputId: incoming.sourceOutputId ?? null,
+        editTarget: incoming.editTarget,
         styleKey: incoming.styleKey,
         similarConcepts: incoming.similarConcepts ?? false,
       };
@@ -273,6 +276,8 @@ export function HomeRoomResults({
       formData.set("projectId", projectId);
       formData.set("kind", "EDIT");
       formData.set("sourceOutputId", editingOutputId);
+      if (targets[editingOutputId])
+        formData.set("editTarget", JSON.stringify(targets[editingOutputId]));
       formData.set("instruction", instruction);
       formData.set("quality", "final");
       formData.set("variations", "1");
@@ -941,6 +946,21 @@ export function HomeRoomResults({
                 {editingTarget.directionLabel ? ` · ${editingTarget.directionLabel}` : ""}
               </p>
             </div>
+          )}
+          {editingTarget && (
+            <ConceptTargetEditor
+              key={editingTarget.id}
+              roomId={roomId}
+              outputId={editingTarget.id}
+              imageUrl={editingTarget.url}
+              advice={editingTarget.advice}
+              target={targets[editingTarget.id]}
+              disabled={editPending}
+              onChange={(target) =>
+                setTargets((previous) => ({ ...previous, [editingTarget.id]: target }))
+              }
+              onAdvice={(advice) => rememberAdvice(editingTarget.id, advice)}
+            />
           )}
           <textarea
             ref={editorRef}

@@ -4,6 +4,7 @@ import {
   outputStyleKey,
   savedConceptAdvice,
   renderSourceOutputId,
+  savedEditTarget,
 } from "@roomdesigner/shared";
 import { EstimateSection } from "@/components/estimates/estimate-section";
 import { RoomPhotos } from "@/components/projects/room-photos";
@@ -79,6 +80,7 @@ export async function RoomDetailView({
       label: job.kind === "EDIT" ? (job.instruction ?? "Edit") : "Base concept",
       styleKey: job.styleKey,
       similarConcepts: readDiversityReport(job.params)?.similarConcepts ?? false,
+      editTarget: savedEditTarget(job.params),
       sourceOutputId:
         renderSourceOutputId(job.params) ??
         (job.kind === "EDIT" ? (outputByAsset.get(job.sourceAssetId) ?? null) : null),

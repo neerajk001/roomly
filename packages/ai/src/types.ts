@@ -2,6 +2,8 @@ export type ImageSize = "1024x1024" | "1536x1024" | "1024x1536" | "auto";
 export type ImageQuality = "low" | "medium" | "high";
 
 export interface EditInput {
+  /** PNG, same oriented dimensions as image; transparent pixels are editable. */
+  mask?: Buffer;
   image: Buffer;
   mime: string;
   prompt: string;

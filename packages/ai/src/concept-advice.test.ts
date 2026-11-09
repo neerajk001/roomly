@@ -24,6 +24,7 @@ const context = {
   notes: "Keep space for reading",
 };
 const content = {
+  objects: [{ label: "Bed", region: { left: 100, top: 300, right: 800, bottom: 900 } }],
   summary: "A calm bedroom.",
   suggestions: [
     {
@@ -85,6 +86,21 @@ describe("concept advice provider", () => {
   });
   it("rejects invalid or refused provider data", async () => {
     parse.mockResolvedValue({ output_parsed: null });
+    await expect(
+      createOpenAIAdviceProvider({ apiKey: "test-key", model: "configured" }).suggest({
+        image: Buffer.from("image"),
+        mime: "image/jpeg",
+        context,
+      }),
+    ).rejects.toThrow();
+  });
+  it("rejects invalid object coordinates rather than offering an unsafe selection", async () => {
+    parse.mockResolvedValue({
+      output_parsed: {
+        ...content,
+        objects: [{ label: "Bed", region: { left: 900, top: 200, right: 100, bottom: 800 } }],
+      },
+    });
     await expect(
       createOpenAIAdviceProvider({ apiKey: "test-key", model: "configured" }).suggest({
         image: Buffer.from("image"),

@@ -50,6 +50,17 @@ test("designer brief, concept, estimate, proposal and anonymous approval", async
     await expect(page.getByText("Room details saved.", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Generate 3 concepts" }).click();
     await expect(page.getByAltText("Concept 3")).toBeVisible({ timeout: 120_000 });
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.getByRole("button", { name: "Edit this", exact: true }).first().click();
+    await page.getByText("Choose an object or area (optional)", { exact: true }).click();
+    await page.getByRole("button", { name: "Mark an area", exact: true }).click();
+    await expect(page.getByRole("slider", { name: "left edge", exact: true })).toHaveValue("250");
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
+    await page.screenshot({ path: "test-results/pro-area-selection-mobile.png", fullPage: true });
+    await page.getByRole("button", { name: "Use whole image", exact: true }).click();
+    await expect(page.getByAltText("Concept area selection")).toHaveCount(0);
     await page.goto(`${roomUrl}/estimate`);
     await page.getByRole("button", { name: "Save as new version" }).click();
     await expect(page.getByText("Saved estimate v1", { exact: true })).toBeVisible();

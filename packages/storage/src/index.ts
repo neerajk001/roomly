@@ -58,3 +58,4 @@ export async function putObject(input: PutObjectInput): Promise<void> {
 export async function deleteObject(key: string): Promise<void> {
   return usesCloudinary() ? cloudinary.deleteObject(key) : s3.deleteObject(key);
 }
+export { prepareMaskedEdit, compositeSelectedArea } from "./edit-mask";

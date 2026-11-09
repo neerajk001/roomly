@@ -94,7 +94,7 @@ function CheckIcon() {
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="border-t border-border bg-card py-20">
+    <section id="pricing" className="border-t border-border bg-background py-20">
       <div className="mx-auto max-w-6xl px-4">
         <div className="text-center">
           <span className="inline-block rounded-xl border border-border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-foreground">

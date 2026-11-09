@@ -191,7 +191,7 @@ export default function LandingPage() {
       <GallerySection />
 
       {/* 5. TESTIMONIALS */}
-      <section className="border-t border-border bg-card py-20">
+      <section className="border-t border-border bg-background py-20">
         <div className="mx-auto max-w-6xl px-4">
           <div className="text-center">
             <span className="inline-block rounded-xl border border-border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-foreground">
@@ -459,7 +459,7 @@ export default function LandingPage() {
       </section>
 
       {/* 6. HOW IT WORKS (FROM PHOTO TO YOUR DREAM SPACE) */}
-      <section id="how-it-works" className="border-t border-border bg-card py-20">
+      <section id="how-it-works" className="border-t border-border bg-background py-20">
         <div className="mx-auto max-w-6xl px-4">
           <div className="text-center">
             <span className="inline-block rounded-xl border border-border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-foreground">

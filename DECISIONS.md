@@ -567,3 +567,20 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
 - Gallery filters and FAQ interactions verified. All seven edited TSX files retain
   identical ordered JSX tags; no components or sections were removed or added.
 - pnpm typecheck, pnpm lint and pnpm test pass across all 11 packages.
+
+# 2026-11-09 — White landing canvas, light-gray components
+- Follow the updated preference for a white page background.
+- Keep light-gray cards, hero preview, badges and controls.
+- Make section canvases white so cards remain visibly distinct.
+- Retain near-black headings and secondary actions.
+- Retain orange primary conversion buttons.
+- Preserve all components, content, spacing and interactions.
+- Keep the change scoped to marketing surfaces.
+- Verify desktop and 375px mobile screenshots and colors.
+- Run the required typecheck, lint and test commands.
+- Commit the finished palette adjustment separately.
+- Delivered white #FFFFFF canvases, light-gray #F2F3F3 cards and #EEF0F0 hero
+  panels. Testimonials, process and pricing section backgrounds are also white.
+- Desktop and 375px mobile previews reviewed; no horizontal overflow. Gallery
+  filters and FAQ interactions pass; both edited TSX files preserve their JSX tags.
+- pnpm typecheck, pnpm lint and pnpm test pass across all 11 packages.

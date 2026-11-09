@@ -149,7 +149,7 @@ export function PricingSection() {
                       <span
                         className={`flex h-5 w-5 shrink-0 items-center justify-center ${
                           plan.popular
-                            ? "bg-primary text-white"
+                            ? "bg-foreground text-white"
                             : "rounded-xl border border-border bg-card text-foreground"
                         }`}
                       >
@@ -165,7 +165,11 @@ export function PricingSection() {
                 <Link
                   href={plan.ctaHref}
                   className={`flex w-full items-center justify-between rounded-xl border border-border px-4 py-3 text-sm font-semibold shadow-sm transition-all   hover:shadow-sm   active:shadow-none ${
-                    plan.name === "Free" ? "bg-card text-foreground" : "bg-primary text-white"
+                    plan.name === "Free"
+                      ? "bg-card text-foreground"
+                      : plan.popular
+                        ? "bg-primary text-white"
+                        : "bg-foreground text-white"
                   }`}
                 >
                   <span>{plan.ctaText}</span>

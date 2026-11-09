@@ -24,7 +24,7 @@ export function CtaBanner() {
             {/* Image with corner accents */}
             <div className="relative hidden shrink-0 sm:block">
               <div className="absolute -left-3 -top-3 h-12 w-12 bg-accent" aria-hidden="true" />
-              <div className="absolute -bottom-3 right-0 h-12 w-12 bg-primary" aria-hidden="true" />
+              <div className="absolute -bottom-3 right-0 h-12 w-12 bg-foreground" aria-hidden="true" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/demo/homeowner-feature.jpg"
@@ -37,7 +37,7 @@ export function CtaBanner() {
               <h2 className="text-3xl font-semibold leading-[1.1] tracking-tight text-foreground sm:text-4xl">
                 Your next room redesign
                 <br />
-                is just a <span className="text-primary">photo away.</span>
+                is just a <span className="text-foreground">photo away.</span>
               </h2>
               <p className="mt-3 text-sm text-muted-foreground">
                 Join 28,500+ users and start visualizing beautiful spaces today.

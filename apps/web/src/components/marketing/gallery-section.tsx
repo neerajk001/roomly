@@ -100,7 +100,7 @@ export function GallerySection() {
                 aria-pressed={isActive}
                 className={`rounded-xl border border-border px-4 py-1.5 text-[11px] font-semibold tracking-normal transition-colors ${
                   isActive
-                    ? "bg-primary text-white"
+                    ? "bg-foreground text-white"
                     : "bg-card text-foreground hover:bg-foreground/5"
                 }`}
               >

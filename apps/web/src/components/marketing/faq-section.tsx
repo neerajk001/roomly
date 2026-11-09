@@ -75,7 +75,7 @@ export function FAQSection() {
           <h2 className="mt-5 text-4xl font-semibold leading-[1.02] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
             Got questions?
             <br />
-            We&apos;ve got <span className="text-primary">answers.</span>
+            We&apos;ve got <span className="text-foreground">answers.</span>
           </h2>
           <svg
             aria-hidden="true"
@@ -104,7 +104,7 @@ export function FAQSection() {
         <div className="space-y-4">
           {FAQS_LEFT.map((faq, i) => {
             const isOpen = Boolean(openIds[faq.id]);
-            const accent = i % 2 === 0 ? "bg-primary" : "bg-accent";
+            const accent = i % 2 === 0 ? "bg-secondary" : "bg-accent";
             return (
               <div key={faq.id} className="overflow-hidden rounded-xl border border-border bg-card">
                 <button
@@ -136,7 +136,7 @@ export function FAQSection() {
         <div className="space-y-4">
           {FAQS_RIGHT.map((faq, i) => {
             const isOpen = Boolean(openIds[faq.id]);
-            const accent = i % 2 === 0 ? "bg-accent" : "bg-primary";
+            const accent = i % 2 === 0 ? "bg-accent" : "bg-secondary";
             return (
               <div key={faq.id} className="overflow-hidden rounded-xl border border-border bg-card">
                 <button

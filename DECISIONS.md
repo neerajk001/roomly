@@ -548,3 +548,22 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
   an unassisted timed designer walkthrough, and CI verification outside this local run.
 - PDF generation remains on-demand in the web app (recorded deviation), with
   immutable stored PDFs and worker-based email delivery/retries.
+
+# 2026-11-09 — Landing color correction
+- Apply the requested gray/black-dominant palette to marketing surfaces.
+- Give the hero and its preview panel explicit gray backgrounds.
+- Replace cream surfaces and peach decoration with neutral grays.
+- Use near-black headings, selected filters, feature icons and proof panels.
+- Keep orange for primary conversion actions; use black for secondary actions.
+- Preserve every existing section, component, control, image and destination.
+- Scope palette variables to the marketing layout.
+- Keep the existing spacing and responsive layout.
+- Verify desktop and 375px screenshots and interactive controls.
+- Run typecheck, lint and tests; commit this visual correction separately.
+- Delivered scoped neutral-gray surfaces and near-black typography; primary CTAs
+  retain orange, with black secondary and non-featured paid-plan actions.
+- Desktop (1440px) and mobile (375px) screenshots reviewed. Hero computed colors
+  are gray #DCE1E1 and near-black #141718; no mobile horizontal overflow.
+- Gallery filters and FAQ interactions verified. All seven edited TSX files retain
+  identical ordered JSX tags; no components or sections were removed or added.
+- pnpm typecheck, pnpm lint and pnpm test pass across all 11 packages.

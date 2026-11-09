@@ -83,6 +83,24 @@
   --sidebar-ring: #c65d0a;
 }
 
+.marketing-theme {
+  --background: #dce1e1;
+  --foreground: #141718;
+  --card: #e8ebeb;
+  --card-foreground: #141718;
+  --popover: #e8ebeb;
+  --popover-foreground: #141718;
+  --secondary: #cdd4d4;
+  --secondary-foreground: #141718;
+  --muted: #d3dada;
+  --muted-foreground: #50595a;
+  --accent: #cdd4d4;
+  --accent-foreground: #141718;
+  --border: #b9c3c3;
+  --input: #a8b4b4;
+  --ring: #141718;
+}
+
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);

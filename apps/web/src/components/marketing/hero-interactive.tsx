@@ -39,7 +39,7 @@ export function HeroInteractive() {
 
   return (
     <div className="min-w-0 w-full">
-      <div className="rounded-xl border border-border bg-card p-2.5">
+      <div className="rounded-xl border border-border bg-muted p-2.5">
         <div className="rounded-xl border border-border">
           <BeforeAfterSlider
             key={activeStyle.id}

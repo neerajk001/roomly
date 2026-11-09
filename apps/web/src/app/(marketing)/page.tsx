@@ -9,7 +9,7 @@ export default function LandingPage() {
   return (
     <div className="bg-background text-foreground overflow-x-hidden">
       {/* 1. HERO SECTION */}
-      <section className="relative mx-auto max-w-6xl px-6 pt-16 pb-20 lg:pt-24 lg:pb-28">
+      <section className="relative mx-auto max-w-6xl bg-background px-6 pt-16 pb-20 lg:pt-24 lg:pb-28">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:items-center lg:gap-12">
           {/* Left Column: Headline & CTA */}
           <div>
@@ -25,7 +25,7 @@ export default function LandingPage() {
 
             <span className="relative mt-4 inline-block">
               <span className="absolute inset-0 bg-transparent" aria-hidden="true" />
-              <span className="relative block text-4xl font-semibold leading-[1.05] tracking-tight text-primary sm:text-5xl lg:text-[52px]">
+              <span className="relative block text-4xl font-semibold leading-[1.05] tracking-tight text-foreground sm:text-5xl lg:text-[52px]">
                 Before you
                 <br />
                 spend a rupee.
@@ -47,7 +47,7 @@ export default function LandingPage() {
               </Link>
               <a
                 href="#how-it-works"
-                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-3 text-xs font-semibold tracking-normal text-foreground transition-colors hover:bg-foreground hover:text-white"
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-foreground px-5 py-3 text-xs font-semibold tracking-normal text-white transition-colors hover:bg-foreground/90"
               >
                 <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24" aria-hidden="true">
                   <polygon points="6 4 20 12 6 20 6 4" />
@@ -250,7 +250,7 @@ export default function LandingPage() {
                   <span className="flex h-7 w-7 items-center justify-center border-l border-border text-foreground">
                     ←
                   </span>
-                  <span className="flex h-7 w-7 items-center justify-center bg-primary text-white">
+                  <span className="flex h-7 w-7 items-center justify-center bg-foreground text-white">
                     →
                   </span>
                 </div>
@@ -303,7 +303,7 @@ export default function LandingPage() {
             </div>
 
             {/* Karan — 92% stat */}
-            <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-primary text-white lg:col-span-3">
+            <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-foreground text-white lg:col-span-3">
               <div className="relative p-4">
                 <span
                   className="absolute right-0 top-0 flex h-8 w-8 items-center justify-center bg-foreground text-white"
@@ -466,7 +466,7 @@ export default function LandingPage() {
               A Simple, Guided Process
             </span>
             <h2 className="mt-5 text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
-              From photo to <span className="text-primary">your dream space.</span>
+              From photo to <span className="text-foreground">your dream space.</span>
             </h2>
             <p className="mx-auto mt-3 max-w-xl font-sans text-lg text-muted-foreground">
               A simple, guided process. No design experience needed.
@@ -503,7 +503,7 @@ export default function LandingPage() {
                     Original Photo
                   </span>
                   <span
-                    className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center bg-primary text-white"
+                    className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center bg-foreground text-white"
                     aria-hidden="true"
                   >
                     <svg
@@ -559,7 +559,7 @@ export default function LandingPage() {
                         key={type}
                         className={`border px-2 py-1 text-[10px] font-semibold ${
                           i === 0
-                            ? "border-primary bg-primary text-white"
+                            ? "border-foreground bg-foreground text-white"
                             : "border-border bg-card text-foreground"
                         }`}
                       >
@@ -814,7 +814,7 @@ export default function LandingPage() {
                     "Get client feedback and approvals",
                   ].map((item) => (
                     <li key={item} className="flex items-center gap-3 text-sm text-foreground">
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center bg-primary text-white">
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center bg-foreground text-white">
                         <svg
                           className="h-3 w-3"
                           viewBox="0 0 20 20"

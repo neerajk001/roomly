@@ -12,6 +12,7 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
     env: {
       ...process.env,
       IMAGE_PROVIDER: "fake",
+      ADVICE_PROVIDER: "fake",
       EMAIL_PROVIDER: "console",
       AUTH_REQUIRE_EMAIL_VERIFICATION: "false",
       // Keep the E2E worker from colliding with a local dev worker's probe.

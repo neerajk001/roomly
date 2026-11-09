@@ -1,4 +1,7 @@
+import type { ConceptAdvice } from "@roomdesigner/shared";
+
 export interface RenderOutputView {
+  advice?: ConceptAdvice;
   directionLabel?: string;
   styleKey?: string | null;
   id: string;
@@ -9,6 +12,7 @@ export interface RenderOutputView {
 }
 
 export interface RenderJobView {
+  sourceOutputId?: string | null;
   similarConcepts?: boolean;
   id: string;
   kind: "RESTYLE" | "EDIT";
@@ -21,6 +25,8 @@ export interface RenderJobView {
 }
 
 export interface RenderJobStatusResponse {
+  sourceOutputId?: string | null;
+  label?: string;
   similarConcepts?: boolean;
   id: string;
   kind: "RESTYLE" | "EDIT";

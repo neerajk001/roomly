@@ -296,7 +296,13 @@ function buildPromptForJob(
   params: RenderParams,
 ): string {
   if (job.kind === "EDIT") {
-    return buildEditPrompt(job.instruction ?? "");
+    const base = buildEditPrompt(job.instruction ?? "", job.room.project);
+    const budget = BUDGET_TIERS.find((tier) => tier.key === params.budgetTier);
+    return [
+      base,
+      ...(params.notes ? [`Original room notes: ${params.notes}`] : []),
+      ...(budget ? [`Budget direction: ${budget.hint}`] : []),
+    ].join("\n");
   }
   const style = job.styleKey !== null ? getStyle(job.styleKey) : undefined;
   const base = buildRestylePrompt({

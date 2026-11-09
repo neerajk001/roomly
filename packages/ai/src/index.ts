@@ -20,6 +20,14 @@ export function getImageProvider(): ImageProvider {
 
 export { createFakeProvider } from "./fake";
 export { buildConceptPrompt, type ConceptDirection } from "./concept-prompts";
+export {
+  getConceptAdviceProvider,
+  createDemoAdviceProvider,
+  createOpenAIAdviceProvider,
+  CONCEPT_ADVICE_INSTRUCTIONS,
+  type ConceptAdviceProvider,
+  type AdviceContext,
+} from "./concept-advice";
 export { classifyProviderError, createOpenAIProvider } from "./openai";
 export {
   PRICING,

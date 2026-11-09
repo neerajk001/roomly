@@ -157,7 +157,8 @@ export function outputConceptLabel(
   styleKey: string | null,
   index: number,
 ): string | undefined {
-  return z.object({ conceptPlanVersion: z.literal(1) }).safeParse(params).success
-    ? conceptDirectionFor(styleKey, index).label
-    : undefined;
+  if (z.object({ conceptPlanVersion: z.literal(1) }).safeParse(params).success)
+    return conceptDirectionFor(styleKey, index).label;
+  const inherited = z.object({ sourceDirectionLabel: z.string() }).safeParse(params);
+  return inherited.success ? inherited.data.sourceDirectionLabel : undefined;
 }

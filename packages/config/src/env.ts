@@ -46,76 +46,90 @@ export function loadRootEnvFile(): void {
  * Server environment variables. Parsed once at import time; the app fails to
  * boot with a readable error if anything is missing or malformed.
  */
-export const serverEnvSchema = z.object({
-  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+export const serverEnvSchema = z
+  .object({
+    NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 
-  // core
-  APP_URL: z.url().default("http://localhost:3000"),
-  DATABASE_URL: z
-    .string()
-    .min(1, "DATABASE_URL is required")
-    .startsWith("postgresql://", "DATABASE_URL must be a postgresql:// URL"),
-  // Optional direct (non-pooled) Postgres URL for pg-boss. Only needed when
-  // DATABASE_URL points at a transaction pooler; otherwise it falls back.
-  QUEUE_DATABASE_URL: optionalUrl,
+    // core
+    APP_URL: z.url().default("http://localhost:3000"),
+    DATABASE_URL: z
+      .string()
+      .min(1, "DATABASE_URL is required")
+      .startsWith("postgresql://", "DATABASE_URL must be a postgresql:// URL"),
+    // Optional direct (non-pooled) Postgres URL for pg-boss. Only needed when
+    // DATABASE_URL points at a transaction pooler; otherwise it falls back.
+    QUEUE_DATABASE_URL: optionalUrl,
 
-  // auth
-  BETTER_AUTH_SECRET: z.string().min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
-  BETTER_AUTH_URL: optionalUrl,
-  GOOGLE_CLIENT_ID: optionalString,
-  GOOGLE_CLIENT_SECRET: optionalString,
-  AUTH_REQUIRE_EMAIL_VERIFICATION: z
-    .enum(["true", "false"])
-    .default("true")
-    .transform((v) => v === "true"),
-  // Dev-only convenience: signs every request in as a local dev user.
-  // Ignored unless NODE_ENV !== "production" (enforced in server code).
-  DEV_AUTH_BYPASS: z
-    .enum(["true", "false"])
-    .default("false")
-    .transform((v) => v === "true"),
+    // auth
+    BETTER_AUTH_SECRET: z.string().min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
+    BETTER_AUTH_URL: optionalUrl,
+    GOOGLE_CLIENT_ID: optionalString,
+    GOOGLE_CLIENT_SECRET: optionalString,
+    AUTH_REQUIRE_EMAIL_VERIFICATION: z
+      .enum(["true", "false"])
+      .default("true")
+      .transform((v) => v === "true"),
+    // Dev-only convenience: signs every request in as a local dev user.
+    // Ignored unless NODE_ENV !== "production" (enforced in server code).
+    DEV_AUTH_BYPASS: z
+      .enum(["true", "false"])
+      .default("false")
+      .transform((v) => v === "true"),
 
-  // storage
-  // `s3` keeps local MinIO/CI working; `cloudinary` is the production provider.
-  STORAGE_PROVIDER: z.enum(["s3", "cloudinary"]).default("s3"),
-  S3_ENDPOINT: z.url().default("http://localhost:9000"),
-  S3_REGION: z.string().default("auto"),
-  S3_BUCKET: z.string().default("roomdesigner"),
-  S3_ACCESS_KEY_ID: z.string().default(""),
-  S3_SECRET_ACCESS_KEY: z.string().default(""),
-  S3_PUBLIC_BASE_URL: optionalUrl,
+    // storage
+    // `s3` keeps local MinIO/CI working; `cloudinary` is the production provider.
+    STORAGE_PROVIDER: z.enum(["s3", "cloudinary"]).default("s3"),
+    S3_ENDPOINT: z.url().default("http://localhost:9000"),
+    S3_REGION: z.string().default("auto"),
+    S3_BUCKET: z.string().default("roomdesigner"),
+    S3_ACCESS_KEY_ID: z.string().default(""),
+    S3_SECRET_ACCESS_KEY: z.string().default(""),
+    S3_PUBLIC_BASE_URL: optionalUrl,
 
-  // Cloudinary (STORAGE_PROVIDER=cloudinary). Keep these server-side only.
-  CLOUDINARY_CLOUD_NAME: optionalString,
-  CLOUDINARY_API_KEY: optionalString,
-  CLOUDINARY_API_SECRET: optionalString,
+    // Cloudinary (STORAGE_PROVIDER=cloudinary). Keep these server-side only.
+    CLOUDINARY_CLOUD_NAME: optionalString,
+    CLOUDINARY_API_KEY: optionalString,
+    CLOUDINARY_API_SECRET: optionalString,
 
-  // rendered image previews (lower in dev to save bandwidth/time)
-  WEB_RENDER_MAX_PX: z.coerce.number().int().positive().max(4096).default(2048),
+    // rendered image previews (lower in dev to save bandwidth/time)
+    WEB_RENDER_MAX_PX: z.coerce.number().int().positive().max(4096).default(2048),
 
-  // ai
-  IMAGE_PROVIDER: z.enum(["fake", "openai"]).default("fake"),
-  OPENAI_API_KEY: optionalString,
-  OPENAI_IMAGE_MODEL: optionalString,
-  MAX_DAILY_SPEND_USD: z.coerce.number().positive().default(5),
-  SIGNUP_FREE_CREDITS: z.coerce.number().int().positive().default(3),
+    // ai
+    IMAGE_PROVIDER: z.enum(["fake", "openai"]).default("fake"),
+    OPENAI_API_KEY: optionalString,
+    OPENAI_IMAGE_MODEL: optionalString,
+    ADVICE_PROVIDER: z.enum(["fake", "openai"]).default("fake"),
+    OPENAI_ADVICE_MODEL: optionalString,
+    // Conservative per-request accounting allowance, not a provider-enforced billing cap.
+    ADVICE_CALL_BUDGET_MICROS: z.coerce.number().int().positive().max(10_000_000).default(250_000),
+    MAX_DAILY_SPEND_USD: z.coerce.number().positive().default(5),
+    SIGNUP_FREE_CREDITS: z.coerce.number().int().positive().default(3),
 
-  // email
-  EMAIL_PROVIDER: z.enum(["console", "resend"]).default("console"),
-  RESEND_API_KEY: optionalString,
-  EMAIL_FROM: optionalString,
+    // email
+    EMAIL_PROVIDER: z.enum(["console", "resend"]).default("console"),
+    RESEND_API_KEY: optionalString,
+    EMAIL_FROM: optionalString,
 
-  // billing (V5)
-  BILLING_PROVIDER: optionalString,
-  BILLING_API_KEY: optionalString,
-  BILLING_WEBHOOK_SECRET: optionalString,
+    // billing (V5)
+    BILLING_PROVIDER: optionalString,
+    BILLING_API_KEY: optionalString,
+    BILLING_WEBHOOK_SECRET: optionalString,
 
-  // worker health probe (0 disables the listener)
-  WORKER_HEALTH_PORT: z.coerce.number().int().min(0).max(65535).default(3002),
+    // worker health probe (0 disables the listener)
+    WORKER_HEALTH_PORT: z.coerce.number().int().min(0).max(65535).default(3002),
 
-  // observability (V6)
-  SENTRY_DSN: optionalString,
-});
+    // observability (V6)
+    SENTRY_DSN: optionalString,
+  })
+  .superRefine((env, ctx) => {
+    if (env.ADVICE_PROVIDER === "openai" && (!env.OPENAI_API_KEY || !env.OPENAI_ADVICE_MODEL))
+      ctx.addIssue({
+        code: "custom",
+        path: ["OPENAI_ADVICE_MODEL"],
+        message:
+          "OpenAI advice requires OPENAI_API_KEY and an explicitly chosen OPENAI_ADVICE_MODEL.",
+      });
+  });
 
 /**
  * Client environment variables (NEXT_PUBLIC_*). Everything the browser needs

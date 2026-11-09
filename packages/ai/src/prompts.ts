@@ -57,13 +57,22 @@ export function buildRestylePrompt(input: RestylePromptInput): string {
 }
 
 /** EDIT prompt, exactly as specified in 04-ai-pipeline.md. */
-export function buildEditPrompt(instruction: string): string {
+export function buildEditPrompt(
+  instruction: string,
+  constraints?: { keepList: string[]; renterMode: boolean },
+): string {
   return [
     `Apply only this change: ${sanitizeInstruction(instruction)}.`,
     "Keep everything else in the image identical, including the room structure, camera angle and all other objects.",
     "Never move, add, remove or resize windows, doors, walls, the floor or built-in features.",
     "The requested change must be clearly visible in the result.",
     "Photorealistic result with consistent lighting and materials.",
+    ...(constraints
+      ? [
+          `Keep these items unchanged: ${constraints.keepList.join(", ") || "none"}.`,
+          ...(constraints.renterMode ? [RENTER_CLAUSE] : []),
+        ]
+      : []),
   ].join("\n");
 }
 

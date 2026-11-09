@@ -1,4 +1,10 @@
-import { outputConceptLabel, readDiversityReport, outputStyleKey } from "@roomdesigner/shared";
+import {
+  outputConceptLabel,
+  readDiversityReport,
+  outputStyleKey,
+  savedConceptAdvice,
+  renderSourceOutputId,
+} from "@roomdesigner/shared";
 import { EstimateSection } from "@/components/estimates/estimate-section";
 import { RoomPhotos } from "@/components/projects/room-photos";
 import { HomeRoomResults } from "@/components/rooms/home-room-results";
@@ -60,6 +66,9 @@ export async function RoomDetailView({
     detail.room.id,
   );
 
+  const outputByAsset = new Map(
+    jobsRaw.flatMap((job) => job.outputs.map((output) => [output.assetId, output.id] as const)),
+  );
   const jobViews: RenderJobView[] = await Promise.all(
     jobsRaw.map(async (job) => ({
       id: job.id,
@@ -70,10 +79,14 @@ export async function RoomDetailView({
       label: job.kind === "EDIT" ? (job.instruction ?? "Edit") : "Base concept",
       styleKey: job.styleKey,
       similarConcepts: readDiversityReport(job.params)?.similarConcepts ?? false,
+      sourceOutputId:
+        renderSourceOutputId(job.params) ??
+        (job.kind === "EDIT" ? (outputByAsset.get(job.sourceAssetId) ?? null) : null),
       outputs: await Promise.all(
         job.outputs.map(async (output) => ({
           id: output.id,
           index: output.index,
+          advice: savedConceptAdvice(job.params, output.id),
           styleKey: outputStyleKey(job.params, job.styleKey, output.index),
           directionLabel: outputConceptLabel(
             job.params,

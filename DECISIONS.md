@@ -675,3 +675,23 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
 - Consult installed Next.js docs, Prisma ORM v7 JSON/update docs and current Sharp resize/raw-output docs; retain the installed Prisma v7 API rather than the newer unversioned documentation examples.
 - Validation: typecheck, lint and tests pass in all 11 packages. All six Playwright journeys pass with fake generation, including Home chat and Pro approval. Synthetic image tests cover re-encoded duplicates, changed furnishings, bounded retries, failed replacements and cost accounting; database tests cover competing retry claims, tenant scoping and spend denial.
 - Reviewed the mobile results with all three images loaded, mood labels and similarity feedback. The focused wizard rerun passes; dedicated test data is cleaned up. No preview assets changed; batch 3 remains unstarted.
+
+## 2026-11-09 — Guided design batch 3 plan
+
+- Implement only the approved selection, image-aware suggestions and refinement batch within the current phase.
+- Remember each room/job's selected output locally; validate restored preferences and always reauthorize mutations server-side.
+- Use the chosen image consistently for comparison, saving, recommendations and edit actions in Home and Pro.
+- Retain per-image edit drafts and clear error/loading states when switching concepts.
+- Persist the exact sourceOutputId and inherited style/budget/notes on each new edit job.
+- Show change history for the selected concept family, with links to its original and edited versions.
+- Add on-demand recommendations from the selected output's image bytes, never from a client-supplied URL.
+- Validate provider and cached recommendation data with zod; cap suggestions at three and prefill edits only after a click.
+- Cache immutable-image advice by output ID in existing job JSON; preserve existing params under row locks.
+- Use a clearly labelled deterministic demo provider in dev/tests; do not pretend demo suggestions analyze pixels.
+- Add an opt-in OpenAI vision/text adapter using the existing SDK, with an explicitly configured model, no default model choice.
+- Document new provider/model/accounting env vars and require valid config when enabling the real adapter.
+- Reserve conservative advice cost under the existing daily guard, cap retries and avoid automatic repeated calls or new user credit charges.
+- Keep estimates separate from image suggestions; never infer exact measurements, product availability or prices from an image.
+- Verify isolation, source-image targeting, cache/race handling, history and mobile flows with fake generation, then commit and stop for review.
+- Validation complete: typecheck, lint and tests pass in all 11 packages (64 web tests). The six browser journeys pass across the suite and focused rerun; the final 375px refinement rerun also passes with editor focus, per-image drafts, remembered selection, exact edit-source ID and concept-specific history. Mobile screenshots reviewed and test accounts cleaned up.
+- Suggestions remain an explicitly labelled demo by default. The real adapter requires an approved configured model; no paid calls, new images, dependencies or migrations were used. Batch 4 and the existing G2 fidelity review remain pending.

@@ -73,6 +73,14 @@ describe("buildRestylePrompt", () => {
 });
 
 describe("buildEditPrompt", () => {
+  it("preserves explicit keep-items and renter restrictions during an edit", () => {
+    const prompt = buildEditPrompt("add a portable lamp", {
+      keepList: ["Bed", "Curtains"],
+      renterMode: true,
+    });
+    expect(prompt).toContain("Keep these items unchanged: Bed, Curtains.");
+    expect(prompt).toContain("Do not change flooring, windows, doors, built-in cabinets");
+  });
   it("wraps the sanitized instruction and re-states the structure lock", () => {
     expect(buildEditPrompt("  replace   the sofa  ")).toBe(
       [

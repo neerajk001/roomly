@@ -4,6 +4,8 @@ import { designPreferencesSchema, diversityReportSchema } from "@roomdesigner/sh
 export const renderParamsSchema = z
   .object({
     ...designPreferencesSchema.shape,
+    sourceOutputId: z.string().optional(),
+    sourceDirectionLabel: z.string().optional(),
     conceptPlanVersion: z.literal(1).optional(),
     diversityRetryUsed: z.boolean().optional(),
     diversityReport: diversityReportSchema.optional(),

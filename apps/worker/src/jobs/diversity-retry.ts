@@ -1,6 +1,6 @@
 import { CONSERVATIVE_IMAGE_COST_MICROS } from "@roomdesigner/ai";
 import { renderParamsSchema, type RenderParams } from "./render-params";
-import type { Prisma } from "@roomdesigner/db";
+import { dailyAiSpendMicros, type Prisma } from "@roomdesigner/db";
 
 /** The false→true JSON update makes the single allowance survive queue retries. */
 export async function claimDiversityRetry(
@@ -14,17 +14,9 @@ export async function claimDiversityRetry(
   },
 ): Promise<boolean> {
   return db.$transaction(async (tx) => {
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
     // Global administrative spend guard, matching createRender; never returned to a tenant.
-    const spent = await tx.renderJob.aggregate({
-      where: { createdAt: { gte: today } },
-      _sum: { costMicros: true },
-    });
-    if (
-      (spent._sum.costMicros ?? 0) + input.initialCostMicros + CONSERVATIVE_IMAGE_COST_MICROS >=
-      input.limitMicros
-    )
+    const spent = await dailyAiSpendMicros(tx);
+    if (spent + input.initialCostMicros + CONSERVATIVE_IMAGE_COST_MICROS >= input.limitMicros)
       return false;
     // Preserve the existing JSON fields without accepting an unchecked queue payload.
     const params = renderParamsSchema.parse(input.params);

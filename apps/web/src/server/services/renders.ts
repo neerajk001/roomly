@@ -5,9 +5,16 @@ import {
   InsufficientCreditsError,
   type Prisma,
   type RenderJob,
+  dailyAiSpendMicros,
 } from "@roomdesigner/db";
 import { CONSERVATIVE_IMAGE_COST_MICROS, sanitizeInstruction } from "@roomdesigner/ai";
-import { designPreferencesSchema, getStyle, totalCreditCost } from "@roomdesigner/shared";
+import {
+  designPreferencesSchema,
+  getStyle,
+  outputStyleKey,
+  outputConceptLabel,
+  totalCreditCost,
+} from "@roomdesigner/shared";
 import { z } from "zod";
 import { AppError } from "../app-error";
 import { enqueueRender } from "../queue";
@@ -47,6 +54,12 @@ export const createRenderSchema = z
     sourceOutputId: z.string().min(1).optional(),
   })
   .superRefine((input, ctx) => {
+    if (input.kind === "EDIT" && input.variations !== 1)
+      ctx.addIssue({
+        code: "custom",
+        path: ["variations"],
+        message: "A chat edit refines one selected concept at a time.",
+      });
     const preferences = designPreferencesSchema.safeParse(input);
     if (!preferences.success) {
       for (const issue of preferences.error.issues)
@@ -91,14 +104,7 @@ function pickRenderParams(
 async function assertDailySpendOk(db: Prisma, costMicrosToAdd: number): Promise<void> {
   const env = getServerEnv();
   const limitMicros = Math.round(env.MAX_DAILY_SPEND_USD * 1_000_000);
-  const startOfDayUtc = new Date();
-  startOfDayUtc.setUTCHours(0, 0, 0, 0);
-
-  const aggregate = await db.renderJob.aggregate({
-    where: { createdAt: { gte: startOfDayUtc } },
-    _sum: { costMicros: true },
-  });
-  const spent = aggregate._sum.costMicros ?? 0;
+  const spent = await dailyAiSpendMicros(db);
   // The provider's real cost is unknown before the call; use the conservative
   // per-image fallback so the guard fails safe.
   if (spent + costMicrosToAdd >= limitMicros) {
@@ -151,6 +157,12 @@ export async function createRender(
   let instruction: string | null = null;
   let notes: string | null = null;
   let parentJobId: string | null = null;
+  let editContext: {
+    sourceOutputId?: string;
+    sourceDirectionLabel?: string;
+    budgetTier?: "budget" | "mid" | "premium";
+    traditionKey?: string;
+  } = {};
 
   if (input.kind === "RESTYLE") {
     if (input.styleKey === undefined || getStyle(input.styleKey) === undefined) {
@@ -188,7 +200,14 @@ export async function createRender(
         id: input.sourceOutputId,
         job: { workspaceId: ctx.workspaceId, roomId: room.id, status: "SUCCEEDED" },
       },
-      select: { assetId: true, jobId: true, asset: { select: { width: true, height: true } } },
+      select: {
+        id: true,
+        index: true,
+        assetId: true,
+        jobId: true,
+        job: { select: { params: true, styleKey: true } },
+        asset: { select: { width: true, height: true } },
+      },
     });
     if (output === null) {
       throw new AppError("NOT_FOUND", "Image not found.", 404);
@@ -198,6 +217,24 @@ export async function createRender(
     sourceWidth = output.asset.width;
     sourceHeight = output.asset.height;
     instruction = cleaned;
+    const inherited = z
+      .object({
+        notes: z.string().max(300).optional(),
+        budgetTier: z.enum(["budget", "mid", "premium"]).optional(),
+        traditionKey: z.string().optional(),
+        sourceDirectionLabel: z.string().optional(),
+      })
+      .parse(output.job.params);
+    styleKey = outputStyleKey(output.job.params, output.job.styleKey, output.index);
+    notes = inherited.notes ?? null;
+    editContext = {
+      sourceOutputId: output.id,
+      budgetTier: inherited.budgetTier,
+      traditionKey: inherited.traditionKey,
+      sourceDirectionLabel:
+        outputConceptLabel(output.job.params, styleKey, output.index) ??
+        inherited.sourceDirectionLabel,
+    };
   }
 
   const cost = totalCreditCost(input.quality, input.variations);
@@ -222,6 +259,7 @@ export async function createRender(
           instruction,
           params: {
             ...pickRenderParams(input.quality, sourceWidth, sourceHeight),
+            ...editContext,
             ...(input.kind === "RESTYLE"
               ? { conceptPlanVersion: 1, diversityRetryUsed: false }
               : {}),

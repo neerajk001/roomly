@@ -1,5 +1,7 @@
 export * from "./design-directions";
 export * from "./concept-directions";
+export * from "./concept-advice";
+export * from "./render-status";
 
 // Shared zod schemas, constants (styles, plans, credits), types.
 // This barrel must stay free of side effects and Node-only IO: it is imported

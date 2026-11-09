@@ -1,5 +1,9 @@
 "use client";
 
+import { useConceptSelection } from "@/components/renders/use-concept-selection";
+import { ConceptAdvicePanel } from "@/components/renders/ConceptAdvicePanel";
+import { ConceptEditHistory } from "@/components/renders/ConceptEditHistory";
+import type { ConceptAdvice } from "@roomdesigner/shared";
 import { createRenderAction } from "@/server/actions/renders";
 import { saveFavorite } from "@/lib/save-favorite";
 import { track } from "@/lib/analytics";
@@ -12,7 +16,7 @@ import type {
   RenderOutputView,
 } from "@/components/renders/types";
 import { isTerminal } from "@/components/renders/types";
-import { STYLES } from "@roomdesigner/shared";
+import { STYLES, renderJobStatusSchema } from "@roomdesigner/shared";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
@@ -37,7 +41,12 @@ export function RenderView({
   const [currentId, setCurrentId] = useState<string | null>(initialJob?.id ?? null);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [editingOutputId, setEditingOutputId] = useState<string | null>(null);
-  const [instruction, setInstruction] = useState("");
+  const editorRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (!editingOutputId) return;
+    editorRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    editorRef.current?.focus({ preventScroll: true });
+  }, [editingOutputId]);
   const [editError, setEditError] = useState<string | null>(null);
   const [panelError, setPanelError] = useState<string | null>(null);
   const [lastRestyle, setLastRestyle] = useState<RestyleRequest | null>(null);
@@ -53,6 +62,45 @@ export function RenderView({
   const current = jobs.find((job) => job.id === currentId) ?? null;
   const favorites = (current?.outputs ?? []).filter((output) => output.isFavorite);
   const status = current?.status ?? null;
+  const { selected, choose, drafts, setDraft } = useConceptSelection(
+    roomId,
+    jobs,
+    currentId,
+    setCurrentId,
+  );
+  const instruction = editingOutputId ? (drafts[editingOutputId] ?? "") : "";
+  const setInstruction = (text: string) => {
+    if (editingOutputId) setDraft(editingOutputId, text);
+  };
+  const editingTarget = jobs
+    .flatMap((job) => job.outputs)
+    .find((output) => output.id === editingOutputId);
+  const selectOutput = (outputId: string, jobId = currentId) => {
+    if (editPending) return;
+    choose(outputId, jobId);
+    setEditingOutputId(null);
+    setEditError(null);
+  };
+  const openEditor = (outputId: string, text?: string) => {
+    if (editPending) return;
+    choose(outputId);
+    setEditingOutputId(outputId);
+    setEditError(null);
+    if (text !== undefined) setDraft(outputId, text);
+    if (editingOutputId === outputId) {
+      editorRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+      editorRef.current?.focus({ preventScroll: true });
+    }
+  };
+  const rememberAdvice = (outputId: string, advice: ConceptAdvice) =>
+    setJobs((previous) =>
+      previous.map((job) => ({
+        ...job,
+        outputs: job.outputs.map((output) =>
+          output.id === outputId ? { ...output, advice } : output,
+        ),
+      })),
+    );
 
   const upsertJob = useCallback((incoming: RenderJobStatusResponse, label: string) => {
     setJobs((previous) => {
@@ -63,7 +111,8 @@ export function RenderView({
         errorMessage: incoming.errorMessage,
         creditsCharged: incoming.creditsCharged,
         outputs: incoming.outputs,
-        label,
+        label: incoming.label ?? label,
+        sourceOutputId: incoming.sourceOutputId ?? null,
         styleKey: incoming.styleKey,
         similarConcepts: incoming.similarConcepts ?? false,
       };
@@ -139,7 +188,7 @@ export function RenderView({
         try {
           const response = await fetch(`/api/renders/${currentId}`, { cache: "no-store" });
           if (response.ok) {
-            const data = (await response.json()) as RenderJobStatusResponse;
+            const data = renderJobStatusSchema.parse(await response.json());
             const label =
               data.kind === "EDIT"
                 ? "Edit"
@@ -401,6 +450,7 @@ export function RenderView({
                   type="button"
                   className="block w-full"
                   onClick={() => {
+                    selectOutput(output.id);
                     setLightbox(`/api/render-outputs/${output.id}/file`);
                   }}
                   aria-label={`Enlarge concept ${String(output.index + 1)}`}
@@ -412,6 +462,15 @@ export function RenderView({
                     loading="lazy"
                     className="aspect-[4/3] w-full object-cover transition-transform group-hover:scale-[1.02]"
                   />
+                </button>
+                <button
+                  type="button"
+                  disabled={editPending}
+                  aria-pressed={selected?.id === output.id}
+                  onClick={() => selectOutput(output.id)}
+                  className="w-full border-t border-border px-2 py-2 text-xs font-medium"
+                >
+                  Select concept {output.index + 1}
                 </button>
                 {output.directionLabel && (
                   <p className="border-t border-border px-2 py-1.5 text-xs font-medium">
@@ -442,8 +501,7 @@ export function RenderView({
                       type="button"
                       className="rounded px-1.5 py-0.5 text-xs text-muted-foreground hover:text-foreground"
                       onClick={() => {
-                        setEditingOutputId(output.id);
-                        setInstruction("");
+                        openEditor(output.id);
                         setEditError(null);
                       }}
                     >
@@ -464,7 +522,29 @@ export function RenderView({
             AI-generated concept visual. Not to scale.
           </p>
 
-          {sourceUrl !== undefined && sourceUrl !== null && current.outputs[0] !== undefined && (
+          {current?.status === "SUCCEEDED" && selected && (
+            <div className="space-y-3">
+              <p className="text-sm font-medium" role="status">
+                Selected concept {selected.index + 1}
+                {selected.directionLabel ? ` · ${selected.directionLabel}` : ""}
+              </p>
+              <ConceptAdvicePanel
+                key={selected.id}
+                roomId={roomId}
+                outputId={selected.id}
+                advice={selected.advice}
+                onAdvice={(advice) => rememberAdvice(selected.id, advice)}
+                onUse={(text) => openEditor(selected.id, text)}
+              />
+              <ConceptEditHistory
+                jobs={jobs}
+                outputId={selected.id}
+                onSelect={(jobId, outputId) => selectOutput(outputId, jobId)}
+              />
+            </div>
+          )}
+
+          {sourceUrl !== undefined && sourceUrl !== null && selected !== null && (
             <div className="space-y-2">
               <p className="text-sm font-medium">Before / after</p>
               <div className="relative overflow-hidden rounded-lg border border-border">
@@ -476,7 +556,7 @@ export function RenderView({
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
                   <img
-                    src={current.outputs[0].url}
+                    src={selected.url}
                     alt="After"
                     className="block h-full w-full object-cover"
                     style={{ width: `${String(10000 / Math.max(clip, 1))}%`, maxWidth: "none" }}
@@ -539,7 +619,23 @@ export function RenderView({
                 {editError}
               </p>
             )}
+            {editingTarget && (
+              <div className="my-3 flex items-center gap-3 rounded-lg border border-border bg-muted p-2">
+                {/* eslint-disable-next-line @next/next/no-img-element -- signed concept thumbnail */}
+                <img
+                  src={editingTarget.thumbUrl}
+                  alt="Concept being edited"
+                  className="h-16 w-20 rounded object-cover"
+                />
+                <p className="text-sm font-medium">
+                  Editing concept {editingTarget.index + 1}
+                  {editingTarget.directionLabel ? ` · ${editingTarget.directionLabel}` : ""}
+                </p>
+              </div>
+            )}
             <textarea
+              ref={editorRef}
+              aria-label="Describe a change to this concept"
               value={instruction}
               maxLength={300}
               rows={3}

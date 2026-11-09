@@ -10,6 +10,23 @@ const validEnv = {
 };
 
 describe("serverEnvSchema", () => {
+  it("requires explicit advice model configuration only when enabling the real provider", () => {
+    expect(serverEnvSchema.parse(validEnv).ADVICE_PROVIDER).toBe("fake");
+    expect(serverEnvSchema.safeParse({ ...validEnv, ADVICE_PROVIDER: "openai" }).success).toBe(
+      false,
+    );
+    expect(
+      serverEnvSchema.safeParse({
+        ...validEnv,
+        ADVICE_PROVIDER: "openai",
+        OPENAI_API_KEY: "test-key",
+        OPENAI_ADVICE_MODEL: "chosen-model",
+      }).success,
+    ).toBe(true);
+    expect(serverEnvSchema.safeParse({ ...validEnv, ADVICE_CALL_BUDGET_MICROS: "0" }).success).toBe(
+      false,
+    );
+  });
   it("accepts a valid environment and applies defaults", () => {
     const parsed = serverEnvSchema.parse(validEnv);
 

@@ -1,5 +1,9 @@
 "use client";
 
+import { useConceptSelection } from "@/components/renders/use-concept-selection";
+import { ConceptAdvicePanel } from "@/components/renders/ConceptAdvicePanel";
+import { ConceptEditHistory } from "@/components/renders/ConceptEditHistory";
+import type { ConceptAdvice } from "@roomdesigner/shared";
 import { createRenderAction } from "@/server/actions/renders";
 import { saveFavorite } from "@/lib/save-favorite";
 import type {
@@ -8,7 +12,7 @@ import type {
   RenderOutputView,
 } from "@/components/renders/types";
 import { isTerminal } from "@/components/renders/types";
-import { formatMoney, getStyle } from "@roomdesigner/shared";
+import { formatMoney, getStyle, renderJobStatusSchema } from "@roomdesigner/shared";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
@@ -61,7 +65,12 @@ export function HomeRoomResults({
   const [currentId, setCurrentId] = useState<string | null>(initialJob?.id ?? null);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [editingOutputId, setEditingOutputId] = useState<string | null>(null);
-  const [instruction, setInstruction] = useState("");
+  const editorRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (!editingOutputId) return;
+    editorRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    editorRef.current?.focus({ preventScroll: true });
+  }, [editingOutputId]);
   const [editError, setEditError] = useState<string | null>(null);
   const [panelError, setPanelError] = useState<string | null>(null);
   const [mode, setMode] = useState<"side" | "slider">("side");
@@ -74,7 +83,45 @@ export function HomeRoomResults({
   const current = jobs.find((job) => job.id === currentId) ?? null;
   const status = current?.status ?? null;
   const outputs = current?.outputs ?? [];
-  const selected = outputs[0] ?? null;
+  const { selected, choose, drafts, setDraft } = useConceptSelection(
+    roomId,
+    jobs,
+    currentId,
+    setCurrentId,
+  );
+  const instruction = editingOutputId ? (drafts[editingOutputId] ?? "") : "";
+  const setInstruction = (text: string) => {
+    if (editingOutputId) setDraft(editingOutputId, text);
+  };
+  const editingTarget = jobs
+    .flatMap((job) => job.outputs)
+    .find((output) => output.id === editingOutputId);
+  const selectOutput = (outputId: string, jobId = currentId) => {
+    if (editPending) return;
+    choose(outputId, jobId);
+    setEditingOutputId(null);
+    setEditError(null);
+  };
+  const openEditor = (outputId: string, text?: string) => {
+    if (editPending) return;
+    choose(outputId);
+    setEditingOutputId(outputId);
+    setEditError(null);
+    if (text !== undefined) setDraft(outputId, text);
+    if (editingOutputId === outputId) {
+      editorRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+      editorRef.current?.focus({ preventScroll: true });
+    }
+  };
+  const rememberAdvice = (outputId: string, advice: ConceptAdvice) =>
+    setJobs((previous) =>
+      previous.map((job) => ({
+        ...job,
+        outputs: job.outputs.map((output) =>
+          output.id === outputId ? { ...output, advice } : output,
+        ),
+      })),
+    );
 
   const upsertJob = useCallback((incoming: RenderJobStatusResponse, label: string) => {
     setJobs((previous) => {
@@ -85,7 +132,8 @@ export function HomeRoomResults({
         errorMessage: incoming.errorMessage,
         creditsCharged: incoming.creditsCharged,
         outputs: incoming.outputs,
-        label,
+        label: incoming.label ?? label,
+        sourceOutputId: incoming.sourceOutputId ?? null,
         styleKey: incoming.styleKey,
         similarConcepts: incoming.similarConcepts ?? false,
       };
@@ -130,7 +178,7 @@ export function HomeRoomResults({
         try {
           const response = await fetch(`/api/renders/${currentId}`, { cache: "no-store" });
           if (response.ok) {
-            const data = (await response.json()) as RenderJobStatusResponse;
+            const data = renderJobStatusSchema.parse(await response.json());
             upsertJob(data, data.kind === "EDIT" ? "Edit" : "Base concept");
             if (isTerminal(data.status)) {
               router.refresh();
@@ -242,7 +290,7 @@ export function HomeRoomResults({
     });
   };
 
-  const styleKey = current?.styleKey ?? null;
+  const styleKey = selected?.styleKey ?? current?.styleKey ?? null;
 
   return (
     <div className="space-y-5">
@@ -461,13 +509,16 @@ export function HomeRoomResults({
                   <li key={output.id}>
                     <article
                       className={`relative flex h-full flex-col overflow-hidden border bg-card ${
-                        index === 0 ? "border-primary ring-1 ring-primary" : "border-border"
+                        selected?.id === output.id
+                          ? "border-foreground ring-2 ring-foreground"
+                          : "border-border"
                       }`}
                     >
                       <div className="relative">
                         <button
                           type="button"
                           onClick={() => {
+                            selectOutput(output.id);
                             setLightbox(`/api/render-outputs/${output.id}/file`);
                           }}
                           className="block w-full"
@@ -481,9 +532,9 @@ export function HomeRoomResults({
                             loading={index === 0 ? "eager" : "lazy"}
                           />
                         </button>
-                        {index === 0 && (
+                        {selected?.id === output.id && (
                           <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-xl border border-border bg-accent px-2 py-1 text-[10px] font-semibold tracking-normal text-foreground">
-                            <span aria-hidden="true">✦</span> Best match
+                            <span aria-hidden="true">✦</span> Selected
                           </span>
                         )}
                         <button
@@ -521,10 +572,20 @@ export function HomeRoomResults({
                         <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
                           {styleDescription(output.styleKey ?? styleKey)}
                         </p>
+                        <button
+                          type="button"
+                          disabled={editPending}
+                          aria-pressed={selected?.id === output.id}
+                          onClick={() => selectOutput(output.id)}
+                          className="mt-3 rounded-lg border border-border bg-muted px-3 py-2 text-sm font-medium"
+                        >
+                          Select concept {index + 1}
+                        </button>
                         <div className="mt-auto flex gap-2 pt-3">
                           <button
                             type="button"
                             onClick={() => {
+                              selectOutput(output.id);
                               setLightbox(`/api/render-outputs/${output.id}/file`);
                             }}
                             className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-primary px-3 py-2 text-[11px] font-semibold text-white"
@@ -534,8 +595,7 @@ export function HomeRoomResults({
                           <button
                             type="button"
                             onClick={() => {
-                              setEditingOutputId(output.id);
-                              setInstruction("");
+                              openEditor(output.id);
                               setEditError(null);
                             }}
                             className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-[11px] font-semibold text-foreground hover:bg-foreground/5"
@@ -566,6 +626,28 @@ export function HomeRoomResults({
               AI-generated concept visual. Not to scale.
             </p>
           </section>
+
+          {current?.status === "SUCCEEDED" && selected && (
+            <div className="space-y-3">
+              <p className="text-sm font-medium" role="status">
+                Selected concept {selected.index + 1}
+                {selected.directionLabel ? ` · ${selected.directionLabel}` : ""}
+              </p>
+              <ConceptAdvicePanel
+                key={selected.id}
+                roomId={roomId}
+                outputId={selected.id}
+                advice={selected.advice}
+                onAdvice={(advice) => rememberAdvice(selected.id, advice)}
+                onUse={(text) => openEditor(selected.id, text)}
+              />
+              <ConceptEditHistory
+                jobs={jobs}
+                outputId={selected.id}
+                onSelect={(jobId, outputId) => selectOutput(outputId, jobId)}
+              />
+            </div>
+          )}
 
           <div className="grid gap-4 lg:grid-cols-[1.35fr_1fr]">
             <section className="rounded-xl border border-border bg-card">
@@ -688,8 +770,8 @@ export function HomeRoomResults({
                 <div>
                   <h2 className="text-base font-semibold text-foreground">Estimated cost range</h2>
                   <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
-                    Based on selected items in this concept. Prices may vary by location and
-                    provider.
+                    Based on your room measurements and selected scope. This range is shared across
+                    concepts; prices may vary by location and provider.
                   </p>
                 </div>
                 <span className="shrink-0 rounded-xl border border-border bg-card px-2 py-1 text-[11px] font-semibold">
@@ -700,7 +782,9 @@ export function HomeRoomResults({
                 {formatMoney(estimate.lowMinor, estimate.currency)} –{" "}
                 {formatMoney(estimate.highMinor, estimate.currency)}
               </p>
-              <p className="mt-4 text-xs font-semibold text-foreground">Top recommendations</p>
+              <p className="mt-4 text-xs font-semibold text-foreground">
+                Suggested estimate priorities
+              </p>
               <ul className="mt-2 divide-y divide-border">
                 {estimate.top.map((item) => (
                   <li
@@ -803,8 +887,7 @@ export function HomeRoomResults({
                 type="button"
                 onClick={() => {
                   if (selected !== null) {
-                    setEditingOutputId(selected.id);
-                    setInstruction("");
+                    openEditor(selected.id);
                     setEditError(null);
                   }
                 }}
@@ -845,7 +928,23 @@ export function HomeRoomResults({
               {editError}
             </p>
           )}
+          {editingTarget && (
+            <div className="my-3 flex items-center gap-3 rounded-lg border border-border bg-muted p-2">
+              {/* eslint-disable-next-line @next/next/no-img-element -- signed concept thumbnail */}
+              <img
+                src={editingTarget.thumbUrl}
+                alt="Concept being edited"
+                className="h-16 w-20 rounded object-cover"
+              />
+              <p className="text-sm font-medium">
+                Editing concept {editingTarget.index + 1}
+                {editingTarget.directionLabel ? ` · ${editingTarget.directionLabel}` : ""}
+              </p>
+            </div>
+          )}
           <textarea
+            ref={editorRef}
+            aria-label="Describe a change to this concept"
             value={instruction}
             maxLength={300}
             rows={3}

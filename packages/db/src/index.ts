@@ -33,3 +33,4 @@ export type TransactionClient = Omit<
 >;
 
 export { InsufficientCreditsError, getBalance, refundCredits, reserveCredits } from "./credits";
+export { dailyAiSpendMicros } from "./ai-spend";

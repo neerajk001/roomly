@@ -1,4 +1,10 @@
-import { outputConceptLabel, readDiversityReport, outputStyleKey } from "@roomdesigner/shared";
+import {
+  outputConceptLabel,
+  readDiversityReport,
+  outputStyleKey,
+  savedConceptAdvice,
+  renderSourceOutputId,
+} from "@roomdesigner/shared";
 import { prisma } from "@roomdesigner/db";
 import { presignGet } from "@roomdesigner/storage";
 import { requireApiWorkspace } from "@/server/auth/session";
@@ -34,6 +40,7 @@ export async function GET(
       job.outputs.map(async (output) => ({
         id: output.id,
         index: output.index,
+        advice: savedConceptAdvice(job.params, output.id),
         styleKey: outputStyleKey(job.params, job.styleKey, output.index),
         directionLabel: outputConceptLabel(
           job.params,
@@ -49,11 +56,13 @@ export async function GET(
     return Response.json({
       id: job.id,
       kind: job.kind,
+      label: job.kind === "EDIT" ? (job.instruction ?? "Edit") : "Base concept",
       status: job.status,
       errorMessage: job.errorMessage,
       creditsCharged: job.creditsCharged,
       styleKey: job.styleKey,
       similarConcepts: readDiversityReport(job.params)?.similarConcepts ?? false,
+      sourceOutputId: renderSourceOutputId(job.params),
       createdAt: job.createdAt,
       outputs,
     });

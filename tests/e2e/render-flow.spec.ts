@@ -1,5 +1,21 @@
 import { expect, test, type Page } from "@playwright/test";
 import { signInWithOtp, uniqueEmail } from "./auth-helpers";
+import { renderJobStatusSchema } from "../../packages/shared/src/render-status";
+
+function waitForCompletedRender(page: Page) {
+  return page.waitForResponse(
+    async (response) => {
+      if (!/\/api\/renders\/[^/]+$/.test(response.url()) || response.request().method() !== "GET")
+        return false;
+      try {
+        return renderJobStatusSchema.parse(await response.json()).status === "SUCCEEDED";
+      } catch {
+        return false;
+      }
+    },
+    { timeout: 120_000 },
+  );
+}
 
 async function signUpAndOnboardHome(page: Page): Promise<void> {
   await signInWithOtp(page, { name: "E2E Renderer", email: uniqueEmail("e2e-render") });
@@ -34,6 +50,7 @@ test("full render flow: project, room, photo, 3 concepts, favorite, chat edit", 
   await expect(page.getByAltText("Room photo")).toBeVisible({ timeout: 30_000 });
 
   // Generate 3 concepts
+  const baseCompleted = waitForCompletedRender(page);
   await page.getByRole("button", { name: "Generate 3 concepts" }).click();
   // Loading copy uses three ASCII dots ("Generating concepts..."); match loosely
   // so a typographic ellipsis in the UI does not break the test. `.first()`
@@ -44,22 +61,57 @@ test("full render flow: project, room, photo, 3 concepts, favorite, chat edit", 
   await expect(
     page.getByText("AI-generated concept visual. Not to scale.", { exact: true }),
   ).toBeVisible();
+  const base = renderJobStatusSchema.parse(await (await baseCompleted).json());
+  const second = base.outputs[1];
+  expect(second).toBeDefined();
+  // Explicit concept selection drives comparison and survives a reload.
+  const beforeSelection = await page.getByAltText("After", { exact: true }).getAttribute("src");
+  await page.getByRole("button", { name: "Select concept 2", exact: true }).click();
+  await expect(page.getByAltText("After", { exact: true })).not.toHaveAttribute(
+    "src",
+    beforeSelection ?? "",
+  );
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Select concept 2", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await page.getByRole("button", { name: "Get suggestions", exact: true }).click();
+  await expect(page.getByText(/Demo suggestions · based on preferences/)).toBeVisible();
+  await page.getByRole("button", { name: "Use this idea", exact: true }).first().click();
+  const composer = page.getByRole("textbox", { name: "Describe a change to this concept" });
+  await expect(composer).toHaveValue(/portable lamp/);
+  await composer.fill("make the sofa deep green");
+  await page.getByRole("button", { name: "Select concept 1", exact: true }).click();
+  await page.getByRole("button", { name: "Edit this design", exact: true }).first().click();
+  await expect(composer).toHaveValue("");
+  await composer.fill("add a small accent");
+  await page.getByRole("button", { name: "Edit this design", exact: true }).nth(1).click();
+  await expect(composer).toHaveValue("make the sofa deep green");
+  await expect(page.getByText(/^Editing concept 2/)).toBeVisible();
+  await expect(composer).toBeFocused();
+  await page.screenshot({ path: "test-results/concept-2-refinement-mobile.png", fullPage: true });
 
   // Favorite the first concept
   const favorite = page.getByRole("button", { name: "Add to favorites" }).first();
   await favorite.click();
   await expect(page.getByRole("button", { name: "Remove from favorites" }).first()).toBeVisible();
 
-  // Chat edit from the first concept
-  await page.getByRole("button", { name: "Edit this" }).first().click();
-  await page
-    .getByPlaceholder("E.g. make the sofa a deep green, keep everything else the same")
-    .fill("make the sofa deep green");
+  // Refine the selected second concept and verify the actual server-side lineage.
+  const editCompleted = waitForCompletedRender(page);
   await page.getByRole("button", { name: "Apply change" }).click();
   await expect(page.getByText("1 concepts ready", { exact: true })).toBeVisible({
     timeout: 90_000,
   });
   await expect(page.getByAltText("Concept 1")).toBeVisible();
+  const edited = renderJobStatusSchema.parse(await (await editCompleted).json());
+  expect(edited.sourceOutputId).toBe(second?.id);
+  const family = page
+    .locator("details")
+    .filter({ has: page.getByText(/^Changes for this concept/) });
+  await family.locator("summary").click();
+  await expect(family.getByRole("button", { name: /^Original concept 2/ })).toBeVisible();
+  await expect(family.getByRole("button", { name: /^Original concept 1/ })).toHaveCount(0);
   const history = page.getByLabel("Design history");
   const editedId = await history.inputValue();
   const originalId = await history.locator("option").first().getAttribute("value");

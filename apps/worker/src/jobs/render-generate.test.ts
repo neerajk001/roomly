@@ -138,6 +138,69 @@ async function balance(workspaceId: string): Promise<number> {
 }
 
 describe("processRenderJob", () => {
+  it("uses every selected style while preserving notes, room constraints and budget", async () => {
+    const fixture = await createFixture();
+    const prompts: string[] = [];
+    const fake = createFakeProvider();
+    try {
+      await prisma.project.update({
+        where: { id: fixture.projectId, workspaceId: fixture.workspaceId },
+        data: { keepList: ["Sofa"], renterMode: true },
+      });
+      await prisma.renderJob.update({
+        where: { id: fixture.jobId, workspaceId: fixture.workspaceId },
+        data: {
+          variations: 3,
+          styleKey: "indian-minimal",
+          params: {
+            providerQuality: "low",
+            size: "1024x1024",
+            traditionKey: "india",
+            styleKeys: ["indian-minimal", "indian-craft", "indian-heritage"],
+            budgetTier: "budget",
+            notes: "Leave space for reading",
+            stagingItems: ["lighting", "storage"],
+          },
+        },
+      });
+      const provider: ImageProvider = {
+        name: "recording-fake",
+        edit: async (input) => {
+          expect(input.image).toEqual(TINY_JPEG);
+          prompts.push(input.prompt);
+          return fake.edit(input);
+        },
+      };
+      expect(
+        await processRenderJob(depsWith(provider), {
+          jobId: fixture.jobId,
+          retryCount: 0,
+          retryLimit: 0,
+        }),
+      ).toBe("ok");
+      expect(prompts).toHaveLength(3);
+      for (const [index, label] of [
+        "Indian minimal",
+        "Indian craft",
+        "Indian heritage",
+      ].entries()) {
+        expect(prompts[index]).toContain(label);
+        expect(prompts[index]).toContain("Sofa");
+        expect(prompts[index]).toContain("Leave space for reading");
+        expect(prompts[index]).toContain("affordable off-the-shelf");
+        expect(prompts[index]).toContain("lighting, storage");
+      }
+      const job = await prisma.renderJob.findFirstOrThrow({
+        where: { id: fixture.jobId, workspaceId: fixture.workspaceId },
+        include: { outputs: true },
+      });
+      expect(job.status).toBe("SUCCEEDED");
+      expect(job.outputs).toHaveLength(3);
+    } finally {
+      await cleanup(fixture);
+    }
+  }, 90_000);
+
   it("succeeds with the fake provider and creates 4 outputs", async () => {
     const fixture = await createFixture();
     const uploads: string[] = [];

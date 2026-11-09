@@ -1,3 +1,4 @@
+import { outputStyleKey } from "@roomdesigner/shared";
 import { EstimateSection } from "@/components/estimates/estimate-section";
 import { RoomPhotos } from "@/components/projects/room-photos";
 import { HomeRoomResults } from "@/components/rooms/home-room-results";
@@ -72,6 +73,7 @@ export async function RoomDetailView({
         job.outputs.map(async (output) => ({
           id: output.id,
           index: output.index,
+          styleKey: outputStyleKey(job.params, job.styleKey, output.index),
           isFavorite: output.isFavorite,
           url: await presignGet(output.asset.storageKey),
           thumbUrl: await presignGet(output.thumbAsset?.storageKey ?? output.asset.storageKey),

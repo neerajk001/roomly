@@ -7,41 +7,66 @@ import {
   type RenderJob,
 } from "@roomdesigner/db";
 import { sanitizeInstruction } from "@roomdesigner/ai";
-import { getStyle, totalCreditCost } from "@roomdesigner/shared";
+import { designPreferencesSchema, getStyle, totalCreditCost } from "@roomdesigner/shared";
 import { z } from "zod";
 import { AppError } from "../app-error";
 import { enqueueRender } from "../queue";
 import type { ServiceContext } from "./context";
 
-export const createRenderSchema = z.object({
-  roomId: z.string().min(1),
-  kind: z.enum(["RESTYLE", "EDIT"]),
-  styleKey: z.string().min(1).max(64).optional(),
-  instruction: z.string().max(600).optional(),
-  variations: z.number().int().min(1).max(4).default(4),
-  quality: z.enum(["draft", "final"]).default("draft"),
-  /** RESTYLE only: optional extra direction from the user. */
-  notes: z.string().max(600).optional(),
-  /** Optional staging picks (e.g. "sofa", "flooring"). */
-  stagingItems: z
-    .array(
-      z.enum([
-        "sofa",
-        "dining-table",
-        "rug",
-        "flooring",
-        "curtains",
-        "plants",
-        "art",
-        "lighting",
-        "storage",
-      ]),
-    )
-    .max(9)
-    .optional(),
-  /** EDIT only: the render output the user wants to change. */
-  sourceOutputId: z.string().min(1).optional(),
-});
+export const createRenderSchema = z
+  .object({
+    roomId: z.string().min(1),
+    kind: z.enum(["RESTYLE", "EDIT"]),
+    styleKey: z.string().min(1).max(64).optional(),
+    styleKeys: z.array(z.string()).optional(),
+    traditionKey: z.string().optional(),
+    budgetTier: z.enum(["budget", "mid", "premium"]).optional(),
+    instruction: z.string().max(600).optional(),
+    variations: z.number().int().min(1).max(4).default(4),
+    quality: z.enum(["draft", "final"]).default("draft"),
+    /** RESTYLE only: optional extra direction from the user. */
+    notes: z.string().max(600).optional(),
+    /** Optional staging picks (e.g. "sofa", "flooring"). */
+    stagingItems: z
+      .array(
+        z.enum([
+          "sofa",
+          "dining-table",
+          "rug",
+          "flooring",
+          "curtains",
+          "plants",
+          "art",
+          "lighting",
+          "storage",
+        ]),
+      )
+      .max(9)
+      .optional(),
+    /** EDIT only: the render output the user wants to change. */
+    sourceOutputId: z.string().min(1).optional(),
+  })
+  .superRefine((input, ctx) => {
+    const preferences = designPreferencesSchema.safeParse(input);
+    if (!preferences.success) {
+      for (const issue of preferences.error.issues)
+        ctx.addIssue({ code: "custom", path: issue.path, message: issue.message });
+    }
+    if (input.styleKeys && input.styleKeys.length > input.variations) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["variations"],
+        message: "Choose at least one concept per selected style.",
+      });
+    }
+    if (input.styleKeys && input.styleKey !== input.styleKeys[0]) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["styleKey"],
+        message: "The primary style must match your first selected style.",
+      });
+    }
+  });
 
 export type CreateRenderInput = z.infer<typeof createRenderSchema>;
 
@@ -96,6 +121,14 @@ export async function createRender(
   ctx: CreateRenderContext,
   input: CreateRenderInput,
 ): Promise<CreatedRender> {
+  const parsed = createRenderSchema.safeParse(input);
+  if (!parsed.success)
+    throw new AppError(
+      "INVALID_INPUT",
+      parsed.error.issues[0]?.message ?? "Check the render options.",
+      400,
+    );
+  input = parsed.data;
   if (!ctx.emailVerified) {
     throw new AppError("EMAIL_NOT_VERIFIED", "Verify your email address first.", 403);
   }
@@ -185,6 +218,13 @@ export async function createRender(
           instruction,
           params: {
             ...pickRenderParams(input.quality, sourceWidth, sourceHeight),
+            ...(input.kind === "RESTYLE"
+              ? {
+                  ...(input.styleKeys ? { styleKeys: input.styleKeys } : {}),
+                  ...(input.traditionKey ? { traditionKey: input.traditionKey } : {}),
+                  ...(input.budgetTier ? { budgetTier: input.budgetTier } : {}),
+                }
+              : {}),
             ...(notes !== null ? { notes } : {}),
             ...(input.stagingItems !== undefined && input.stagingItems.length > 0
               ? { stagingItems: input.stagingItems }

@@ -632,3 +632,26 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
 - Desktop and 375px screenshots reviewed; all 16 assets load, four hero styles,
   six gallery pairs, filters and keyboard slider checks pass. Components preserved.
 - pnpm typecheck, pnpm lint and pnpm test pass across all 11 packages.
+
+# 2026-11-09 — Guided design batch 1
+- Implement only the approved first batch; leave diversity scoring and object editing for later.
+- Add curated design-tradition groups with India-first browsing and global coverage.
+- Preserve all existing style keys and add distinct directions for missing traditions.
+- Create one photographic preview atlas per style, covering nine named room types.
+- Show the selected room's atlas tile, description, materials and palette on each style card.
+- Replace repeated four-photo previews throughout the guided style/review screens.
+- Reorder the existing steps so design direction comes before optional budget.
+- Offer budget-friendly, mid-range, premium or no preference, retaining custom amounts.
+- Validate restored drafts and preferences, while preserving older saved projects/jobs.
+- Pass every selected style, tradition and budget tier through validated server/worker inputs.
+- Assign selected styles to concept slots and label outputs with their actual assigned style.
+- Reject more selected styles than requested outputs instead of silently dropping selections.
+- Keep current generation-quality controls, constraints, credit rules and fake-provider tests.
+- Add catalog, validation, worker prompt and complete browser journey coverage.
+- Verify desktop/mobile previews, typecheck, lint and tests; commit one completed batch.
+- Preferences use the existing RenderJob JSON params; legacy styleKey remains the primary fallback, with no migration.
+- Atlas images are AI-created style references rather than the user's generated results; “Other” names its living-room fallback.
+- Fixed staging preferences being dropped by worker parsing as part of preserving the existing review controls.
+- Reused packages/estimate's exact money parser rather than the wizard's previous floating-point conversion.
+- Checked installed Next.js server/client component documentation and [Prisma JSON field docs](https://www.prisma.io/docs/orm/v7/prisma-client/special-fields-and-types/working-with-json-fields); plain validated JSON objects match the current implementation.
+- Batch 1 validation: typecheck, lint and tests pass across all 11 packages; all six Playwright journeys pass with fake generation, including Home chat, Pro approval and the revised mobile wizard. Reviewed screenshots and verified all 25 atlas assets. Later batches remain unstarted.

@@ -3,7 +3,18 @@
 import { uploadToStorage } from "@/lib/upload-storage";
 import { createGuidedProjectAction, goToRoomAction } from "@/server/actions/wizard";
 import { createRenderAction } from "@/server/actions/renders";
-import { STYLES, typicalSizeFor, totalCreditCost, type UploadTarget } from "@roomdesigner/shared";
+import {
+  BUDGET_TIERS,
+  getStyle,
+  stylesForTradition,
+  typicalSizeFor,
+  totalCreditCost,
+  type UploadTarget,
+} from "@roomdesigner/shared";
+import { parseMoneyInput } from "@roomdesigner/estimate";
+import { StylePreview } from "./StylePreview";
+import { StyleDirectionPicker } from "./StyleDirectionPicker";
+import { restoreWizardDraft, wizardDraftSchema, type WizardDraft as Draft } from "./wizard-draft";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -45,13 +56,6 @@ const KEEP_IMAGES: Record<string, string> = {
   TV: "/demo/living-after.jpg",
 };
 
-const STYLE_IMAGES = [
-  "/demo/hero-after-modern.jpg",
-  "/demo/hero-after-minimal.jpg",
-  "/demo/hero-after-boho.jpg",
-  "/demo/hero-after-classic.jpg",
-];
-
 const STAGE_ITEMS = [
   ["sofa", "Sofa"],
   ["dining-table", "Dining table"],
@@ -64,27 +68,12 @@ const STAGE_ITEMS = [
   ["storage", "Storage"],
 ] as const;
 
-const STEPS = ["Photo", "Room details", "Keep items", "Renting", "Budget", "Style", "Review"];
-
-interface Draft {
-  step: number;
-  roomType: string;
-  width: string;
-  length: string;
-  height: string;
-  useTypical: boolean;
-  keepList: string[];
-  customKeep: string;
-  renterMode: boolean;
-  budget: string;
-  styles: string[];
-  variations: string;
-  quality: "draft" | "final";
-  notes: string;
-  stagingItems: string[];
-}
+const STEPS = ["Photo", "Room details", "Keep items", "Renting", "Style", "Budget", "Review"];
 
 const initialDraft: Draft = {
+  version: 3,
+  traditionKey: "",
+  budgetTier: null,
   step: 0,
   roomType: "LIVING_ROOM",
   width: "4.2",
@@ -103,9 +92,8 @@ const initialDraft: Draft = {
 };
 
 function minorFromMajor(value: string, currency: string): number | null {
-  const parsed = Number.parseFloat(value.replace(/,/g, ""));
-  if (!Number.isFinite(parsed) || parsed <= 0) return null;
-  return Math.round(parsed * (currency === "JPY" ? 1 : 100));
+  const minor = parseMoneyInput(value.replace(/,/g, ""), currency);
+  return minor !== null && minor > 0 ? minor : null;
 }
 
 function mmFromMetres(value: string): number | null {
@@ -153,7 +141,13 @@ export function GuidedWizard({
 }) {
   const router = useRouter();
   const [draft, setDraft] = useState<Draft>(() =>
-    initialStyle === undefined ? initialDraft : { ...initialDraft, styles: [initialStyle] },
+    initialStyle === undefined
+      ? initialDraft
+      : {
+          ...initialDraft,
+          styles: getStyle(initialStyle) ? [initialStyle] : [],
+          traditionKey: "global",
+        },
   );
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -170,7 +164,8 @@ export function GuidedWizard({
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (raw !== null) {
       try {
-        setDraft({ ...initialDraft, ...(JSON.parse(raw) as Partial<Draft>) });
+        const restored = restoreWizardDraft(JSON.parse(raw) as unknown);
+        if (restored) setDraft(restored);
       } catch {
         // ignore corrupt draft
       }
@@ -195,8 +190,16 @@ export function GuidedWizard({
     setDraft((current) => ({ ...current, ...next }));
   };
 
-  const chosenStyle = draft.styles[0] ?? "modern";
+  const chosenStyles =
+    draft.styles.length > 0
+      ? draft.styles
+      : stylesForTradition(draft.traditionKey)
+          .slice(0, 3)
+          .map((style) => style.key);
+  const chosenStyle = chosenStyles[0] ?? "modern";
+  const chosenStyleDefinition = getStyle(chosenStyle);
   const variationCount = Math.min(4, Math.max(1, Number(draft.variations) || 3));
+  const hasEnoughConcepts = variationCount >= chosenStyles.length;
   const totalCost = totalCreditCost(draft.quality, variationCount);
   const typicalDims = typicalSizeFor(draft.roomType);
   const widthM = draft.useTypical ? typicalDims.widthMm / 1000 : Number(draft.width);
@@ -206,14 +209,25 @@ export function GuidedWizard({
 
   const canContinue = (): boolean => {
     if (draft.step === 0) return files.length >= 1;
-    if (draft.step === 1) return draft.roomType !== "";
+    if (draft.step === 1) return true;
+    if (draft.step === 4) return draft.traditionKey !== "" && draft.styles.length > 0;
+    if (draft.step === 5)
+      return draft.budget.trim() === "" || minorFromMajor(draft.budget, currency) !== null;
     return true;
   };
 
   const next = () => {
     setError(null);
     if (!canContinue()) {
-      setError(draft.step === 0 ? "Add at least one photo to continue." : "Choose a room type.");
+      setError(
+        draft.step === 0
+          ? "Add at least one photo to continue."
+          : draft.step === 4
+            ? "Choose a tradition and at least one look, or choose looks for me."
+            : draft.step === 5
+              ? "Enter a valid positive budget, or clear it to skip."
+              : "Choose a room type.",
+      );
       return;
     }
     patch({ step: Math.min(draft.step + 1, STEPS.length - 1) });
@@ -235,7 +249,7 @@ export function GuidedWizard({
     }));
   };
 
-  const toggleStaging = (item: string) => {
+  const toggleStaging = (item: Draft["stagingItems"][number]) => {
     setDraft((current) => ({
       ...current,
       stagingItems: current.stagingItems.includes(item)
@@ -259,6 +273,19 @@ export function GuidedWizard({
 
   const submit = async () => {
     setError(null);
+    if (!hasEnoughConcepts || chosenStyles.length === 0) {
+      setError("Choose at least one concept per selected look.");
+      return;
+    }
+    if (draft.budget.trim() !== "" && minorFromMajor(draft.budget, currency) === null) {
+      setError("Enter a valid budget, or clear it to skip.");
+      return;
+    }
+    if (files.length === 0) {
+      setError("Add your room photo again before generating.");
+      patch({ step: 0 });
+      return;
+    }
     setBusy(true);
     try {
       setProgress("Creating your project...");
@@ -301,12 +328,15 @@ export function GuidedWizard({
         if (!confirm.ok) throw new Error("Upload could not be confirmed.");
       }
 
-      setProgress("Starting 3 concept visuals...");
+      setProgress(`Starting ${variationCount} concept visuals...`);
       const renderForm = new FormData();
       renderForm.set("roomId", created.roomId);
       renderForm.set("projectId", created.projectId);
       renderForm.set("kind", "RESTYLE");
       renderForm.set("styleKey", chosenStyle);
+      renderForm.set("styleKeys", JSON.stringify(chosenStyles));
+      renderForm.set("traditionKey", draft.traditionKey || "global");
+      if (draft.budgetTier) renderForm.set("budgetTier", draft.budgetTier);
       renderForm.set("variations", String(variationCount));
       renderForm.set("quality", draft.quality);
       if (draft.notes.trim() !== "") renderForm.set("notes", draft.notes.trim());
@@ -334,7 +364,7 @@ export function GuidedWizard({
       {draft.step !== 6 && (
         <nav
           aria-label="Design steps"
-          className="border-b border-border p-3 lg:border-b-0 lg:border-r lg:p-4"
+          className="min-w-0 border-b border-border p-3 lg:border-b-0 lg:border-r lg:p-4"
         >
           <ol className="flex gap-1 overflow-x-auto lg:flex-col lg:gap-1">
             {STEPS.map((label, index) => {
@@ -375,7 +405,11 @@ export function GuidedWizard({
         </nav>
       )}
 
-      <div className={draft.step === 6 ? "" : "flex min-h-0 flex-col p-5 sm:p-8 lg:p-10"}>
+      <div
+        className={
+          draft.step === 6 ? "min-w-0" : "flex min-h-0 min-w-0 flex-col p-5 sm:p-8 lg:p-10"
+        }
+      >
         <div className="flex-1">
           {error !== null && (
             <p
@@ -551,7 +585,9 @@ export function GuidedWizard({
                         id="wiz-room-type"
                         value={draft.roomType}
                         onChange={(event) => {
-                          patch({ roomType: event.target.value });
+                          patch({
+                            roomType: wizardDraftSchema.shape.roomType.parse(event.target.value),
+                          });
                         }}
                         className="h-10 w-full appearance-none rounded-xl border border-border bg-card pl-9 pr-3 text-sm"
                       >
@@ -849,7 +885,7 @@ export function GuidedWizard({
             </div>
           )}
 
-          {draft.step === 4 && (
+          {draft.step === 5 && (
             <div className="grid gap-5 lg:grid-cols-[1fr_220px]">
               <div>
                 <h1 className="text-3xl font-semibold tracking-tight">
@@ -884,102 +920,67 @@ export function GuidedWizard({
                     />
                   </div>
                 </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {[
-                    ["Under 25k", "25000"],
-                    ["25k – 75k", "50000"],
-                    ["75k+", "100000"],
-                  ].map(([label, value]) => (
+                <div className="mt-5 grid gap-3 sm:grid-cols-3" aria-label="Budget preference">
+                  {BUDGET_TIERS.map((tier) => (
                     <button
-                      key={label}
+                      key={tier.key}
                       type="button"
-                      onClick={() => {
-                        patch({ budget: value ?? "" });
-                      }}
-                      className={`border px-3 py-1.5 text-xs ${
-                        draft.budget === value
-                          ? "border-primary bg-accent"
-                          : "border-border bg-card"
-                      }`}
+                      aria-pressed={draft.budgetTier === tier.key}
+                      onClick={() =>
+                        patch({ budgetTier: draft.budgetTier === tier.key ? null : tier.key })
+                      }
+                      className={`rounded-xl border p-4 text-left ${draft.budgetTier === tier.key ? "border-foreground bg-muted ring-1 ring-foreground" : "border-border bg-card"}`}
                     >
-                      {label}
+                      <span className="block text-sm font-semibold">{tier.label}</span>
+                      <span className="mt-2 block text-xs text-muted-foreground">
+                        {tier.description}
+                      </span>
                     </button>
                   ))}
                 </div>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Optional. A spending direction, not an exact price promise. You can also add a
+                  custom amount above.
+                </p>
                 <button
                   type="button"
                   onClick={() => {
-                    patch({ budget: "" });
+                    patch({ budget: "", budgetTier: null });
                   }}
                   className="mt-4 rounded-xl border border-border bg-card px-3 py-1.5 text-xs"
                 >
-                  Skip for now
+                  No budget preference
                 </button>
               </div>
               <aside className="hidden space-y-3 lg:block">
-                {/* eslint-disable-next-line @next/next/no-img-element -- static demo asset */}
-                <img
-                  src="/demo/kitchen-after.jpg"
-                  alt=""
-                  className="h-32 w-full rounded-xl border border-border object-cover"
-                />
+                {chosenStyleDefinition && (
+                  <StylePreview style={chosenStyleDefinition} roomType={draft.roomType} />
+                )}
                 <div className="rounded-xl border border-border bg-card p-3 text-[11px] text-muted-foreground">
-                  We&apos;ll show what fits your budget first, focusing on high-impact changes.
+                  Your preference guides furniture and finish choices. Concept visuals are not price
+                  quotes.
                 </div>
               </aside>
             </div>
           )}
 
-          {draft.step === 5 && (
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight">
-                Which <span className="text-primary">look</span> do you like?
-              </h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Pick the styles you like most. You can select multiple (up to 3).
-              </p>
-              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {STYLES.map((style, index) => {
-                  const active = draft.styles.includes(style.key);
-                  return (
-                    <button
-                      key={style.key}
-                      type="button"
-                      aria-pressed={active}
-                      onClick={() => {
-                        toggleStyle(style.key);
-                      }}
-                      className={`relative overflow-hidden border bg-card text-left text-xs ${
-                        active ? "border-primary ring-1 ring-primary" : "border-border"
-                      }`}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element -- static demo asset */}
-                      <img
-                        src={STYLE_IMAGES[index % STYLE_IMAGES.length] ?? STYLE_IMAGES[0]}
-                        alt=""
-                        className="h-16 w-full border-b border-border object-cover"
-                        aria-hidden="true"
-                      />
-                      <span className="block px-2 py-1.5 font-medium">{style.label}</span>
-                      {active && (
-                        <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center bg-primary text-white">
-                          <CheckIcon />
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  patch({ styles: ["scandinavian"] });
-                }}
-                className="mt-3 rounded-xl border border-border bg-card px-3 py-1.5 text-xs"
-              >
-                ✨ Not sure yet — choose for me
-              </button>
-            </div>
+          {draft.step === 4 && (
+            <StyleDirectionPicker
+              traditionKey={draft.traditionKey}
+              styles={draft.styles}
+              roomType={draft.roomType}
+              onTradition={(key) =>
+                patch({ traditionKey: key, styles: key === draft.traditionKey ? draft.styles : [] })
+              }
+              onToggle={toggleStyle}
+              onExplore={() =>
+                patch({
+                  styles: stylesForTradition(draft.traditionKey)
+                    .slice(0, 3)
+                    .map((style) => style.key),
+                })
+              }
+            />
           )}
 
           {draft.step === 6 && (
@@ -1022,7 +1023,7 @@ export function GuidedWizard({
                   <button
                     type="button"
                     onClick={() => void submit()}
-                    disabled={busy}
+                    disabled={busy || !hasEnoughConcepts || chosenStyles.length === 0}
                     aria-busy={busy}
                     className="inline-flex items-center gap-2 rounded-xl border border-border bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all   hover:shadow-sm disabled:opacity-60"
                   >
@@ -1033,52 +1034,49 @@ export function GuidedWizard({
               </div>
 
               <section className="relative rounded-xl border border-border bg-card p-4 pt-6">
-                <StepBadge>1. Choose a style</StepBadge>
-                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                  {STYLES.map((style, index) => {
-                    const active = draft.styles.includes(style.key);
+                <StepBadge>1. Design direction</StepBadge>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  {chosenStyles.map((key) => {
+                    const style = getStyle(key);
+                    if (!style) return null;
                     return (
-                      <button
-                        key={style.key}
-                        type="button"
-                        aria-pressed={active}
-                        onClick={() => {
-                          toggleStyle(style.key);
-                        }}
-                        className={`flex items-start gap-2 border bg-card p-2 text-left transition-colors ${
-                          active
-                            ? "border-primary ring-1 ring-primary"
-                            : "border-border hover:bg-foreground/[0.02]"
-                        }`}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element -- static demo asset */}
-                        <img
-                          src={STYLE_IMAGES[index % STYLE_IMAGES.length] ?? STYLE_IMAGES[0]}
-                          alt=""
-                          className="h-14 w-20 shrink-0 rounded-xl border border-border object-cover"
-                          aria-hidden="true"
-                        />
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-sm font-semibold text-foreground">
-                            {style.label}
-                          </span>
-                          <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">
+                      <div key={key} className="overflow-hidden rounded-lg border border-border">
+                        <StylePreview style={style} roomType={draft.roomType} />
+                        <div className="p-3">
+                          <p className="text-sm font-semibold">{style.label}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">
                             {capitalize(style.promptHint)}
-                          </span>
-                        </span>
-                        <span
-                          className={`flex h-4 w-4 shrink-0 items-center justify-center border ${
-                            active
-                              ? "border-primary bg-primary text-white"
-                              : "border-border bg-card"
-                          }`}
-                        >
-                          {active && <CheckIcon className="h-2.5 w-2.5" />}
-                        </span>
-                      </button>
+                          </p>
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
+                  <button
+                    type="button"
+                    onClick={() => patch({ step: 4 })}
+                    className="rounded-lg border border-border px-3 py-2"
+                  >
+                    Change design direction
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => patch({ step: 5 })}
+                    className="rounded-lg border border-border px-3 py-2"
+                  >
+                    Budget:{" "}
+                    {BUDGET_TIERS.find((tier) => tier.key === draft.budgetTier)?.label ??
+                      "No tier preference"}
+                    {draft.budget ? ` · ${currency} ${draft.budget}` : ""}
+                  </button>
+                </div>
+                {!hasEnoughConcepts && (
+                  <p role="alert" className="mt-3 text-sm text-destructive">
+                    Choose at least {chosenStyles.length} concepts so every selected look is
+                    included.
+                  </p>
+                )}
               </section>
 
               <div className="grid gap-4 sm:grid-cols-2">
@@ -1091,11 +1089,13 @@ export function GuidedWizard({
                     id="wiz-variations"
                     value={draft.variations}
                     onChange={(event) => {
-                      patch({ variations: event.target.value });
+                      patch({
+                        variations: wizardDraftSchema.shape.variations.parse(event.target.value),
+                      });
                     }}
                     className="h-10 w-full rounded-xl border border-border bg-card px-3 text-sm"
                   >
-                    {[2, 3, 4].map((count) => (
+                    {[1, 2, 3, 4].map((count) => (
                       <option key={count} value={String(count)}>
                         {count}
                       </option>
@@ -1219,7 +1219,7 @@ export function GuidedWizard({
                   <button
                     type="button"
                     onClick={() => void submit()}
-                    disabled={busy}
+                    disabled={busy || !hasEnoughConcepts || chosenStyles.length === 0}
                     aria-busy={busy}
                     className="inline-flex items-center gap-2 rounded-xl border border-border bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all   hover:shadow-sm disabled:opacity-60"
                   >

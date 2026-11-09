@@ -11,7 +11,12 @@ import {
 import { refundCredits, type Prisma } from "@roomdesigner/db";
 import { makeThumbnail, makeWebVersion, buildStorageKey } from "@roomdesigner/storage";
 import { getServerEnv } from "@roomdesigner/config/env";
-import { getStyle } from "@roomdesigner/shared";
+import {
+  BUDGET_TIERS,
+  designPreferencesSchema,
+  getStyle,
+  outputStyleKey,
+} from "@roomdesigner/shared";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 
@@ -28,11 +33,33 @@ const ROOM_TYPE_LABELS: Record<string, string> = {
   OTHER: "room",
 };
 
-export const renderParamsSchema = z.object({
-  providerQuality: z.enum(["low", "medium", "high"]),
-  size: z.enum(["1024x1024", "1536x1024", "1024x1536", "auto"]),
-  notes: z.string().max(300).optional(),
-});
+export const renderParamsSchema = z
+  .object({
+    ...designPreferencesSchema.shape,
+    providerQuality: z.enum(["low", "medium", "high"]),
+    size: z.enum(["1024x1024", "1536x1024", "1024x1536", "auto"]),
+    notes: z.string().max(300).optional(),
+    stagingItems: z
+      .array(
+        z.enum([
+          "sofa",
+          "dining-table",
+          "rug",
+          "flooring",
+          "curtains",
+          "plants",
+          "art",
+          "lighting",
+          "storage",
+        ]),
+      )
+      .max(9)
+      .optional(),
+  })
+  .refine(
+    (value) => designPreferencesSchema.safeParse(value).success,
+    "Invalid design preferences.",
+  );
 
 export type RenderParams = z.infer<typeof renderParamsSchema>;
 
@@ -112,12 +139,18 @@ export async function processRenderJob(
 
   try {
     const params = renderParamsSchema.safeParse(job.params);
-    if (!params.success) {
+    if (!params.success || (params.data.styleKeys?.length ?? 0) > job.variations) {
       await finalizeFailure(deps, job, "INVALID_JOB", "This render request is invalid.");
       return "ok";
     }
 
-    const prompt = buildPromptForJob(job, params.data);
+    const prompts = Array.from({ length: job.variations }, (_, index) =>
+      buildPromptForJob(
+        { ...job, styleKey: outputStyleKey(params.data, job.styleKey, index) },
+        params.data,
+      ),
+    );
+    const prompt = prompts[0] ?? buildPromptForJob(job, params.data);
     const source = await deps.download(job.sourceAsset.storageKey);
 
     // One call per variation with a distinct emphasis: a single n=4 call
@@ -127,8 +160,7 @@ export async function processRenderJob(
         ? await editVariations(deps, {
             source,
             mime: job.sourceAsset.mime,
-            basePrompt: prompt,
-            variations: job.variations,
+            prompts,
             size: params.data.size,
             quality: params.data.providerQuality,
           })
@@ -182,7 +214,11 @@ export async function processRenderJob(
     }
 
     if (index === 0) {
-      throw new ProviderError("PROVIDER_EMPTY", "The image service returned no images.", "transient");
+      throw new ProviderError(
+        "PROVIDER_EMPTY",
+        "The image service returned no images.",
+        "transient",
+      );
     }
 
     await db.renderJob.update({
@@ -231,9 +267,16 @@ function buildPromptForJob(
     keepList: job.room.project.keepList,
     renterMode: job.room.project.renterMode,
   });
-  return params.notes !== undefined && params.notes !== ""
-    ? `${base}\nAdditional notes: ${params.notes}`
+  const budget = BUDGET_TIERS.find((tier) => tier.key === params.budgetTier);
+  const budgetDirected = budget
+    ? `${base}\nBudget direction: ${budget.hint} These are concept visuals, not a price quote.`
     : base;
+  const directed = params.stagingItems?.length
+    ? `${budgetDirected}\nRequested staging focus: ${params.stagingItems.join(", ")}. Respect the keep-items and renter constraints above.`
+    : budgetDirected;
+  return params.notes !== undefined && params.notes !== ""
+    ? `${directed}\nAdditional notes: ${params.notes}`
+    : directed;
 }
 
 async function finalizeFailure(
@@ -297,18 +340,17 @@ async function editVariations(
   input: {
     source: Buffer;
     mime: string;
-    basePrompt: string;
-    variations: number;
+    prompts: string[];
     size: ImageSize;
     quality: ImageQuality;
   },
 ): Promise<EditResult> {
   const results = await Promise.all(
-    Array.from({ length: input.variations }, (_, index) =>
+    input.prompts.map((prompt, index) =>
       deps.provider.edit({
         image: input.source,
         mime: input.mime,
-        prompt: variationPrompt(input.basePrompt, index),
+        prompt: variationPrompt(prompt, index),
         n: 1,
         size: input.size,
         quality: input.quality,

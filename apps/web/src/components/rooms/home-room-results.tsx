@@ -446,7 +446,7 @@ export function HomeRoomResults({
             </p>
             <ul className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {outputs.map((output, index) => {
-                const label = styleLabelFor(styleKey);
+                const label = styleLabelFor(output.styleKey ?? styleKey);
                 return (
                   <li key={output.id}>
                     <article
@@ -506,7 +506,7 @@ export function HomeRoomResults({
                           {String(index + 1).padStart(2, "0")} · {label}
                         </p>
                         <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                          {styleDescription(styleKey)}
+                          {styleDescription(output.styleKey ?? styleKey)}
                         </p>
                         <div className="mt-auto flex gap-2 pt-3">
                           <button

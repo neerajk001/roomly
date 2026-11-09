@@ -1,4 +1,5 @@
 export interface RenderOutputView {
+  styleKey?: string | null;
   id: string;
   index: number;
   isFavorite: boolean;

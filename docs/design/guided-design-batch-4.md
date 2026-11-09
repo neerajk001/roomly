@@ -1,5 +1,8 @@
 # Guided design — batch 4
 
+Completed batch report. See [current project status](../project-status.md) and
+the [batch index](README.md) for the combined implementation and later fixes.
+
 - [x] Object/area selection and masked edits in Home and Pro, with validated lineage, fake-provider tests, mobile verification and commit.
 
 This is one integrated task: source selection, coordinates, provider mask and

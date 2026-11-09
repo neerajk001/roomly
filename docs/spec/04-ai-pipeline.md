@@ -9,6 +9,7 @@ export type ImageSize = "1024x1024" | "1536x1024" | "1024x1536" | "auto";
 export type ImageQuality = "low" | "medium" | "high";
 
 export interface EditInput {
+  mask?: Buffer;            // PNG; transparent editable region, same oriented dimensions
   image: Buffer;
   mime: string;
   prompt: string;
@@ -112,6 +113,39 @@ States: `QUEUED → RUNNING → SUCCEEDED | FAILED | CANCELED`.
 8. On final failure: set `FAILED` with a short `errorCode`, a user-safe `errorMessage`, then refund credits.
 
 **Chat edit** creates a new job with `kind = EDIT`, `parentJobId` = the previous job, `sourceAssetId` = the chosen output's asset. Chains can be walked backwards for history.
+
+### Guided-design implementation (batches 1–5)
+
+The [batch reports](../design/README.md) and [current status](../project-status.md)
+describe the delivered extensions. RESTYLE assigns selected styles to individual
+slots and uses distinct creative directions. A conservative near-copy check can
+replace one slot once per job; provider costs include discarded attempts, while
+user credits cover only requested outputs. This does not guarantee semantic diversity.
+
+EDIT always generates one output and stores the exact `sourceOutputId`, inherited
+style/mood/notes/budget, and optional validated `editTarget` in job JSON. Kept-item
+and renter constraints reach edit prompts. Target coordinates are integer
+thousandths of the oriented image, checked by the server and worker. The worker
+builds a same-size PNG mask, uses automatic sizing, then composites only the
+selected rectangle onto the source and stores a lossless PNG at source dimensions.
+The rest of the stored image is protected; rectangle edges may still show seams.
+
+On-demand concept analysis is separate from render generation. It accepts only
+an authorized output ID, loads a server-owned thumbnail, and validates up to three
+suggestions and eight approximate object rectangles. `ADVICE_PROVIDER=fake` is an
+honest preference-only demo with no detection. Real analysis requires an explicitly
+configured `OPENAI_ADVICE_MODEL`. Cache/attempt metadata lives in the existing job
+params under row locks; calls have a timeout, no automatic provider retries, a
+workspace rate limit and at most two attempts per output/provider. Per-day advice
+allowances count against the shared spend guard even on older jobs and failed
+calls. This is conservative accounting, not a global reservation of all in-flight
+image work or a provider-enforced billing cap.
+
+Status responses also include selected-style/direction labels, edit-source and
+target metadata, cached advice and similarity feedback. Clients validate responses
+and requested job IDs. Status reads are cancellable and bounded; a paused read can
+be resumed without creating another job. Unconfirmed mutation responses preserve
+the user's draft and are never automatically resubmitted.
 
 ## Status API
 

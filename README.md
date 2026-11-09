@@ -7,6 +7,10 @@ The full product spec lives in [`docs/spec/`](docs/spec/README.md). The current
 implementation covers **V1-V4** plus V6 production hardening: monorepo, database,
 auth, onboarding, Home/Pro flows, worker, Docker and CI/CD.
 
+See [current project status](docs/project-status.md) for implemented behavior,
+guided-design batches 1–5, verification and remaining review gates. Implementation
+coverage does not mean every phase Definition of Done or live deployment is approved.
+
 ## Deployment
 
 Everything runs on a single Hostinger VPS:
@@ -42,8 +46,11 @@ Notes:
 - The dev Postgres is published on **5434** because 5432/5433 are commonly
   occupied on dev machines. CI uses a normal 5432 service.
 - `APP_URL` and `BETTER_AUTH_URL` in `.env` must match the port Next.js picks.
-- `EMAIL_PROVIDER=console` prints verification and password-reset links to the
-  dev server log (Mailpit is available for SMTP experiments).
+- `EMAIL_PROVIDER=console` prints email OTP codes in development. Sign-in uses OTP
+  or configured Google OAuth; password/reset authentication is disabled.
+- Use `IMAGE_PROVIDER=fake` and `ADVICE_PROVIDER=fake` for development/tests. Real
+  advice/object detection requires an explicitly configured vision model; see
+  [.env.example](.env.example) and the current status page.
 - Seed a demo workspace (user `demo@roomdesigner.local`): `pnpm db:seed -- --demo`.
 
 ## Checks
@@ -59,12 +66,13 @@ pnpm build
 | Path | Purpose |
 |---|---|
 | `apps/web` | Next.js app (App Router, Tailwind 4, shadcn/ui) |
-| `apps/worker` | Background worker placeholder (render jobs land in V2) |
+| `apps/worker` | Render/edit generation, cleanup, stale-job recovery and proposal email outbox |
 | `packages/config` | zod env schema, tsconfig/ESLint base |
 | `packages/db` | Prisma 7 schema, migrations, client, seed |
 | `packages/auth` | Better Auth server/client, workspace bootstrap |
 | `packages/shared` | Pure shared constants/schemas (client-safe barrel) |
-| `packages/{estimate,ai,storage,pdf,billing}` | Skeletons for V2–V6 |
+| `packages/{estimate,ai,storage,pdf}` | Estimate engine, image/advice providers, image processing/masks and proposal PDFs |
+| `packages/billing` | Reserved for V5; billing is excluded from the guided-design batches |
 
 ## Product rules that are easy to break
 

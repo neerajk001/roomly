@@ -2,6 +2,11 @@
 
 Working title: **RoomDesigner** (decision gate G1 — rename any time).
 
+For the checked-in implementation and open review items, start with
+[current project status](../project-status.md) and the
+[guided-design index](../design/README.md). This spec retains the original V1–V6
+phase plan; guided-design batch numbers are separate from phase numbers.
+
 One product, two modes:
 - **Home mode** — homeowners and renters redesign a room from a photo, stay within a budget, and share results.
 - **Pro mode** — interior designers and remodelers run client work: brief → renders → estimate from their own rate card → branded proposal → client approval.

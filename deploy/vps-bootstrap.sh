@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # One-time bootstrap for the Hostinger VPS that runs the full RoomDesigner
-# stack (Caddy + Next.js web/API + worker). Tested on Ubuntu 22.04/24.04. Run as root:
+# stack (host Nginx + Next.js web/API + worker). Run as root:
 #
 #   sudo bash deploy/vps-bootstrap.sh
 #
@@ -67,7 +67,7 @@ fi
 echo "==> Configuring unattended security updates"
 dpkg-reconfigure -f noninteractive unattended-upgrades || true
 
-echo "==> Configuring the firewall (SSH + HTTP/HTTPS for Caddy)"
+echo "==> Configuring the firewall (SSH + HTTP/HTTPS for the host proxy)"
 ufw allow OpenSSH
 ufw allow 80/tcp
 ufw allow 443/tcp
@@ -85,11 +85,12 @@ cat <<'EOF'
 Bootstrap complete.
 
 Next steps:
-  1. Copy docker-compose.prod.yml and the deploy/ directory (Caddyfile,
-     rollback.sh, env example) to /opt/roomdesigner/.
+  1. Copy docker-compose.prod.yml and the deploy/ directory (rollback.sh,
+     env example) to /opt/roomdesigner/.
   2. Copy deploy/.env.production.example to /opt/roomdesigner/.env.production
      and fill in the real values (chmod 600).
-  3. Point the domain's DNS A/AAAA record at this VPS before starting Caddy.
+  3. Configure host Nginx + TLS for the public domain and proxy to 127.0.0.1:3000.
+     Nginx/certificates are not installed or configured by this script.
   4. Set the GitHub repository secrets listed in docs/runbook.md.
   5. Push to main/master and let the Deploy workflow run.
 EOF

@@ -1,5 +1,8 @@
 # Guided design — batch 3
 
+Completed batch report. For the current combined implementation and open review
+items, see [project status](../project-status.md) and the [batch index](README.md).
+
 - [x] Explicit, remembered concept selection in Home and Pro.
 - [x] Comparison, saved actions and chat consistently target that concept.
 - [x] Image-specific recommendation provider, validated output and safe caching.
@@ -7,7 +10,7 @@
 - [x] Edit lineage, inherited context and concept-specific change history.
 - [x] Tenant isolation, fake-provider tests, browser/mobile checks and commit.
 
-Object detection, object selection and masked edits remain batch 4. No new style
+Object detection, object selection and masked edits were delivered in batch 4. No new style
 preview imagery, billing feature or default production model selection is included.
 
 ## Built
@@ -55,7 +58,7 @@ retailer availability, or structural safety from an image.
 - New variables are in `.env.example` and the environment schema. No dependencies,
   migrations, preview images or billing functionality were added.
 - Real-model quality/fidelity remains the existing G2 review. Object detection,
-  selection and masked edits remain batch 4.
+  selection and masked edits are documented in completed batch 4.
 
 ## Verification
 
@@ -70,7 +73,7 @@ the gallery and adding editor focus: selection survives reload, drafts stay
 separate, the submitted edit targets concept 2, and history excludes concept 1.
 Mobile screenshots were reviewed; the test confirms no horizontal overflow.
 All generation and advice checks used fake/mocked providers. Test accounts were
-cleaned up. Real-provider quality review remains pending; batch 4 is unstarted.
+cleaned up. Real-provider quality review remains pending; batch 4 is complete.
 
 ## Documentation sources
 

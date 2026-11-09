@@ -1,5 +1,9 @@
 # V2 — Core Engine: summary for review
 
+Historical phase-completion snapshot. Features, counts and open items below describe
+that review point, not current status. See [current project status](project-status.md)
+for the delivered guided flow, current auth and remaining review gates.
+
 ## What works
 
 - **Uploads**: S3 presign + confirm routes, 10 MB / JPEG-PNG-WebP / 4096 px limits, sharp re-encode

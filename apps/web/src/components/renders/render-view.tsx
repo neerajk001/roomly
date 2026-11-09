@@ -5,7 +5,9 @@ import { useConceptSelection } from "@/components/renders/use-concept-selection"
 import { ConceptAdvicePanel } from "@/components/renders/ConceptAdvicePanel";
 import { ConceptEditHistory } from "@/components/renders/ConceptEditHistory";
 import type { ConceptAdvice, EditTarget } from "@roomdesigner/shared";
-import { createRenderAction } from "@/server/actions/renders";
+import { requestRender } from "@/lib/request-render";
+import { useRenderPolling } from "@/components/renders/use-render-polling";
+import { RenderStatusNotice } from "@/components/renders/RenderStatusNotice";
 import { saveFavorite } from "@/lib/save-favorite";
 import { track } from "@/lib/analytics";
 import { GeneratePanel, type RestyleRequest } from "@/components/renders/generate-panel";
@@ -16,8 +18,7 @@ import type {
   RenderJobView,
   RenderOutputView,
 } from "@/components/renders/types";
-import { isTerminal } from "@/components/renders/types";
-import { STYLES, renderJobStatusSchema } from "@roomdesigner/shared";
+import { STYLES } from "@roomdesigner/shared";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
@@ -58,7 +59,6 @@ export function RenderView({
   const [altStyle, setAltStyle] = useState("scandinavian");
   const [compareOpen, setCompareOpen] = useState(false);
   const trackedSuccess = useRef<Set<string>>(new Set());
-  const attempts = useRef(0);
   const savingFavorites = useRef(new Set<string>());
 
   const current = jobs.find((job) => job.id === currentId) ?? null;
@@ -104,7 +104,7 @@ export function RenderView({
       })),
     );
 
-  const upsertJob = useCallback((incoming: RenderJobStatusResponse, label: string) => {
+  const upsertJob = useCallback((incoming: RenderJobStatusResponse) => {
     setJobs((previous) => {
       const view: RenderJobView = {
         id: incoming.id,
@@ -113,7 +113,7 @@ export function RenderView({
         errorMessage: incoming.errorMessage,
         creditsCharged: incoming.creditsCharged,
         outputs: incoming.outputs,
-        label: incoming.label ?? label,
+        label: incoming.label ?? (incoming.kind === "EDIT" ? "Edit" : "Base concept"),
         sourceOutputId: incoming.sourceOutputId ?? null,
         editTarget: incoming.editTarget,
         styleKey: incoming.styleKey,
@@ -165,7 +165,7 @@ export function RenderView({
         if (request.stagingItems.length > 0) {
           formData.set("stagingItems", JSON.stringify(request.stagingItems));
         }
-        const result = await createRenderAction({}, formData);
+        const result = await requestRender(formData);
         if (result.error !== undefined) {
           setPanelError(result.error);
           return;
@@ -180,48 +180,17 @@ export function RenderView({
     [projectId, roomId, router, startJob],
   );
 
-  useEffect(() => {
-    if (currentId === null || status === null || isTerminal(status)) return;
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    attempts.current = 0;
-
-    const tick = () => {
-      void (async () => {
-        try {
-          const response = await fetch(`/api/renders/${currentId}`, { cache: "no-store" });
-          if (response.ok) {
-            const data = renderJobStatusSchema.parse(await response.json());
-            const label =
-              data.kind === "EDIT"
-                ? "Edit"
-                : (jobs.find((job) => job.id === data.id)?.label ?? "Base concept");
-            upsertJob(data, label);
-            if (isTerminal(data.status)) {
-              if (data.status === "SUCCEEDED" && !trackedSuccess.current.has(data.id)) {
-                trackedSuccess.current.add(data.id);
-                track("render_succeeded", { kind: data.kind, images: data.outputs.length });
-              }
-              router.refresh();
-              return;
-            }
-          }
-        } catch {
-          // Network hiccup: keep polling.
-        }
-        attempts.current += 1;
-        const delay = Math.min(2000 * Math.pow(1.4, Math.max(0, attempts.current - 3)), 10_000);
-        if (!cancelled) timer = setTimeout(tick, delay);
-      })();
-    };
-
-    timer = setTimeout(tick, 2000);
-    return () => {
-      cancelled = true;
-      if (timer !== undefined) clearTimeout(timer);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- poll loop keyed by job + status
-  }, [currentId, status]);
+  const onRenderComplete = useCallback(
+    (data: RenderJobStatusResponse) => {
+      if (data.status === "SUCCEEDED" && !trackedSuccess.current.has(data.id)) {
+        trackedSuccess.current.add(data.id);
+        track("render_succeeded", { kind: data.kind, images: data.outputs.length });
+      }
+      router.refresh();
+    },
+    [router],
+  );
+  const polling = useRenderPolling(currentId, status, upsertJob, onRenderComplete);
 
   const toggleFavorite = (output: RenderOutputView) => {
     if (savingFavorites.current.has(output.id)) return;
@@ -269,7 +238,7 @@ export function RenderView({
       formData.set("instruction", instruction);
       formData.set("quality", "final");
       formData.set("variations", "1");
-      const result = await createRenderAction({}, formData);
+      const result = await requestRender(formData);
       if (result.error !== undefined) {
         setEditError(result.error);
         return;
@@ -293,6 +262,7 @@ export function RenderView({
         onCreate={submitRestyle}
       />
 
+      <RenderStatusNotice message={polling.error} onRetry={polling.retry} />
       {jobs.length > 1 && (
         <div className="flex flex-wrap gap-1.5" aria-label="Render history">
           {jobs.map((job, index) => (
@@ -300,8 +270,12 @@ export function RenderView({
               key={job.id}
               type="button"
               onClick={() => {
+                if (editPending) return;
                 setCurrentId(job.id);
+                setEditingOutputId(null);
+                setEditError(null);
               }}
+              disabled={editPending}
               aria-pressed={job.id === currentId}
               className={`max-w-[14rem] truncate rounded-full border px-3 py-1 text-xs ${
                 job.id === currentId

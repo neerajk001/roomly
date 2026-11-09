@@ -1,34 +1,41 @@
-# V4 — Pro Mode: summary for review
+# Pro mode — current implementation summary
+
+Updated 2026-11-09. This replaces the early V4 snapshot whose gaps were completed
+in later core-flow batches. See [project status](project-status.md) and the unchanged
+[V4 review checklist](spec/phases/v4-pro-mode.md) for outstanding acceptance gates.
 
 ## What works
-- **Studio profile** (`/studio/settings`): name, brand colour, currency, units, contact email/phone,
-  default proposal terms, logo upload (PNG/JPEG/WebP ≤2 MB, kind=LOGO, EXIF stripped).
-- **Clients**: CRUD with search + soft delete, detail page with projects, brief-link count, attach a
-  client when creating a studio project.
-- **Brief links**: per-client links with expiry, copy, status; public `/brief/[token]` with branded
-  header, questions, style picks, budget/timeline, up to 8 token-scoped photo uploads, honeypot and
-  rate limits; submission creates project + room + assets + `BriefSubmission`, closes the link and
-  emails the designer. Verified end-to-end with a debug client.
-- **Rate cards**: seeded "Starter rates (edit me)" card, list + editor (name, markup/tax %, item
-  label/category/unit/price, add/remove), all-or-nothing validation, CSV export and import with
-  row-level errors.
-- **Estimate builder** (`room → Build estimate`, studio): auto-fill from scope + default card,
-  editable lines, live totals via `recompute`, save creates versions, history shown.
-- **Proposals**: builder with title/intro/terms/expiry, estimate version, up to 4 pinned favorite
-  renders with captions; send → SENT + client email with public link; **PDF** generated on demand
-  with @react-pdf/renderer and stored in S3; Proposals panel shows status, comments, PDF state.
-- **Public approval** `/p/[token]`: branded, noindex/no-referrer, options gallery, estimate
-  accordion, terms, PDF download; first view → VIEWED; approve records name/time/option and closes;
-  request changes records a client comment + CHANGES_REQUESTED; expired/invalid tokens handled;
-  IP/token rate limits.
-- **Dashboard**: `/studio` shows proposal pipeline counts (Draft/Sent/Viewed/Approved/Changes).
-- **Tests**: 24 web tests incl. proposal state machine (double-send, invalid option, approved lock,
-  expired rejection, comments) and CSV parsing; typecheck/lint/build green.
 
-## Gaps / deviations (logged in DECISIONS.md)
-- PDF is generated on demand in the web app (not a worker job) and contains text + estimate only —
-  option thumbnails are not embedded.
-- Imperial rate-card display, multi-room estimate summary totals, and an explicit read-only lock on
-  estimates referenced by sent proposals are still open (new versions are inherently immutable).
-- No PDF snapshot test and no Playwright designer→brief→estimate→send→approval workflow yet.
-- CI on GitHub still unverified (no remote). G2 fidelity still needs 5 photos.
+- Studio profile: name, brand color, units, currency, contacts, terms and validated
+  logo upload. Pro results omit the free-workspace platform watermark.
+- Clients: scoped CRUD/search/soft deletion, linked projects and brief links.
+- Public briefs: branded token link, expiration/rate limits/honeypot, multiple
+  photo uploads and validated answers. Submission creates the project/room/assets;
+  the designer can use those photos for generation.
+- Rate cards: editable starter placeholders, grouped/reorderable responsive lines,
+  units and metric/imperial display, exact integer money parsing, multiple cards and
+  default selection, CSV import/export with row errors and no partial writes.
+- Estimates: measurements/opening deductions through the shared engine, editable
+  scope/lines, safe totals, concurrent version allocation, saved-version reopening,
+  preservation of sent estimates and latest-per-room project summaries.
+- Proposals: editable drafts with stale-write checks; explicit revisions; frozen
+  sent content/branding/estimate/options; image-bearing branded PDFs generated on
+  demand in the web app; public preview/download/approval/change requests; durable
+  notification outbox handled by the worker with idempotent delivery.
+- Studio dashboard/project tabs expose rooms, renders, estimates, proposals and
+  activity. Client approval closes the proposal with the chosen option/name/time.
+- Shared guided-design batches provide selected-style/direction metadata, contrast
+  and bounded similarity retry, selected-concept suggestions, independent text and
+  area targets, protected masked edits and concept-family history in Pro too.
+
+## Verification and open review
+
+Automated coverage includes tenant isolation, rate-card validation, estimate math
+and versioning, proposal state transitions/snapshots/notifications, PDF branding,
+estimate text and concept pages. Playwright covers designer → public uploaded brief
+→ generation → estimate → PDF → anonymous approval, including mobile area controls.
+
+These checks use fake/mocked providers. The V4 Definition of Done remains open for
+real-provider manual fidelity/workflow testing, unaided completion timing and CI
+evidence. There is no claim that the application is production-approved. Billing,
+invoicing, team seats and contractor handoff remain outside this delivery.

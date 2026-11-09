@@ -19,6 +19,7 @@ env:
   AUTH_REQUIRE_EMAIL_VERIFICATION: "false"
   DEV_AUTH_BYPASS: "false"
   IMAGE_PROVIDER: fake
+  ADVICE_PROVIDER: fake
   EMAIL_PROVIDER: console
   # MinIO started below for upload/render tests.
   S3_ENDPOINT: http://localhost:9000
@@ -75,11 +76,9 @@ jobs:
         run: pnpm lint
 
       - name: Unit and integration tests
-        # Vitest 5 shares node_modules/.vitest-cache between workspace packages;
-        # running file parallelism disabled (files run serially per package)
-        # avoids a cache-cleanup race on agents. `--concurrency` was removed
-        # as a CLI flag in Vitest 5.
-        run: pnpm test -- --no-file-parallelism
+        # Root test script serializes Turbo package tasks to avoid the shared
+        # Vitest cache-cleanup race. This is Turbo concurrency, not a Vitest flag.
+        run: pnpm test
 
       - name: Start MinIO for upload tests
         run: |

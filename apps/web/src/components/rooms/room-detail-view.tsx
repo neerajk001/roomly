@@ -167,6 +167,7 @@ export async function RoomDetailView({
     return (
       <div className="space-y-6">
         <HomeRoomResults
+          key={detail.room.id}
           roomId={detail.room.id}
           projectId={projectId}
           roomLabel={roomLabel}
@@ -235,6 +236,7 @@ export async function RoomDetailView({
           Generate concepts
         </h2>
         <RenderView
+          key={detail.room.id}
           roomId={detail.room.id}
           projectId={projectId}
           hasPhoto={photos.length > 0}

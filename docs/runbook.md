@@ -4,20 +4,23 @@
 
 | Component | Where | Notes |
 |---|---|---|
-| TLS / reverse proxy | **Caddy** on the Hostinger VPS | Automatic HTTPS, HTTP→HTTPS redirect, proxies to `web:3000`. |
+| TLS / reverse proxy | **Host Nginx** on the Hostinger VPS | Existing HTTPS configuration proxies to `127.0.0.1:3000`. |
 | Web (UI, server actions, API routes) | **Hostinger VPS**, Docker | `apps/web/Dockerfile`, `docker-compose.prod.yml` service `web`. |
 | Worker (pg-boss render jobs) | **Hostinger VPS**, Docker | `apps/worker/Dockerfile`, service `worker`. |
-| Database | **Neon Postgres** | Pooled URL for the web runtime; direct URL for the worker, migrations and pg-boss. |
+| Database | **Neon Postgres** | Current VPS env uses a direct URL for web, worker, migrations and pg-boss. |
 | Storage | **Cloudinary** | Signed browser uploads, private assets, expiring signed delivery URLs. MinIO/S3 is local/CI only. |
 | Email | **Resend** | OTP codes; `EMAIL_PROVIDER=resend`. |
 | Auth | **Better Auth** | Google social sign-in + email OTP only. Passwords and reset/verification links are disabled. |
 
-The whole application runs on the VPS. Caddy is the only public entry point;
-the web, worker and health ports are internal to the Docker network.
+This runbook matches the checked-in Compose topology: host Nginx is the public
+entry point, web is published on loopback only, and worker health is internal.
+There is no `caddy` Compose service. `deploy/Caddyfile` is retained legacy config
+and is not loaded by the current stack. Verify the actual host TLS/proxy setup
+before a release; this document is not evidence of a successful deployment.
 
 ## Environments
 
-| Env | Web + worker | Caddy | DB | Storage | Provider |
+| Env | Web + worker | Host proxy | DB | Storage | Provider |
 |---|---|---|---|---|---|
 | local | localhost:3001 + local tsx | — | docker :5434 | MinIO (`STORAGE_PROVIDER=s3`) | fake |
 | staging | VPS staging stack | staging domain | Neon staging | Cloudinary staging | fake |
@@ -46,6 +49,27 @@ Rules:
 - Every new variable must be added to `.env.example`, the zod schema in
   `packages/config/src/env.ts` and `turbo.json`'s `globalEnv`.
 
+### Concept suggestions and object detection
+
+`ADVICE_PROVIDER=fake` is the default and is labelled as preference-based demo
+advice. It performs no object detection; manual area editing remains available.
+Enable real analysis only with `ADVICE_PROVIDER=openai`, `OPENAI_API_KEY` and an
+explicit `OPENAI_ADVICE_MODEL` supporting images and structured output. Missing
+required real-provider configuration fails validation. Keep tests/staging fake
+until the separate G2 quality review authorizes a real run.
+
+`ADVICE_CALL_BUDGET_MICROS=250000` reserves a conservative allowance per attempted
+analysis call, including failures. It is not exact usage pricing or a hard cap
+at the provider. Per-day advice allowances and render costs share the daily spend
+guard. Advice is cached per output/provider with at most two attempts; older
+cached advice without object bounds uses manual selection. See the
+[pipeline](spec/04-ai-pipeline.md) and [project status](project-status.md).
+
+Local `pnpm dev` uses port 3001; the local env template's app/auth URLs match it.
+Production uses HTTPS URLs and container port 3000 behind host Nginx. The root
+test command serializes package tasks; CI explicitly uses fake image and advice
+providers. Browser tests start their isolated server on 3100.
+
 ## Auth and email setup
 
 - Google Cloud OAuth client, authorised redirect URI:
@@ -67,7 +91,9 @@ Rules:
    ```
    This installs Docker, enables unattended updates, fail2ban and opens SSH,
    80/tcp, 443/tcp and 443/udp.
-4. Point the domain's DNS A/AAAA record at the VPS **before** starting Caddy.
+4. Point the domain's DNS A/AAAA record at the VPS. Configure host Nginx and its
+   TLS certificate to proxy HTTPS to `127.0.0.1:3000`; the bootstrap script installs
+   Docker/firewall prerequisites and does not provision Nginx or certificates.
 5. Copy the deployment files:
    ```bash
    sudo mkdir -p /opt/roomdesigner
@@ -109,7 +135,7 @@ Optionally set repository variables `WEB_PLATFORM` / `WORKER_PLATFORM`
 1. Build and push `roomdesigner-web` and `roomdesigner-worker` to GHCR.
 2. Run `prisma migrate deploy` against `NEON_DIRECT_DATABASE_URL`.
 3. SSH to the VPS, pull the exact git SHA and run
-   `docker compose up -d --wait` for `web`, `worker` and `caddy`.
+   `docker compose up -d --wait` for `web` and `worker`.
    The web healthcheck (`/api/health`) gates the deploy.
 4. Optionally poll `PRODUCTION_URL/api/health` after the stack is healthy.
 
@@ -124,10 +150,10 @@ cd /opt/roomdesigner
 export GHCR_OWNER=<your-github-owner>
 export IMAGE_TAG=<git-sha>
 docker compose --env-file .env.production -f docker-compose.prod.yml pull web worker
-docker compose --env-file .env.production -f docker-compose.prod.yml up -d --remove-orphans --wait --wait-timeout 180 web worker caddy
 
-# Migrations (manual)
+# Apply additive migrations before starting the new app version.
 docker compose --env-file .env.production -f docker-compose.prod.yml --profile tools run --rm migrate
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d --remove-orphans --wait --wait-timeout 180 web worker
 ```
 
 ## Rollback
@@ -140,17 +166,13 @@ docker compose --env-file .env.production -f docker-compose.prod.yml --profile t
 - **Database**: migrations must be backward compatible. Restore from Neon PITR
   only for destructive failures; record the incident in `DECISIONS.md`.
 
-## Web and Caddy operations
+## Web and host proxy operations
 
 - Web logs: `docker compose --env-file .env.production -f docker-compose.prod.yml logs -f web`.
 - Web health: `GET http://127.0.0.1:3000/api/health` inside the container.
-- Caddy logs: `docker compose --env-file .env.production -f docker-compose.prod.yml logs -f caddy`.
-- Caddy auto-renews TLS certificates. Its state lives in the `caddy-data`
-  volume; do not delete it unless you intentionally want new certificates.
-- After changing `deploy/Caddyfile`, reload with:
-  ```bash
-  docker compose --env-file .env.production -f docker-compose.prod.yml exec caddy caddy reload --config /etc/caddy/Caddyfile
-  ```
+- Nginx logs, configuration and certificate renewal are managed on the host,
+  outside Compose. Validate the host configuration before reloading it.
+- Image rollback changes only web/worker images, not host TLS/proxy settings.
 - Verify `https://<DOMAIN>/api/health` returns `{"ok":true}` after every deploy.
 
 ## Worker operations

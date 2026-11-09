@@ -1,34 +1,43 @@
-# V3 — Home Mode: summary for review
+# Home mode — current implementation summary
+
+Updated 2026-11-09. See [project status](project-status.md) for the combined
+Home/Pro implementation and open review gates. Test evidence for each guided-design
+delivery is retained in its [batch report](design/README.md).
 
 ## What works
-- **Guided wizard** `/app/new`: photos → room (+"use typical sizes") → keep-list chips → renter mode →
-  optional budget → 6-pair style quiz with tag-based recommendations (or skip) → confirm. Progress
-  bar, back button, draft survives refresh; one submit creates the project, room, illustrative rate
-  card, persisted estimate, uploads photos, starts a 3-concept draft render and lands on the room.
-- **Results**: 3–4 concepts with favorites, download, lightbox, chat edit with example chips,
-  before/after slider, "try another style", compare two favorites, history strip, disclaimer.
-- **Cost range**: illustrative ±20% range from the pure estimate engine; category toggles recompute
-  instantly client-side; "what to change first" ranking with budget fit/over; shopping list
-  (checkable, copy, print) with sizes derived from the room.
-- **Share & votes**: share link (favorites-only or all), copy/regenerate/revoke, public
-  `/share/[token]` gallery (no login, noindex, no-referrer), one vote per image per browser +
-  IP/token rate limit, owner sees counts.
-- **Free tier**: free workspaces get a watermark applied at delivery (preview + download); stored
-  originals stay clean; `/pricing` stub and a "get more credits" dialog.
-- **Analytics**: privacy-friendly beacon events (`wizard_started/completed`, `render_requested/succeeded`,
-  `estimate_viewed`, `share_created`).
-- **Tests**: 15 estimate/shared unit tests, 15 web integration tests (isolation, rooms, estimates,
-  share), 9 storage tests (images + watermark), worker tests; 5 Playwright E2E including
-  wizard → render → favorite → share link → anonymous vote. typecheck/lint/test/test:e2e/build green.
 
-## Not done / caveats
-- CI on GitHub still unverified (no remote).
-- G2 fidelity report still needs 5 real photos in `fixtures/rooms/`.
-- Polling and analytics are simple implementations; rate limit is in-memory (single process) until V6.
-- Style quiz uses palette swatches instead of style photos (artwork pending).
-- Chat-edit history is per room (last 10 jobs), not a full audit trail.
+- The seven-step /app/new flow covers photos, room details/typical-size help,
+  keep-items, renter restrictions, design tradition and room-specific looks,
+  optional budget, then review and extra notes. It uses 25 distinct photographic
+  style atlases rather than repeated placeholder photos. Budget tier and custom
+  amount are optional. Validated non-file preferences survive refresh.
+- Every selected style maps to an output. Contrasting auto-picks and creative
+  directions make alternatives more distinct; heuristic near-copy detection can
+  replace one slot once, with honest remaining-similarity feedback.
+- Results include remembered concept selection, favorites, download, lightbox,
+  before/after comparison, style changes and concept-family version history.
+  The editor identifies its exact source; text drafts and area targets remain
+  separate per image while the page is open.
+- On-demand suggestions can prefill an edit, without generating automatically.
+  Optional object/area selection supports approximate detected boxes or manual
+  pointer/touch/keyboard controls. Masked edits preserve the stored source outside
+  the reviewed rectangle and retain keep-items/renter/notes/budget context.
+- Estimate ranges, category scope, priorities and shopping lists use entered room
+  measurements and the shared estimate engine, not dimensions or prices from pixels.
+- Share links support favorites/all outputs, regeneration/revocation and anonymous
+  voting. Free-workspace watermarks are applied at delivery, preserving originals.
+- Submission errors retain the draft and do not automatically retry mutations.
+  Status polling is bounded/cancellable with a read-only recovery action. Room
+  navigation resets client editing state. Core UI works at 375px width.
 
-## Deviations (all logged in `DECISIONS.md`)
-Votes via cookie + in-memory limiter (no votes table), watermark at delivery via route handler,
-`shareShowFavorites` column added, wizard persists drafts in localStorage (photos must be re-picked),
-"typical size" fallback for estimates, checklist shopping list is client-side only.
+## Limits and remaining review
+
+- Default demo suggestions do not analyze images or detect objects. Real vision
+  requires explicit provider/model configuration and G2 manual quality review.
+- Similarity checks are heuristic. Rectangles are not precise segmentation;
+  masked edits can leave seams. No freehand brush, retailer catalog, layout engine,
+  exact-price claim or construction guarantee is implemented.
+- Files must be reselected after wizard refresh. Result edit text/area drafts are
+  in memory; only concept selection persists across result-page reloads.
+- Real-provider fidelity, CI/release evidence and manual usability timing remain
+  the open phase review gates. Billing is excluded from this work.

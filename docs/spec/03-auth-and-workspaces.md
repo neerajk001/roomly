@@ -2,6 +2,12 @@
 
 Library: **Better Auth** with the Prisma adapter (PostgreSQL). Package: `packages/auth`.
 
+**Implementation update:** current sign-in uses email OTP and Google OAuth.
+Password, reset and verification-link flows in the original V1 outline below are
+historical design examples, not enabled routes. OTP sign-in verifies the email.
+Use the current server code and [project status](../project-status.md) when making
+changes; workspace scoping rules below still apply.
+
 > Read the current Better Auth docs before implementing: installation, Prisma adapter, CLI schema generation, Next.js integration, email/password, social providers, additional user fields, and database hooks. Snippets below are guides only.
 
 ## Capabilities for V1

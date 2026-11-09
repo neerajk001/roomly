@@ -1,5 +1,9 @@
 # DECISIONS.md
 
+This is a chronological decision log. Statements such as "pending" or "unstarted"
+in older entries describe that date; later entries supersede them. Use
+[project status](docs/project-status.md) for the current consolidated state.
+
 Format: date, decision, reason.
 
 ## 2026-10-28 — Repo location
@@ -719,3 +723,27 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
 - The initial parallel Vitest run encountered a Windows shared-cache startup collision. Validation is rerun sequentially with `pnpm test --concurrency=1`; typecheck and lint still run across all packages.
 - Batch 4 validation complete: typecheck and lint pass in all 11 packages; the full sequential test run passes, including 66 web, 17 worker, 21 AI, 25 shared and 19 storage tests. Both Home/Pro browser journeys pass at mobile width, including drawing/keyboard bounds, per-concept selection, exact submitted region/source, reset and the existing Pro approval flow. Screenshots reviewed and two browser-test accounts cleaned up.
 - Targeted calls use automatic sizing from the normalized image and store its original pixel dimensions. Mask and worker tests confirm transparency alignment and outside-pixel preservation in lossless PNG output. No paid calls or default model changes were made; G2 real detection and boundary-quality review remains open. Stop after this batch for human review.
+
+## 2026-11-09 — Guided design batch 5 plan
+
+- User confirmed batch 5 means core-flow bug fixes, reliability and final UX testing; exclude billing.
+- Treat this as one integrated stabilization/documentation task within the current phase.
+- Add bounded, cancellable status polling shared by Home and Pro, with a visible status-only retry.
+- Validate polled job IDs and responses; ignore responses after switching jobs or leaving the page.
+- Catch unconfirmed generation/edit submissions without clearing drafts or automatically retrying mutations.
+- Close old edit composers when changing design sets and prevent switching during an edit submission.
+- Reset room-specific client state on room navigation rather than carrying old jobs/drafts into another room.
+- Pass advice provider/model/accounting settings through Turborepo strict env and production examples.
+- Make the test command serialize package tasks to avoid the observed shared Vitest cache race.
+- Reconcile README, architecture/pipeline docs, summaries, batch reports and runbook with actual code.
+- Add one current project-status page and guided-design index; preserve dated decisions as history.
+- Correct deployment instructions to the existing host-Nginx Compose topology without changing hosting or deploying.
+- Keep outstanding G2 fidelity, manual usability and production checks open; do not claim release readiness.
+- Add network/polling tests and verify recovery in the real mobile browser journey with fake providers.
+- Run typecheck, lint, tests, full browser regression and production build; record results, commit and stop.
+- Batch 5 complete: Home/Pro now share bounded cancellable status reads, reject wrong-job payloads, expose status-only recovery and retain drafts on unconfirmed mutation responses without automatic resubmission. Pro history changes close old editors, edit submissions disable history switching, and room keys reset room-specific client state.
+- Fixed advice env propagation through Turbo strict mode, added production advice examples, aligned local app/auth examples with dev port 3001, and serialized root test package execution. CI uses the same command and explicitly keeps both providers fake.
+- Reconciled README, architecture/auth/pipeline notes, security inventory, Home/Pro summaries, old batch reports and runbook. Added docs/project-status.md and docs/design/README.md as current entry points. Historical decisions/early summaries are explicitly labelled; phase files and unresolved acceptance gates remain unchanged.
+- Deployment docs and rollback targets now match the existing host-Nginx web/worker Compose file. Bootstrap text accurately describes prerequisites and separate host proxy/TLS setup; no host configuration or deployment was performed.
+- Verification: all 11 packages pass typecheck/lint/tests (73 web tests); all six Playwright journeys pass, including five injected status failures followed by read-only recovery, targeted Home edits and Pro approval. Production build passes with fake providers. Mobile screenshots reviewed; five E2E accounts/workspaces cleaned up; changed Markdown links, env-template coverage, shell syntax and diff checks pass.
+- Real-model quality/fidelity, detection/boundary review, manual V4 usability timing and CI/live-release evidence remain pending. No billing, new imagery, paid call, model selection or migration was included. Stop after committing for human review.

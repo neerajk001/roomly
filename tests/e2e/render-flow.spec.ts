@@ -50,12 +50,28 @@ test("full render flow: project, room, photo, 3 concepts, favorite, chat edit", 
   await expect(page.getByAltText("Room photo")).toBeVisible({ timeout: 30_000 });
 
   // Generate 3 concepts
+  let failedStatusReads = 0;
+  await page.route("**/api/renders/*", async (route) => {
+    if (route.request().method() === "GET" && failedStatusReads < 5) {
+      failedStatusReads++;
+      await route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "Temporary status outage" }),
+      });
+    } else await route.continue();
+  });
   const baseCompleted = waitForCompletedRender(page);
   await page.getByRole("button", { name: "Generate 3 concepts" }).click();
   // Loading copy uses three ASCII dots ("Generating concepts..."); match loosely
   // so a typographic ellipsis in the UI does not break the test. `.first()`
   // because the status chip and the panel both show it.
   await expect(page.getByText(/Generating concepts/).first()).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("button", { name: "Check status again", exact: true })).toBeVisible({
+    timeout: 45_000,
+  });
+  expect(failedStatusReads).toBe(5);
+  await page.getByRole("button", { name: "Check status again", exact: true }).click();
   await expect(page.getByAltText("Concept 1")).toBeVisible({ timeout: 90_000 });
   await expect(page.getByAltText("Concept 3")).toBeVisible();
   await expect(

@@ -11,7 +11,7 @@
 | Database | **PostgreSQL** |
 | ORM | **Prisma** |
 | Job queue | pg-boss (queue stored in the same Postgres; no Redis needed) |
-| Object storage | S3-compatible (Cloudflare R2 recommended; MinIO locally) via AWS SDK v3 |
+| Object storage | Cloudinary in production; S3-compatible/MinIO for local and CI |
 | Image processing | sharp |
 | AI images | `ImageProvider` abstraction. Providers: `fake` (dev/tests), `openai` first. Others later |
 | PDF | @react-pdf/renderer |
@@ -32,7 +32,7 @@ room-designer/
 ├─ docs/spec/                 # these files
 ├─ apps/
 │  ├─ web/                    # Next.js: UI, server actions, route handlers, public pages
-│  └─ worker/                 # Node process: render jobs, PDF jobs, cleanup jobs
+│  └─ worker/                 # Node process: renders, cleanup, proposal notification outbox
 ├─ packages/
 │  ├─ config/                 # tsconfig.base, eslint config, env schema (zod)
 │  ├─ db/                     # prisma/schema.prisma, client singleton, seed
@@ -40,7 +40,7 @@ room-designer/
 │  ├─ shared/                 # zod schemas, constants (styles, plans, credit costs), types
 │  ├─ estimate/               # PURE estimate engine + tests (no IO)
 │  ├─ ai/                     # ImageProvider, prompts, pricing table, fake + openai providers
-│  ├─ storage/                # S3 client, presign helpers, sharp pipeline, watermark
+│  ├─ storage/                # Cloudinary/S3, signed upload/delivery, sharp, watermark, edit masks
 │  ├─ pdf/                    # proposal PDF components (react-pdf)
 │  └─ billing/                # BillingProvider interface + implementation (V5)
 ├─ docker-compose.yml         # postgres, minio, mailpit
@@ -62,34 +62,40 @@ room-designer/
 ```
 Browser ──► apps/web (Next.js) ──► Postgres (Prisma)
    │             │                      ▲
-   │             ├─ presigned URL ─► S3/R2
+   │             ├─ signed upload ─► Cloudinary/S3
    │             └─ enqueue (pg-boss) ──┤
    │                                    ▼
-   └── polls /api/renders/:id    apps/worker ──► ImageProvider ──► S3/R2
+   └── polls /api/renders/:id    apps/worker ──► ImageProvider ──► Cloudinary/S3
 ```
 
-- The web app never calls the image provider directly. It reserves credits, creates a `RenderJob`, and enqueues it.
+- Image generation runs only in the worker. The web app reserves credits, creates
+  a `RenderJob`, and enqueues it. On-demand text/vision analysis runs in the web
+  advice service with its own timeout, cache and spend allowance; it cannot create
+  a render automatically. Proposal PDFs are generated on demand in the web app.
 - The worker owns calls to the provider, image post-processing and refunds.
 - Public pages (`/p/[token]`, `/brief/[token]`, `/share/[token]`) are route handlers/pages that look up by token only. They have no session.
 
 ## Environment variables
 
-All parsed in `packages/config/env.ts` with zod. Server and client schemas are separate.
+All parsed in `packages/config/src/env.ts` with zod. Server and client schemas are
+separate. `.env.example` is the complete local template; production values are in
+`deploy/.env.production.example`. Runtime variables also belong in `turbo.json`.
 
 ```
 # core
-APP_URL=http://localhost:3000
+APP_URL=http://localhost:3001
 NODE_ENV=development
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/roomdesigner
+DATABASE_URL=postgresql://postgres:postgres@localhost:5434/roomdesigner
 
 # auth
 BETTER_AUTH_SECRET=
-BETTER_AUTH_URL=http://localhost:3000
+BETTER_AUTH_URL=http://localhost:3001
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 AUTH_REQUIRE_EMAIL_VERIFICATION=true   # false only in tests/dev
 
 # storage
+STORAGE_PROVIDER=s3                    # cloudinary in production
 S3_ENDPOINT=http://localhost:9000
 S3_REGION=auto
 S3_BUCKET=roomdesigner
@@ -101,6 +107,9 @@ S3_PUBLIC_BASE_URL=                    # optional CDN base for public assets
 IMAGE_PROVIDER=fake                    # fake | openai
 OPENAI_API_KEY=
 OPENAI_IMAGE_MODEL=                    # check current model id in provider docs
+ADVICE_PROVIDER=fake                   # preference-based demo; no object detection
+OPENAI_ADVICE_MODEL=                   # explicitly chosen vision/structured-output model
+ADVICE_CALL_BUDGET_MICROS=250000        # conservative allowance, not a provider cap
 MAX_DAILY_SPEND_USD=5
 SIGNUP_FREE_CREDITS=3
 

@@ -1,5 +1,9 @@
 # V1 — Foundation: summary for review
 
+Historical phase-completion snapshot. Features, counts and open items below describe
+that review point, not current status. See [current project status](project-status.md)
+for the delivered guided flow, current auth and remaining review gates.
+
 Date: 2026-10-28 · Commits: `b7f2bb6` (tooling), `1e298f0` (database),
 `c7ccdaf` (auth), `086d938` (onboarding/shells), test commit.
 

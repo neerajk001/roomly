@@ -1,5 +1,8 @@
 # Guided design — batch 2
 
+Completed batch report. For the current combined implementation and open review
+items, see [project status](../project-status.md) and the [batch index](README.md).
+
 - [x] Contrasting style selection and explicit per-concept creative directions.
 - [x] Conservative image similarity detection and one bounded replacement attempt.
 - [x] Persisted retry budget, spend checks and accounting for discarded images.

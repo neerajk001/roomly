@@ -1,5 +1,8 @@
 # Guided design — batch 1
 
+Completed batch report. For the current combined implementation and open review
+items, see [project status](../project-status.md) and the [batch index](README.md).
+
 - [x] Design-tradition catalog with stable legacy style keys.
 - [x] Distinct photographic previews for the selected room type.
 - [x] Tradition → style → optional budget → review flow.
@@ -7,8 +10,8 @@
 - [x] Preference persistence and backward-compatible existing jobs.
 - [x] Validation, worker regression tests and mobile/browser verification.
 
-Later batches retain responsibility for stronger concept diversity and duplicate
-scoring, image-specific recommendations, object detection and masked editing.
+Diversity, image-specific suggestions and object/area editing were delivered in
+batches 2–4; they are outside this batch 1 report.
 
 ## Built
 
@@ -39,9 +42,8 @@ Existing landing-page before/after assets are retained.
 
 ## Review boundary
 
-This completes only batch 1. Stronger diversity planning and duplicate detection,
-image-specific recommendations, object selection and masked edits remain for later
-batches. Real-provider fidelity still needs the existing G2 review; automated
+This report covers batch 1. Diversity planning, similarity checks, suggestions
+and object/area editing are documented in the completed batch 2–4 reports. Real-provider fidelity still needs the existing G2 review; automated
 generation checks use the fake provider.
 
 ## Validation
@@ -54,4 +56,4 @@ generation checks use the fake provider.
   labels, favorites, sharing and anonymous voting.
 - Reviewed mobile style-selection and desktop review screenshots. Verified 25
   distinct 1200 × 1200 WebP atlases; no landing assets were replaced.
-- No new environment variables or dependencies. Batch 2 has not started.
+- No new environment variables or dependencies. Batch 2 is complete; see its report.

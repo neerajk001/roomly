@@ -5,15 +5,16 @@ import { useConceptSelection } from "@/components/renders/use-concept-selection"
 import { ConceptAdvicePanel } from "@/components/renders/ConceptAdvicePanel";
 import { ConceptEditHistory } from "@/components/renders/ConceptEditHistory";
 import type { ConceptAdvice, EditTarget } from "@roomdesigner/shared";
-import { createRenderAction } from "@/server/actions/renders";
+import { requestRender } from "@/lib/request-render";
+import { useRenderPolling } from "@/components/renders/use-render-polling";
+import { RenderStatusNotice } from "@/components/renders/RenderStatusNotice";
 import { saveFavorite } from "@/lib/save-favorite";
 import type {
   RenderJobStatusResponse,
   RenderJobView,
   RenderOutputView,
 } from "@/components/renders/types";
-import { isTerminal } from "@/components/renders/types";
-import { formatMoney, getStyle, renderJobStatusSchema } from "@roomdesigner/shared";
+import { formatMoney, getStyle } from "@roomdesigner/shared";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
@@ -79,7 +80,6 @@ export function HomeRoomResults({
   const [clip, setClip] = useState(50);
   const [createPending, startCreate] = useTransition();
   const [editPending, startEdit] = useTransition();
-  const attempts = useRef(0);
   const savingFavorites = useRef(new Set<string>());
 
   const current = jobs.find((job) => job.id === currentId) ?? null;
@@ -125,7 +125,7 @@ export function HomeRoomResults({
       })),
     );
 
-  const upsertJob = useCallback((incoming: RenderJobStatusResponse, label: string) => {
+  const upsertJob = useCallback((incoming: RenderJobStatusResponse) => {
     setJobs((previous) => {
       const view: RenderJobView = {
         id: incoming.id,
@@ -134,7 +134,7 @@ export function HomeRoomResults({
         errorMessage: incoming.errorMessage,
         creditsCharged: incoming.creditsCharged,
         outputs: incoming.outputs,
-        label: incoming.label ?? label,
+        label: incoming.label ?? (incoming.kind === "EDIT" ? "Edit" : "Base concept"),
         sourceOutputId: incoming.sourceOutputId ?? null,
         editTarget: incoming.editTarget,
         styleKey: incoming.styleKey,
@@ -170,39 +170,10 @@ export function HomeRoomResults({
     [],
   );
 
-  useEffect(() => {
-    if (currentId === null || status === null || isTerminal(status)) return;
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    attempts.current = 0;
-
-    const tick = () => {
-      void (async () => {
-        try {
-          const response = await fetch(`/api/renders/${currentId}`, { cache: "no-store" });
-          if (response.ok) {
-            const data = renderJobStatusSchema.parse(await response.json());
-            upsertJob(data, data.kind === "EDIT" ? "Edit" : "Base concept");
-            if (isTerminal(data.status)) {
-              router.refresh();
-              return;
-            }
-          }
-        } catch {
-          // Keep polling through network hiccups.
-        }
-        attempts.current += 1;
-        const delay = Math.min(2000 * Math.pow(1.4, Math.max(0, attempts.current - 3)), 10_000);
-        if (!cancelled) timer = setTimeout(tick, delay);
-      })();
-    };
-
-    timer = setTimeout(tick, 2000);
-    return () => {
-      cancelled = true;
-      if (timer !== undefined) clearTimeout(timer);
-    };
-  }, [currentId, status, upsertJob, router]);
+  const onRenderComplete = useCallback(() => {
+    router.refresh();
+  }, [router]);
+  const polling = useRenderPolling(currentId, status, upsertJob, onRenderComplete);
 
   const toggleFavorite = (output: RenderOutputView) => {
     if (savingFavorites.current.has(output.id)) return;
@@ -253,7 +224,7 @@ export function HomeRoomResults({
         formData.set("quality", input.quality);
         formData.set("variations", String(input.variations));
         if (input.notes.trim() !== "") formData.set("notes", input.notes);
-        const result = await createRenderAction({}, formData);
+        const result = await requestRender(formData);
         if (result.error !== undefined) {
           setPanelError(result.error);
           return;
@@ -281,7 +252,7 @@ export function HomeRoomResults({
       formData.set("instruction", instruction);
       formData.set("quality", "final");
       formData.set("variations", "1");
-      const result = await createRenderAction({}, formData);
+      const result = await requestRender(formData);
       if (result.error !== undefined) {
         setEditError(result.error);
         return;
@@ -403,6 +374,7 @@ export function HomeRoomResults({
         <label className="block max-w-md space-y-2 text-sm font-medium">
           Design history
           <select
+            disabled={editPending}
             value={currentId ?? ""}
             onChange={(event) => {
               setCurrentId(event.target.value);
@@ -422,6 +394,7 @@ export function HomeRoomResults({
         </label>
       )}
 
+      <RenderStatusNotice message={polling.error} onRetry={polling.retry} />
       {panelError !== null && (
         <p role="alert" className="border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
           {panelError}

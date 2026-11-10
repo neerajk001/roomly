@@ -19,6 +19,7 @@ import {
 } from "@roomdesigner/storage";
 import { getServerEnv } from "@roomdesigner/config/env";
 import {
+  editTargetRegions,
   BUDGET_TIERS,
   conceptDirectionFor,
   getStyle,
@@ -155,7 +156,7 @@ export async function processRenderJob(
     const prompt = prompts[0] ?? buildPromptForJob(job, params.data);
     const source = await deps.download(job.sourceAsset.storageKey);
     const targeted = params.data.editTarget
-      ? await prepareMaskedEdit(source, params.data.editTarget.region)
+      ? await prepareMaskedEdit(source, editTargetRegions(params.data.editTarget))
       : null;
 
     // One call per variation with a distinct emphasis: a single n=4 call
@@ -245,7 +246,11 @@ export async function processRenderJob(
     for (const image of result.images) {
       const web = params.data.editTarget
         ? {
-            data: await compositeSelectedArea(source, image.data, params.data.editTarget.region),
+            data: await compositeSelectedArea(
+              source,
+              image.data,
+              editTargetRegions(params.data.editTarget),
+            ),
             mime: "image/png",
           }
         : await makeWebVersion(image.data, webPreviewMaxPx());
@@ -335,7 +340,7 @@ function buildPromptForJob(
         : []),
       ...(params.editTarget
         ? [
-            `Edit only the selected masked area (${JSON.stringify(params.editTarget.label)}). The rest of the image is protected. Keep the target's position and scale unless explicitly asked otherwise.`,
+            `Edit only the selected masked area (${JSON.stringify(params.editTarget.label)}). The mask contains all selected rectangles. Edit those regions only, including separate selected parts; gaps between them and the rest of the image are protected. Keep positions and scale unless explicitly asked otherwise.`,
           ]
         : []),
       ...(params.notes ? [`Original room notes: ${params.notes}`] : []),

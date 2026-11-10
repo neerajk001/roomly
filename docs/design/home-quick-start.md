@@ -39,7 +39,11 @@ these preferences continue to work. Existing Pro staging controls remain separat
 
 The screen retains validated non-file preferences locally, prevents duplicate
 submissions and links to the saved room if upload/generation cannot be confirmed.
-No file or arbitrary free text is retained in local storage.
+No file is retained in local storage. The later
+[selected-area follow-up](selected-area-analysis.md) adds a voluntary custom
+request (up to 300 characters) beside the checklist. It is retained with the
+non-file draft, saved to project notes and passed to generation context. Blank
+input adds no required step.
 
 Browser checks use a separate `pgboss_e2e` queue schema, with fake providers on
 both web and worker. Normal development keeps `QUEUE_SCHEMA=pgboss`; the setting

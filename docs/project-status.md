@@ -37,8 +37,8 @@ The subsequent production build passes. Existing G2/V4 manual review gates remai
 The [Home quick-start](design/home-quick-start.md) is one screen: a photo, room type,
 optional must-have checkboxes and Generate. All ten room types have distinct lists;
 changing the room clears its old picks. Nothing is automatically checked. These
-are categories to include, not exact objects to preserve. There is no initial
-extra-instructions, measurements, renter or budget questionnaire. Optional style
+are categories to include, not exact objects to preserve. A short custom request
+is optional. There is no required instructions, measurements, renter or budget questionnaire. Optional style
 selection sits behind one control; the default requests three contrasting ideas.
 Costs/measurements and detailed editing remain available after the first result.
 
@@ -55,12 +55,19 @@ fits the entire source image, keeps Apply visible, traps focus and restores the
 opener on exit. Setup and estimate sections retain their state when switching tabs.
 
 Real vision analysis can return up to three refinement ideas and eight approximate
-object rectangles. Users review/adjust object bounds or mark an area manually
-with pointer, touch or keyboard controls. The worker creates a same-size PNG mask
-and composites only the selected rectangle onto the source. Targeted stored
+object rectangles. Users review/adjust object bounds or mark up to five separate
+areas with pointer, touch or keyboard controls. They can redraw, remove or clear
+areas. Analyse selected areas works without an instruction: the full image and
+ordered close-ups inform suggestions, which the user chooses or replaces with a
+command before explicitly applying. Changing the selection hides stale ideas.
+The worker creates a same-size PNG mask and composites only the selected regions,
+protecting the gaps as well as outside pixels. Targeted stored
 outputs are lossless PNGs with the source pixel dimensions. Bounds are not precise
 object segmentation; a rectangle may include background or nearby objects and
-can leave visible seams. There is no freehand mask brush.
+can leave visible seams. There is no freehand mask brush. See the
+[selected-area report](design/selected-area-analysis.md). Initial Home/Pro
+quick-start also offers a bounded, optional custom request beside the checklist;
+it is saved with the project and passed to generation/edit context.
 
 Default `ADVICE_PROVIDER=fake` supplies clearly labelled preference-based demo
 ideas and **no object detection**. Manual selection still works. Real analysis
@@ -114,3 +121,10 @@ The subsequent production build passes as well. This does not close G2 or the
 remaining V4 manual review gates.
 The root test command serializes Turbo package tasks to avoid the observed shared
 Vitest cache startup race. Tests use fake/mocked image and analysis providers.
+
+The latest [selected-area follow-up](design/selected-area-analysis.md) passes
+typecheck/lint/package tests (78 web tests) and three targeted Home/Pro browser
+journeys. Redraw, multiple regions, explicit analysis and optional custom startup
+requests are implemented. `gpt-5.4-mini` is selected; paid-provider activation
+remains pending explicit approval after automatic review blocked image egress.
+The production build and source/documentation checks also pass.

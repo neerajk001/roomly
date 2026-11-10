@@ -58,6 +58,7 @@ describe("createRoom", () => {
         roomType: "KITCHEN" as const,
         renterMode: false,
         keepList: [],
+        notes: "  Leave a coffee station corner  ",
       };
       const created = await createDesignProject(prisma, { ...ctx(), currency: "INR" }, input);
       const project = await prisma.project.findFirstOrThrow({
@@ -65,6 +66,7 @@ describe("createRoom", () => {
         include: { rooms: true },
       });
       expect(project.clientId).toBe(client.id);
+      expect(project.notes).toBe("Leave a coffee station corner");
       expect(project.rooms).toHaveLength(1);
       expect(project.rooms[0]).toMatchObject({
         id: created.roomId,

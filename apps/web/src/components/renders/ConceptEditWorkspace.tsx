@@ -1,8 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useTransition } from "react";
 import { Dialog, Tabs } from "radix-ui";
 import type { ConceptAdvice, EditTarget } from "@roomdesigner/shared";
+import { editTargetRegions } from "@roomdesigner/shared";
+import { getConceptAdviceAction } from "@/server/actions/concept-advice";
 import type { RenderOutputView } from "./types";
 import { ConceptTargetEditor } from "./ConceptTargetEditor";
 import { ConceptAdvicePanel } from "./ConceptAdvicePanel";
@@ -43,6 +45,39 @@ export function ConceptEditWorkspace({
       : null,
   );
   const [tab, setTab] = useState<string>(initialTab);
+  const [analysing, startAnalysis] = useTransition();
+  const [analysis, setAnalysis] = useState<{ key: string; advice: ConceptAdvice }>();
+  const [analysisError, setAnalysisError] = useState<{ key: string; message: string }>();
+  const selectionKey = target ? JSON.stringify(editTargetRegions(target)) : "";
+  const selectedAdvice = analysis?.key === selectionKey ? analysis.advice : undefined;
+  function analyse() {
+    if (!target || pending || analysing) return;
+    const key = selectionKey;
+    setTab("ideas");
+    setAnalysisError(undefined);
+    startAnalysis(async () => {
+      try {
+        const result = await getConceptAdviceAction({
+          roomId,
+          outputId: output.id,
+          editTarget: target,
+          intentionHint: instruction.trim() || undefined,
+        });
+        if (result.advice) setAnalysis({ key, advice: result.advice });
+        else
+          setAnalysisError({
+            key,
+            message:
+              result.error ?? "Analysis is unavailable. You can still enter your own change.",
+          });
+      } catch {
+        setAnalysisError({
+          key,
+          message: "Analysis could not be loaded. Please try again or enter your own change.",
+        });
+      }
+    });
+  }
   return (
     <Dialog.Root
       open
@@ -98,18 +133,27 @@ export function ConceptEditWorkspace({
             imageUrl={output.url}
             advice={output.advice}
             target={target}
-            disabled={pending}
+            disabled={pending || analysing}
             onChange={onTarget}
             onAdvice={onAdvice}
             actions={
               <>
+                <button
+                  type="button"
+                  disabled={!target || pending || analysing}
+                  aria-busy={analysing}
+                  onClick={analyse}
+                  className="mb-3 w-full rounded-lg border border-foreground px-4 py-2.5 text-sm font-semibold disabled:opacity-40"
+                >
+                  {analysing ? "Analysing selected areas…" : "Analyse selected areas"}
+                </button>
                 <p className="mb-2 text-xs text-muted-foreground">
                   Best quality · 3 credits per edit
                 </p>
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    disabled={pending || instruction.trim().length < 3}
+                    disabled={pending || analysing || instruction.trim().length < 3}
                     aria-busy={pending}
                     onClick={onApply}
                     className="flex-1 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
@@ -198,8 +242,10 @@ export function ConceptEditWorkspace({
                 <ConceptAdvicePanel
                   roomId={roomId}
                   outputId={output.id}
-                  advice={output.advice}
+                  advice={target ? selectedAdvice : output.advice}
                   onAdvice={onAdvice}
+                  passive={!!target}
+                  disabled={pending || analysing}
                   onUse={(text) => {
                     if (pending) return;
                     onInstruction(text);
@@ -207,6 +253,17 @@ export function ConceptEditWorkspace({
                     requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }));
                   }}
                 />
+                {analysing && (
+                  <p role="status" className="mt-3 text-sm text-muted-foreground">
+                    Looking at the whole room and your selected areas. Suggestions will not change
+                    the image.
+                  </p>
+                )}
+                {analysisError?.key === selectionKey && (
+                  <p role="alert" className="mt-3 text-sm text-destructive">
+                    {analysisError.message}
+                  </p>
+                )}
               </Tabs.Content>
             </Tabs.Root>
             {error && (

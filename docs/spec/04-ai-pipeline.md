@@ -127,16 +127,23 @@ style/mood/notes/budget, and optional validated `editTarget` in job JSON. Kept-i
 and renter constraints reach edit prompts. Target coordinates are integer
 thousandths of the oriented image, checked by the server and worker. The worker
 builds a same-size PNG mask, uses automatic sizing, then composites only the
-selected rectangle onto the source and stores a lossless PNG at source dimensions.
-The rest of the stored image is protected; rectangle edges may still show seams.
+selected regions onto the source and stores a lossless PNG at source dimensions.
+Targets retain the original `region` with optional `additionalRegions` (at most
+five total). Server/worker validation bounds combined coverage to 80%; gaps and
+outside pixels stay protected. Rectangle edges may still show seams.
 
 On-demand concept analysis is separate from render generation. It accepts only
-an authorized output ID, loads a server-owned thumbnail, and validates up to three
+an authorized output ID and optional validated target/hint, loads a server-owned
+thumbnail plus ordered selection close-ups, and validates up to three
 suggestions and eight approximate object rectangles. `ADVICE_PROVIDER=fake` is an
 honest preference-only demo with no detection. Real analysis requires an explicitly
 configured `OPENAI_ADVICE_MODEL`. Cache/attempt metadata lives in the existing job
 params under row locks; calls have a timeout, no automatic provider retries, a
-workspace rate limit and at most two attempts per output/provider. Per-day advice
+workspace rate limit and at most two attempts per cache entry/provider. General
+advice keeps its output key; selected analysis keys include coordinates and hint,
+with at most six selection variants per output. Each selected call reserves the
+configured allowance multiplied by the full-image-plus-crop count. It never
+generates a render or charges generation credits. Per-day advice
 allowances count against the shared spend guard even on older jobs and failed
 calls. This is conservative accounting, not a global reservation of all in-flight
 image work or a provider-enforced billing cap.

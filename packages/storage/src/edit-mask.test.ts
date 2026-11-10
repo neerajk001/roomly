@@ -1,6 +1,6 @@
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
-import { prepareMaskedEdit, compositeSelectedArea } from "./edit-mask";
+import { prepareMaskedEdit, compositeSelectedArea, makeSelectedAreaPreviews } from "./edit-mask";
 
 const region = { left: 200, top: 250, right: 600, bottom: 750 };
 const solid = (width: number, height: number, background: string) =>
@@ -44,5 +44,36 @@ describe("server-owned edit masks", () => {
     await expect(
       prepareMaskedEdit(await solid(10, 10, "red"), { ...region, right: -1 }),
     ).rejects.toThrow();
+  });
+  it("edits two disjoint areas while protecting every gap pixel and keeps close-ups ordered", async () => {
+    const regions = [region, { left: 700, top: 100, right: 900, bottom: 300 }];
+    const source = await solid(100, 80, "red");
+    const prepared = await prepareMaskedEdit(source, regions);
+    const mask = await sharp(prepared.mask).raw().toBuffer();
+    const result = await compositeSelectedArea(source, await solid(40, 40, "blue"), regions);
+    const pixels = await sharp(result).removeAlpha().raw().toBuffer();
+    for (let y = 0; y < 80; y++)
+      for (let x = 0; x < 100; x++) {
+        const inside =
+          (x >= 20 && x < 60 && y >= 20 && y < 60) || (x >= 70 && x < 90 && y >= 8 && y < 24);
+        expect(mask[(y * 100 + x) * 4 + 3]).toBe(inside ? 0 : 255);
+        expect([...pixels.subarray((y * 100 + x) * 3, (y * 100 + x) * 3 + 3)]).toEqual(
+          inside ? [0, 0, 255] : [255, 0, 0],
+        );
+      }
+    const crops = await makeSelectedAreaPreviews(source, regions);
+    expect(crops).toHaveLength(2);
+    const dimensions = await Promise.all(
+      crops.map(async (crop) => {
+        const info = await sharp(crop.image).metadata();
+        return [info.width, info.height];
+      }),
+    );
+    expect(dimensions).toEqual([
+      [40, 40],
+      [20, 16],
+    ]);
+    await expect(prepareMaskedEdit(source, [])).rejects.toThrow();
+    await expect(makeSelectedAreaPreviews(source, Array(6).fill(region))).rejects.toThrow();
   });
 });

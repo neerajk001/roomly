@@ -59,12 +59,24 @@ test("designer brief, concept, estimate, proposal and anonymous approval", async
     await page.getByRole("button", { name: "Mark an area", exact: true }).click();
     await page.getByText("Adjust selection edges", { exact: true }).click();
     await expect(page.getByRole("slider", { name: "left edge", exact: true })).toHaveValue("250");
+    for (let i = 0; i < 4; i++)
+      await page.getByRole("button", { name: "Add area", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Area 5", exact: true })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await expect(page.getByRole("button", { name: "Add area", exact: true })).toBeDisabled();
+    await page.getByRole("button", { name: "Analyse selected areas", exact: true }).click();
+    await expect(page.getByText(/Demo ideas for 5 selected areas/)).toBeVisible();
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);
     await expect(page.getByRole("button", { name: "Apply change", exact: true })).toBeInViewport();
     await page.screenshot({ path: "test-results/pro-area-selection-mobile.png" });
-    await page.getByRole("button", { name: "Use whole image", exact: true }).click();
+    await page.getByRole("button", { name: "Clear all areas", exact: true }).click();
+    await expect(
+      page.getByRole("button", { name: "Analyse selected areas", exact: true }),
+    ).toBeDisabled();
     await page.getByText("Change a specific area (optional)", { exact: true }).click();
     await expect(
       page.getByRole("button", { name: "Use whole image", exact: true }),

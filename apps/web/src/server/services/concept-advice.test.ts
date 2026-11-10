@@ -191,6 +191,84 @@ describe("image-specific advice service", () => {
     expect(selected.suggest).toHaveBeenCalledTimes(1);
     expect(outcomes.some((outcome) => outcome.status === "fulfilled")).toBe(true);
   });
+  it("analyses full room plus separate crops without instructions, caches each selection and reserves crop spend", async () => {
+    await clearAdvice();
+    const selected = provider("ai");
+    const download = vi.fn(async () => image);
+    const editTarget = {
+      label: "Selected areas",
+      region: { left: 100, top: 200, right: 400, bottom: 700 },
+      additionalRegions: [{ left: 700, top: 100, right: 900, bottom: 300 }],
+    };
+    const deps = {
+      provider: selected,
+      download,
+      callBudgetMicros: 100,
+      dailyLimitMicros: 1_000_000_000,
+    };
+    const request = { ...input(), editTarget };
+    const before = await prisma.renderJob.count({ where: { workspaceId } });
+    const first = await getConceptAdvice(prisma, ctx(), request, deps);
+    expect(await getConceptAdvice(prisma, ctx(), request, deps)).toEqual(first);
+    expect(selected.suggest).toHaveBeenCalledTimes(1);
+    expect(selected.suggest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selectedImages: expect.arrayContaining([
+          expect.objectContaining({ image: expect.any(Buffer) }),
+        ]),
+        context: expect.objectContaining({
+          selectedRegions: [editTarget.region, ...editTarget.additionalRegions],
+          intentionHint: "",
+        }),
+      }),
+    );
+    await getConceptAdvice(prisma, ctx(), { ...request, intentionHint: "Maybe more colour" }, deps);
+    await getConceptAdvice(
+      prisma,
+      ctx(),
+      { ...request, editTarget: { ...editTarget, region: { ...editTarget.region, left: 150 } } },
+      deps,
+    );
+    await getConceptAdvice(prisma, ctx(), input(), deps);
+    expect(selected.suggest).toHaveBeenCalledTimes(4);
+    expect(await prisma.renderJob.count({ where: { workspaceId } })).toBe(before);
+    const job = await prisma.renderJob.findFirstOrThrow({ where: { id: jobId, workspaceId } });
+    expect(job.params).toMatchObject({
+      adviceSpendByDay: { [new Date().toISOString().slice(0, 10)]: 1000 },
+    });
+  });
+  it("bounds selected-analysis variants and authorizes selected requests before accessing images", async () => {
+    await clearAdvice();
+    const selected = provider();
+    const download = vi.fn(async () => image);
+    const editTarget = { label: "Area", region: { left: 100, top: 200, right: 400, bottom: 700 } };
+    const deps = { provider: selected, download };
+    await expect(
+      getConceptAdvice(
+        prisma,
+        { ...ctx(), workspaceId: "another-workspace" },
+        { ...input(), editTarget },
+        deps,
+      ),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(download).not.toHaveBeenCalled();
+    for (let i = 0; i < 6; i++)
+      await getConceptAdvice(
+        prisma,
+        ctx(),
+        { ...input(), editTarget, intentionHint: "Idea " + i },
+        deps,
+      );
+    await expect(
+      getConceptAdvice(
+        prisma,
+        ctx(),
+        { ...input(), editTarget, intentionHint: "Another idea" },
+        deps,
+      ),
+    ).rejects.toMatchObject({ code: "ADVICE_LIMIT" });
+    expect(selected.suggest).toHaveBeenCalledTimes(6);
+  });
   it("counts paid advice on an older job against today's guard and caps failed attempts", async () => {
     await clearAdvice();
     const selected = provider("ai");
@@ -234,6 +312,7 @@ describe("image-specific advice service", () => {
     const editTarget = {
       label: "Portable lamp",
       region: { left: 100, top: 200, right: 400, bottom: 700 },
+      additionalRegions: [{ left: 700, top: 100, right: 900, bottom: 300 }],
     };
     const created = await createRender(prisma, ctx(), {
       roomId,

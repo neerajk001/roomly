@@ -10,12 +10,16 @@ export function ConceptAdvicePanel({
   advice,
   onAdvice,
   onUse,
+  passive = false,
+  disabled = false,
 }: {
   roomId: string;
   outputId: string;
   advice?: ConceptAdvice;
   onAdvice(advice: ConceptAdvice): void;
   onUse(instruction: string): void;
+  passive?: boolean;
+  disabled?: boolean;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -26,31 +30,34 @@ export function ConceptAdvicePanel({
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-base font-semibold">Suggestions for this concept</h2>
-        <button
-          type="button"
-          disabled={pending}
-          aria-busy={pending}
-          className="rounded-lg border border-border px-3 py-2 text-sm disabled:opacity-50"
-          onClick={() =>
-            start(async () => {
-              setError(null);
-              try {
-                const result = await getConceptAdviceAction({ roomId, outputId });
-                if (result.advice) onAdvice(result.advice);
-                else setError(result.error ?? "Suggestions are unavailable.");
-              } catch {
-                setError("Suggestions could not be loaded. Please try again.");
-              }
-            })
-          }
-        >
-          {pending ? "Preparing suggestions…" : advice ? "Review suggestions" : "Get suggestions"}
-        </button>
+        {!passive && (
+          <button
+            type="button"
+            disabled={pending || disabled}
+            aria-busy={pending}
+            className="rounded-lg border border-border px-3 py-2 text-sm disabled:opacity-50"
+            onClick={() =>
+              start(async () => {
+                setError(null);
+                try {
+                  const result = await getConceptAdviceAction({ roomId, outputId });
+                  if (result.advice) onAdvice(result.advice);
+                  else setError(result.error ?? "Suggestions are unavailable.");
+                } catch {
+                  setError("Suggestions could not be loaded. Please try again.");
+                }
+              })
+            }
+          >
+            {pending ? "Preparing suggestions…" : advice ? "Review suggestions" : "Get suggestions"}
+          </button>
+        )}
       </div>
       {!advice && !pending && (
         <p className="mt-2 text-sm text-muted-foreground">
-          Choose a concept, then request ideas for refining it. Nothing changes until you apply an
-          edit.
+          {passive
+            ? "Select areas, then choose Analyse selected areas. You can leave the instruction empty."
+            : "Choose a concept, then request ideas for refining it. Nothing changes until you apply an edit."}
         </p>
       )}
       {pending && (
@@ -87,6 +94,7 @@ export function ConceptAdvicePanel({
                   <p className="mt-2 text-xs">{suggestion.reason}</p>
                   <button
                     type="button"
+                    disabled={disabled}
                     onClick={() => onUse(suggestion.instruction)}
                     className="mt-3 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium"
                   >

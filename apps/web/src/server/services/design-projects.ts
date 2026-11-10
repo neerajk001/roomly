@@ -7,6 +7,7 @@ import { AppError } from "../app-error";
 
 const optionalMm = z.number().int().min(100).max(30000).nullable().optional();
 export const designProjectSchema = z.object({
+  notes: z.string().trim().max(300).optional(),
   name: z.string().trim().min(1).max(120).optional(),
   clientId: z.string().min(1).optional(),
   roomType: roomTypeSchema,
@@ -40,6 +41,7 @@ export async function createDesignProject(
     data: {
       workspaceId: ctx.workspaceId,
       currency: ctx.currency,
+      notes: data.notes?.trim() || null,
       name: data.name ?? roomName + " redesign",
       clientId: data.clientId ?? null,
       budgetMinor: data.budgetMinor ?? null,

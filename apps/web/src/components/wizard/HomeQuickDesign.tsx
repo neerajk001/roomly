@@ -34,6 +34,7 @@ const draftSchema = z
     roomType: checklistRoomTypeSchema,
     includeItems: roomIncludeItemsSchema,
     style: z.string().max(64),
+    customRequest: z.string().max(300).default(""),
   })
   .refine(
     (draft) =>
@@ -63,6 +64,7 @@ export function HomeQuickDesign({
   const [roomType, setRoomType] = useState<ChecklistRoomType>("LIVING_ROOM");
   const [includeItems, setIncludeItems] = useState<string[]>([]);
   const [style, setStyle] = useState(initialStyle ?? "");
+  const [customRequest, setCustomRequest] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +81,7 @@ export function HomeQuickDesign({
         // eslint-disable-next-line react-hooks/set-state-in-effect -- restore validated non-file browser preferences once
         setRoomType(parsed.data.roomType);
         setIncludeItems(parsed.data.includeItems);
+        setCustomRequest(parsed.data.customRequest);
         if (!initialStyle) setStyle(parsed.data.style);
       }
     } catch {
@@ -89,11 +92,14 @@ export function HomeQuickDesign({
   useEffect(() => {
     if (!hydrated) return;
     try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ roomType, includeItems, style }));
+      localStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({ roomType, includeItems, style, customRequest }),
+      );
     } catch {
       /* Optional persistence. */
     }
-  }, [hydrated, roomType, includeItems, style]);
+  }, [hydrated, roomType, includeItems, style, customRequest]);
   useEffect(() => {
     if (!file) return;
     const url = URL.createObjectURL(file);
@@ -119,6 +125,7 @@ export function HomeQuickDesign({
           ...(studio && projectName.trim() ? { name: projectName.trim() } : {}),
           ...(studio && clientId ? { clientId } : {}),
           roomType,
+          notes: customRequest.trim(),
           widthMm: null,
           lengthMm: null,
           heightMm: null,
@@ -160,6 +167,7 @@ export function HomeQuickDesign({
         variations: "3",
         quality: "draft",
         includeItems: JSON.stringify(includeItems),
+        notes: customRequest.trim(),
       }))
         render.set(key, value);
       const queued = await requestRender(render);
@@ -343,6 +351,20 @@ export function HomeQuickDesign({
               ))}
             </div>
           </fieldset>
+          <label className="mt-5 block text-sm font-medium">
+            Anything else you want?{" "}
+            <span className="font-normal text-muted-foreground">(optional)</span>
+            <textarea
+              aria-label="Additional room requests"
+              value={customRequest}
+              onChange={(event) => setCustomRequest(event.target.value)}
+              maxLength={300}
+              rows={2}
+              disabled={busy || !!created}
+              placeholder="E.g. a prayer corner, space for a piano, or no TV"
+              className="mt-2 block w-full resize-y rounded-lg border border-border bg-background p-3 text-sm"
+            />
+          </label>
           <details className="mt-5 border-t border-border pt-4">
             <summary className="cursor-pointer text-sm font-medium">
               Choose a style (optional)

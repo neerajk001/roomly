@@ -94,6 +94,46 @@ describe("concept advice provider", () => {
       }),
     ).rejects.toThrow();
   });
+  it("sends full context followed by ordered selection close-ups without assuming intent", async () => {
+    parse.mockClear();
+    parse.mockResolvedValue({ output_parsed: { ...content, objects: [] } });
+    await createOpenAIAdviceProvider({ apiKey: "fake-test-key", model: "configured" }).suggest({
+      image: Buffer.from("full"),
+      mime: "image/jpeg",
+      selectedImages: [
+        { image: Buffer.from("first"), mime: "image/webp" },
+        { image: Buffer.from("second"), mime: "image/webp" },
+      ],
+      context: {
+        ...context,
+        selectedRegions: [
+          { left: 100, top: 200, right: 400, bottom: 700 },
+          { left: 700, top: 100, right: 900, bottom: 300 },
+        ],
+        intentionHint: "",
+      },
+    });
+    expect(parse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: expect.arrayContaining([
+          expect.objectContaining({
+            content: expect.arrayContaining([
+              expect.objectContaining({
+                image_url: "data:image/jpeg;base64," + Buffer.from("full").toString("base64"),
+              }),
+              expect.objectContaining({
+                image_url: "data:image/webp;base64," + Buffer.from("first").toString("base64"),
+              }),
+              expect.objectContaining({
+                image_url: "data:image/webp;base64," + Buffer.from("second").toString("base64"),
+              }),
+            ]),
+          }),
+        ]),
+      }),
+    );
+    expect(CONCEPT_ADVICE_INSTRUCTIONS).toContain("never claim to know");
+  });
   it("rejects invalid object coordinates rather than offering an unsafe selection", async () => {
     parse.mockResolvedValue({
       output_parsed: {

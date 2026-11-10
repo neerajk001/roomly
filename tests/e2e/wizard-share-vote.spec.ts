@@ -23,7 +23,10 @@ test("wizard renders, favorite, create share link, vote anonymously", async ({ p
   await page.setViewportSize({ width: 375, height: 812 });
   await expect(page.getByRole("heading", { name: "Your room. Three new ideas." })).toBeVisible();
   await expect(page.getByRole("button", { name: "Continue", exact: true })).toHaveCount(0);
-  await expect(page.getByRole("textbox")).toHaveCount(0);
+  await expect(page.getByRole("textbox")).toHaveCount(1);
+  await page
+    .getByRole("textbox", { name: "Additional room requests" })
+    .fill("Leave a small corner for a coffee station");
   await page.getByLabel("Room photo", { exact: true }).setInputFiles("tests/e2e/fixtures/room.jpg");
   await expect(page.getByRole("button", { name: "Generate 3 ideas", exact: true })).toBeEnabled();
   for (const room of ROOM_CHECKLISTS) {
@@ -87,6 +90,12 @@ test("wizard renders, favorite, create share link, vote anonymously", async ({ p
   const projectId = /\/projects\/([^/]+)\//.exec(roomUrl)?.[1] ?? "";
   await expect(page.getByAltText("Concept 1")).toBeVisible({ timeout: 120_000 });
   const generated = renderJobStatusSchema.parse(await (await completed).json());
+  await page.getByRole("tab", { name: "Room setup", exact: true }).click();
+  await page.getByText("Room details & selected items", { exact: true }).click();
+  await expect(
+    page.getByText("Leave a small corner for a coffee station", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("tab", { name: "Designs", exact: true }).click();
   expect(generated.includeItems).toEqual(["counter-organizers", "breakfast-stools"]);
   expect(generated.outputs.map((output) => output.styleKey)).toEqual(
     recommendContrastingStyles("global", 3),

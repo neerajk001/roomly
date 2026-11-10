@@ -16,7 +16,7 @@ export const editRegionSchema = z
     "Choose an area at least 1% wide and high, covering at most 80% of the image.",
   );
 
-export const editTargetSchema = z.object({
+export const editObjectSchema = z.object({
   label: z
     .string()
     .trim()
@@ -25,8 +25,22 @@ export const editTargetSchema = z.object({
     .regex(/^[^\u0000-\u001f<>]+$/),
   region: editRegionSchema,
 });
+export const editTargetSchema = editObjectSchema
+  .extend({
+    additionalRegions: z.array(editRegionSchema).max(4).optional(),
+  })
+  .refine((target) => {
+    const regions = [target.region, ...(target.additionalRegions ?? [])];
+    return (
+      new Set(regions.map((region) => JSON.stringify(region))).size === regions.length &&
+      regions.reduce((sum, r) => sum + (r.right - r.left) * (r.bottom - r.top), 0) <= 800000
+    );
+  }, "Choose up to five different areas with a combined size of at most 80% of the image.");
 export type EditRegion = z.infer<typeof editRegionSchema>;
 export type EditTarget = z.infer<typeof editTargetSchema>;
+export function editTargetRegions(target: EditTarget): EditRegion[] {
+  return [target.region, ...(target.additionalRegions ?? [])];
+}
 export function savedEditTarget(params: unknown): EditTarget | undefined {
   const result = z.object({ editTarget: editTargetSchema }).safeParse(params);
   return result.success ? result.data.editTarget : undefined;

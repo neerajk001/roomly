@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { editTargetSchema, savedEditTarget } from "./edit-target";
+import { editTargetSchema, savedEditTarget, editTargetRegions } from "./edit-target";
 
 describe("edit target boundaries", () => {
   const target = { label: "Sofa", region: { left: 100, top: 200, right: 600, bottom: 700 } };
@@ -18,5 +18,23 @@ describe("edit target boundaries", () => {
     ])
       expect(editTargetSchema.safeParse({ ...target, region }).success).toBe(false);
     expect(editTargetSchema.safeParse({ ...target, label: "<unsafe>" }).success).toBe(false);
+  });
+  it("retains separate regions while limiting count, duplicates and combined coverage", () => {
+    const more = { left: 700, top: 100, right: 900, bottom: 300 };
+    const parsed = editTargetSchema.parse({ ...target, additionalRegions: [more] });
+    expect(editTargetRegions(parsed)).toEqual([target.region, more]);
+    expect(savedEditTarget({ editTarget: parsed })).toEqual(parsed);
+    expect(
+      editTargetSchema.safeParse({ ...target, additionalRegions: [target.region] }).success,
+    ).toBe(false);
+    expect(
+      editTargetSchema.safeParse({ ...target, additionalRegions: Array(5).fill(more) }).success,
+    ).toBe(false);
+    expect(
+      editTargetSchema.safeParse({
+        ...target,
+        additionalRegions: [{ left: 0, top: 0, right: 1000, bottom: 700 }],
+      }).success,
+    ).toBe(false);
   });
 });

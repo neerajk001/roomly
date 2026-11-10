@@ -394,7 +394,7 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
 
 ## 2026-11-05 - Host Nginx instead of bundled Caddy
 - The VPS already runs host Nginx on 80/443 with a Let's Encrypt cert for
-  \oomly.neerajx.site\. To avoid a port conflict, the compose stack no longer
+  \oomly.neerajx.site\. To avoid a port conflict, the compose stack no longer
   runs the Caddy container; \web\ is published on \127.0.0.1:3000\ and Nginx
   reverse-proxies to it. The deploy workflow now pulls/starts only \web\ and
   \worker\. \deploy/Caddyfile\ is retained for reference but unused.
@@ -813,3 +813,23 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
 - Update meaningful browser checks, run typecheck/lint/tests and sequential fake-provider browser/build checks, document and commit.
 - Verified Prisma 7 nested writes against [official relation-query documentation](https://www.prisma.io/docs/orm/v7/prisma-client/queries/relation-queries); project and first room use one nested creation. Kept mutation logic in a service and added client-isolation coverage. Experience routing is explicit: Home `/new`, Pro `/studio/projects/new`, with the optional detailed wizard inside Studio.
 - Final application simplification verification: typecheck/lint/all package tests pass (76 web tests), without new lint warnings. Five browser journeys passed in the final full run; the Home journey's remaining removed-badge/history assertions were corrected and its complete focused rerun passed. All six journeys are verified on unchanged final application code. Reviewed desktop/375px layouts, profile switching, Pro quick-start, explicit sharing scope, assigned Saved styles, mask/source/version preservation and client approval. Final production build passes (3m54s). Formatting, Markdown links, env wiring and whitespace checks pass. Cleaned five final full-run test accounts plus the focused Home account; no user data removed. Billing, paid image calls, new model selection and deployment remain excluded. Existing G2/V4 manual gates stay open; stop for review after committing.
+
+## 2026-11-10 — Multi-area editing and selected-area analysis plan
+
+- Fix the reported inability to redraw by keeping drawing controls usable after selection.
+- Support up to five numbered areas with active selection, redraw, remove and clear controls in Home and Pro.
+- Extend legacy single-area targets with optional additional regions; validate each rectangle and combined area bounds at every boundary.
+- Build a union mask and composite only the selected rectangles, preserving gaps and outside pixels exactly.
+- Add Analyse selected areas, enabled only for a valid selection and independent of whether the instruction is empty.
+- Send the whole image and selected-region close-ups with room/preferences context to the configured advice provider.
+- Treat inferred intentions as possibilities; return a few grounded suggestions without applying or generating an edit.
+- Keep targeted suggestions separate from general advice and invalidate their display when the selection changes.
+- Scope advice caching by output, regions and optional instruction; bound per-output analysis attempts and preserve daily spend accounting.
+- Let choosing a suggestion prefill the edit input; keep explicit Apply and existing credit charging.
+- Add a short optional custom request beside Home/Pro quick-start checklists and carry it into existing notes/context.
+- Add schema, mask, service/provider and browser coverage; preserve old jobs and per-concept drafts/targets.
+- Keep billing, model selection and paid API tests excluded; update documentation, required checks and commit for review.
+- Verified multi-image vision input and data URLs against the [official OpenAI vision guide](https://developers.openai.com/api/docs/guides/images-vision?api-mode=responses). Reused the existing Responses structured-output call and configured model; no SDK method or model change. The local `.env` has no advice provider/model override, so the default remains labelled demo until the human supplies the G2 model choice.
+- The human then delegated the choice ("apply which suites"). Selected `gpt-5.4-mini` for the bounded room/region advice task after checking its [official model page](https://developers.openai.com/api/docs/models/gpt-5.4-mini): image input, structured outputs and default non-reasoning behavior fit concise interactive suggestions. Enable only the local advice configuration; preserve the existing image model, daily guard and fake-provider tests. This resolves model selection for this feature, not G2 visual-fidelity acceptance.
+- Automatic approval review rejected the combined local activation/browser command: persistent `ADVICE_PROVIDER=openai` could send private room images to a paid external service without sufficiently explicit egress/cost approval. The rejected command did not execute. Do not bypass it: keep demo configuration, complete fake-only checks with explicit parent/web/worker overrides, then request explicit activation approval. Existing `.env` and local runtime configuration remain unchanged.
+- Final verification: all 11 package typecheck/lint/test tasks pass (78 web, 28 shared, 22 AI, 20 storage, 17 worker tests). All three targeted Home/Pro browser journeys pass on the final code, including immediate redraw, two disjoint area edits, empty-instruction analysis, chosen drafts/stale-result hiding, five-area limits/clear, custom startup note persistence, edit lineage and proposal approval. Reviewed desktop/375px screenshots; three recorded test accounts/workspaces cleaned, user data retained. Fake-only production build passes (1m14s); formatting, Markdown links, environment wiring and whitespace checks pass. No paid API call or runtime advice activation occurred. Commit the integrated V4 maintenance task and stop for review; ask explicit permission for the selected model's paid image analysis before activation.

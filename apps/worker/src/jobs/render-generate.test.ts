@@ -142,7 +142,11 @@ async function balance(workspaceId: string): Promise<number> {
 describe("processRenderJob", () => {
   it("sends an aligned mask and preserves protected pixels in a targeted edit", async () => {
     const fixture = await createFixture(3);
-    const editTarget = { label: "Sofa", region: { left: 200, top: 250, right: 600, bottom: 750 } };
+    const editTarget = {
+      label: "Selected areas",
+      region: { left: 200, top: 250, right: 600, bottom: 750 },
+      additionalRegions: [{ left: 700, top: 100, right: 900, bottom: 300 }],
+    };
     const source = await sharp({
       create: { width: 100, height: 80, channels: 3, background: "red" },
     })
@@ -207,6 +211,12 @@ describe("processRenderJob", () => {
       expect(stored).toBeDefined();
       const pixels = await sharp(stored).removeAlpha().raw().toBuffer();
       expect([...pixels.subarray(0, 3)]).toEqual([255, 0, 0]);
+      expect([...pixels.subarray((10 * 100 + 75) * 3, (10 * 100 + 75) * 3 + 3)]).toEqual([
+        0, 0, 255,
+      ]);
+      expect([...pixels.subarray((30 * 100 + 65) * 3, (30 * 100 + 65) * 3 + 3)]).toEqual([
+        255, 0, 0,
+      ]);
       expect([...pixels.subarray((30 * 100 + 30) * 3, (30 * 100 + 30) * 3 + 3)]).toEqual([
         0, 0, 255,
       ]);

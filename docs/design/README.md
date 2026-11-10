@@ -19,6 +19,10 @@ records findings before implementation.
 Follow-up: [Room workspace UX correction](room-workspace-ux.md) addresses the
 overcrowded results page with separate room sections and a dedicated editor.
 
+Latest follow-up: [selected-area editing and analysis](selected-area-analysis.md)
+adds redraw/removal, up to five separate areas, explicit analysis and optional
+custom input beside the initial room-item checklist.
+
 Current Home entry: [one-screen quick-start](home-quick-start.md) replaces the
 homeowner questionnaire with a photo, room type and room-specific must-haves.
 The older detailed wizard remains in Pro; the batch reports retain delivery history.

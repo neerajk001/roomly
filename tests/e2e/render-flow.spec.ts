@@ -120,6 +120,9 @@ test("full render flow: project, room, photo, 3 concepts, favorite, chat edit", 
   await page.getByRole("button", { name: "Explore suggestions →", exact: true }).click();
   const editor = page.getByRole("dialog", { name: "Edit this concept", exact: true });
   await expect(editor).toBeVisible();
+  await expect(
+    editor.getByRole("button", { name: "Analyse selected areas", exact: true }),
+  ).toBeDisabled();
   await editor.getByRole("button", { name: "Get suggestions", exact: true }).click();
   await expect(page.getByText(/Demo suggestions · based on preferences/)).toBeVisible();
   await page.getByRole("button", { name: "Use this idea", exact: true }).first().click();
@@ -153,11 +156,49 @@ test("full render flow: project, room, photo, 3 concepts, favorite, chat edit", 
   await page.mouse.down();
   await page.mouse.move(box.x + box.width * 0.75, box.y + box.height * 0.75, { steps: 5 });
   await page.mouse.up();
+  // Drawing stays armed: a second drag replaces the active selection immediately.
+  await page.mouse.move(box.x + box.width * 0.2, box.y + box.height * 0.2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width * 0.7, box.y + box.height * 0.7, { steps: 5 });
+  await page.mouse.up();
   await page.getByText("Adjust selection edges", { exact: true }).click();
   const leftEdge = page.getByRole("slider", { name: "left edge", exact: true });
+  await expect(leftEdge).toHaveValue("200");
+  await page.getByRole("button", { name: "Redraw area 1", exact: true }).click();
+  await page.mouse.move(box.x + box.width * 0.25, box.y + box.height * 0.25);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width * 0.75, box.y + box.height * 0.75, { steps: 5 });
+  await page.mouse.up();
   await leftEdge.focus();
   await leftEdge.press("ArrowRight");
   await expect(leftEdge).toHaveValue("260");
+  await page.getByRole("button", { name: "Add area", exact: true }).click();
+  await page.mouse.move(box.x + box.width * 0.8, box.y + box.height * 0.1);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width * 0.95, box.y + box.height * 0.2, { steps: 5 });
+  await page.mouse.up();
+  await expect(page.getByRole("button", { name: "Area 2", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await composer.fill("");
+  await page.getByRole("button", { name: "Analyse selected areas", exact: true }).click();
+  await expect(editor.getByText(/Demo ideas for 2 selected areas/)).toBeVisible();
+  await page.screenshot({ path: "test-results/selected-area-analysis-desktop.png" });
+  await expect(page.getByRole("button", { name: "Apply change", exact: true })).toBeDisabled();
+  await editor.getByRole("button", { name: "Use this idea", exact: true }).first().click();
+  await expect(composer).toHaveValue(/portable lamp/);
+  await page.getByRole("button", { name: "Remove area 2", exact: true }).click();
+  await page.getByRole("tab", { name: "Ideas", exact: true }).click();
+  await expect(editor.getByText(/Demo ideas for 2 selected areas/)).toHaveCount(0);
+  await page.getByRole("tab", { name: "Your change", exact: true }).click();
+  await composer.fill("make the sofa deep green");
+  await page.getByRole("button", { name: "Add area", exact: true }).click();
+  await page.mouse.move(box.x + box.width * 0.8, box.y + box.height * 0.1);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width * 0.95, box.y + box.height * 0.2, { steps: 5 });
+  await page.mouse.up();
+  await page.getByRole("button", { name: "Area 1", exact: true }).click();
   await page.getByRole("button", { name: "Back to designs", exact: true }).click();
   await page.getByRole("button", { name: "Select concept 1", exact: true }).click();
   await page.getByRole("button", { name: "Edit this design", exact: true }).first().click();
@@ -218,8 +259,9 @@ test("full render flow: project, room, photo, 3 concepts, favorite, chat edit", 
   await expect(page.getByAltText(/^Concept \d+$/)).toHaveCount(1);
   expect(edited.sourceOutputId).toBe(second?.id);
   expect(edited.editTarget).toEqual({
-    label: "Selected area",
+    label: "Selected areas",
     region: { left: 260, top: 250, right: 750, bottom: 750 },
+    additionalRegions: [{ left: 800, top: 100, right: 950, bottom: 200 }],
   });
   await page.getByText("Ideas & versions", { exact: true }).click();
   const family = page

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { getServerEnv } from "@roomdesigner/config/env";
@@ -7,8 +8,10 @@ import {
   type ConceptAdviceProvider,
   type AdviceContext,
 } from "@roomdesigner/ai";
-import { getObject, makeThumbnail } from "@roomdesigner/storage";
+import { getObject, makeThumbnail, makeSelectedAreaPreviews } from "@roomdesigner/storage";
 import {
+  editTargetSchema,
+  editTargetRegions,
   adviceMapSchema,
   conceptAdviceContentSchema,
   conceptAdviceSchema,
@@ -24,6 +27,8 @@ import type { CreateRenderContext } from "./renders";
 export const conceptAdviceInputSchema = z.object({
   roomId: z.string().min(1).max(128),
   outputId: z.string().min(1).max(128),
+  editTarget: editTargetSchema.optional(),
+  intentionHint: z.string().trim().max(300).optional(),
 });
 const metadataSchema = z.record(z.string(), z.json());
 const spendMapSchema = z.record(z.string(), z.number().int().nonnegative().safe());
@@ -66,24 +71,38 @@ export async function getConceptAdvice(
   });
   if (!output) throw new AppError("NOT_FOUND", "Concept not found.", 404);
   const jobId = output.jobId;
+  const regions = input.editTarget ? editTargetRegions(input.editTarget) : [];
+  const cacheKey = input.editTarget
+    ? input.outputId +
+      ":areas:" +
+      createHash("sha256")
+        .update(JSON.stringify({ regions, hint: input.intentionHint ?? "" }))
+        .digest("hex")
+        .slice(0, 24)
+    : input.outputId;
   const env = getServerEnv();
   const provider = deps.provider ?? getConceptAdviceProvider();
   const initialMap = adviceMapSchema.safeParse(
     metadataSchema.parse(output.job.params).conceptAdvice ?? {},
   );
-  const cached = initialMap.success ? initialMap.data[input.outputId] : undefined;
+  const cached = initialMap.success ? initialMap.data[cacheKey] : undefined;
   if (cached?.status === "ready" && cached.provider === provider.source) return cached.advice;
 
+  let selectedImages: { image: Buffer; mime: string }[] = [];
   let image: Awaited<ReturnType<typeof makeThumbnail>>;
   try {
-    image = await makeThumbnail(await (deps.download ?? getObject)(output.asset.storageKey));
+    const source = await (deps.download ?? getObject)(output.asset.storageKey);
+    image = await makeThumbnail(source);
+    if (regions.length) selectedImages = await makeSelectedAreaPreviews(source, regions);
   } catch {
     throw new AppError("SERVICE_BUSY", "The concept image could not be loaded. Try again.", 503);
   }
   const requestId = randomUUID();
   const startedAt = new Date().toISOString();
   const cost =
-    provider.source === "ai" ? (deps.callBudgetMicros ?? env.ADVICE_CALL_BUDGET_MICROS) : 0;
+    provider.source === "ai"
+      ? (deps.callBudgetMicros ?? env.ADVICE_CALL_BUDGET_MICROS) * (1 + regions.length)
+      : 0;
   const claim = await db.$transaction(async (tx) => {
     const rows = await tx.$queryRaw<
       { params: unknown }[]
@@ -91,7 +110,17 @@ export async function getConceptAdvice(
     if (!rows[0]) throw new AppError("NOT_FOUND", "Concept not found.", 404);
     const metadata = metadataSchema.parse(rows[0].params);
     const map = adviceMapSchema.parse(metadata.conceptAdvice ?? {});
-    const existing = map[input.outputId];
+    const existing = map[cacheKey];
+    if (
+      input.editTarget &&
+      !existing &&
+      Object.keys(map).filter((key) => key.startsWith(input.outputId + ":areas:")).length >= 6
+    )
+      throw new AppError(
+        "ADVICE_LIMIT",
+        "You have analysed six selections for this concept. You can still enter your own change.",
+        429,
+      );
     const sameProvider = existing?.provider === provider.source;
     if (sameProvider && existing.status === "ready") return { cached: existing.advice };
     if (
@@ -127,7 +156,7 @@ export async function getConceptAdvice(
       const day = startedAt.slice(0, 10);
       spends[day] = (spends[day] ?? 0) + cost;
     }
-    map[input.outputId] = {
+    map[cacheKey] = {
       status: "running",
       requestId,
       attempts: attempts + 1,
@@ -144,6 +173,9 @@ export async function getConceptAdvice(
   const preferences = contextParamsSchema.parse(output.job.params);
   const styleKey = outputStyleKey(output.job.params, output.job.styleKey, output.index);
   const context: AdviceContext = {
+    ...(regions.length
+      ? { selectedRegions: regions, intentionHint: input.intentionHint ?? "" }
+      : {}),
     roomType: output.job.room.type,
     style: getStyle(styleKey ?? "modern")?.label ?? "Modern",
     direction:
@@ -158,7 +190,12 @@ export async function getConceptAdvice(
   };
   try {
     const content = conceptAdviceContentSchema.parse(
-      await provider.suggest({ image: image.data, mime: image.mime, context }),
+      await provider.suggest({
+        image: image.data,
+        mime: image.mime,
+        context,
+        ...(selectedImages.length ? { selectedImages } : {}),
+      }),
     );
     const advice = conceptAdviceSchema.parse({
       ...content,
@@ -183,10 +220,10 @@ export async function getConceptAdvice(
       >`SELECT "params" FROM "RenderJob" WHERE "id" = ${jobId} AND "workspaceId" = ${ctx.workspaceId} FOR UPDATE`;
       const metadata = metadataSchema.parse(rows[0]?.params);
       const map = adviceMapSchema.parse(metadata.conceptAdvice ?? {});
-      const entry = map[input.outputId];
+      const entry = map[cacheKey];
       if (!entry || entry.requestId !== requestId)
         throw new Error("Advice request was superseded.");
-      map[input.outputId] = advice
+      map[cacheKey] = advice
         ? { ...entry, status: "ready", advice }
         : { ...entry, status: "failed" };
       await tx.renderJob.update({

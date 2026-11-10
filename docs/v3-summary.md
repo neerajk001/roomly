@@ -32,7 +32,7 @@ delivery is retained in its [batch report](design/README.md).
 - On-demand suggestions can prefill an edit, without generating automatically.
   Optional object/area selection supports approximate detected boxes or manual
   pointer/touch/keyboard controls. Masked edits preserve the stored source outside
-  the reviewed rectangle and retain keep-items/renter/notes/budget context.
+  the reviewed regions (up to five) and retain keep-items/renter/notes/budget context.
 - Estimate ranges, category scope, priorities and shopping lists use entered room
   measurements and the shared estimate engine, not dimensions or prices from pixels.
 - Share links support favorites/all outputs, regeneration/revocation and anonymous

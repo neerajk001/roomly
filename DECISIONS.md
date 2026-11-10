@@ -1,5 +1,15 @@
 # DECISIONS.md
 
+## 2026-11-10 — Application-wide friction audit
+
+User requested recommendations on steps and noise across Home and Pro. Recorded
+source-based findings and prioritized cuts in `docs/design/application-friction-audit.md`:
+duplicate navigation/project layers, repeated result/cost controls, misleading
+Saved/Inspiration affordances and stale copy, then Pro and landing simplification.
+This audit changes documentation only; implementation recommendations remain for
+review. Required typecheck/lint/package tests pass from unchanged-code Turbo cache.
+No billing work, product behavior change or new phase was started.
+
 This is a chronological decision log. Statements such as "pending" or "unstarted"
 in older entries describe that date; later entries supersede them. Use
 [project status](docs/project-status.md) for the current consolidated state.

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
-import { Tabs } from "radix-ui";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Dialog, Tabs } from "radix-ui";
 import Link from "next/link";
 
 export function RoomWorkspace({
@@ -10,19 +10,27 @@ export function RoomWorkspace({
   setup,
   hasPhoto,
   shoppingHref,
-  shareHref,
+  share,
+  manageHref,
 }: {
   designs: ReactNode;
   costs: ReactNode;
   setup: ReactNode;
   hasPhoto: boolean;
   shoppingHref?: string;
-  shareHref?: string;
+  share?: ReactNode;
+  manageHref?: string;
 }) {
   const [section, setSection] = useState(hasPhoto ? "designs" : "setup");
+  const shareOpener = useRef<HTMLElement | null>(null);
+  const [sharing, setSharing] = useState(false);
   useEffect(() => {
     const followHash = () => {
-      if (location.hash === "#cost-breakdown") setSection("costs");
+      if (location.hash === "#share-room") {
+        shareOpener.current =
+          document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        setSharing(true);
+      } else if (location.hash === "#cost-breakdown") setSection("costs");
       else if (location.hash === "#room-details") setSection("setup");
     };
     followHash();
@@ -50,21 +58,6 @@ export function RoomWorkspace({
             </Tabs.Trigger>
           ))}
         </Tabs.List>
-        <nav
-          aria-label="Room workflow"
-          className="flex gap-4 text-xs font-medium text-muted-foreground"
-        >
-          {shoppingHref && (
-            <Link className="hover:text-foreground" href={shoppingHref}>
-              Shopping list ↗
-            </Link>
-          )}
-          {shareHref && (
-            <Link className="hover:text-foreground" href={shareHref}>
-              Share & get feedback ↗
-            </Link>
-          )}
-        </nav>
       </div>
       <Tabs.Content
         forceMount
@@ -102,6 +95,14 @@ export function RoomWorkspace({
           </p>
         </div>
         {costs}
+        {shoppingHref && (
+          <Link
+            className="inline-block rounded-lg border border-border px-4 py-2 text-sm"
+            href={shoppingHref}
+          >
+            Planning checklist →
+          </Link>
+        )}
       </Tabs.Content>
       <Tabs.Content
         forceMount
@@ -126,7 +127,47 @@ export function RoomWorkspace({
           )}
         </div>
         {setup}
+        {manageHref && (
+          <Link href={manageHref} className="inline-block text-sm underline">
+            Manage rooms in this project →
+          </Link>
+        )}
       </Tabs.Content>
+      {share && (
+        <Dialog.Root
+          open={sharing}
+          onOpenChange={(open) => {
+            setSharing(open);
+            if (!open && location.hash === "#share-room")
+              history.replaceState(null, "", location.pathname + location.search);
+          }}
+        >
+          <Dialog.Portal>
+            <Dialog.Overlay className="fixed inset-0 z-[70] bg-foreground/40" />
+            <Dialog.Content
+              aria-describedby="share-description"
+              onCloseAutoFocus={(event) => {
+                event.preventDefault();
+                shareOpener.current?.focus();
+              }}
+              className="fixed left-1/2 top-1/2 z-[80] max-h-[90dvh] w-[calc(100%_-_2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-xl"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <Dialog.Title className="text-xl font-semibold">Share designs</Dialog.Title>
+                <Dialog.Close className="rounded-lg border px-3 py-2 text-sm">Close</Dialog.Close>
+              </div>
+              <Dialog.Description
+                id="share-description"
+                className="mb-4 mt-2 text-sm text-muted-foreground"
+              >
+                Choose which designs from this project others can see. Creating a link makes that
+                gallery public.
+              </Dialog.Description>
+              {share}
+            </Dialog.Content>
+          </Dialog.Portal>
+        </Dialog.Root>
+      )}
     </Tabs.Root>
   );
 }

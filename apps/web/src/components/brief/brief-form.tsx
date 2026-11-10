@@ -45,7 +45,7 @@ export function BriefForm({
   const [budgetBand, setBudgetBand] = useState("not_sure");
   const [timeline, setTimeline] = useState("");
   const [keepItems, setKeepItems] = useState("");
-  const [notes, setNotes] = useState("");
+
   const [uploads, setUploads] = useState<UploadState[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -142,7 +142,6 @@ export function BriefForm({
             budgetBand,
             timeline: timeline === "" ? undefined : timeline,
             keepItems: keepItems === "" ? undefined : keepItems,
-            notes: notes === "" ? undefined : notes,
           },
           assetIds,
           website: "",
@@ -226,82 +225,87 @@ export function BriefForm({
         />
       </div>
 
-      <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">Styles you like (up to 3)</legend>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {STYLES.slice(0, 8).map((style) => {
-            const active = picks.includes(style.key);
-            return (
-              <button
-                key={style.key}
-                type="button"
-                aria-pressed={active}
-                onClick={() => {
-                  togglePick(style.key);
+      <details className="rounded-xl border border-border p-4">
+        <summary className="cursor-pointer text-sm font-medium">
+          Preferences & constraints (optional)
+        </summary>
+        <div className="mt-4 space-y-5">
+          {" "}
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium">Styles you like (up to 3)</legend>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {STYLES.slice(0, 8).map((style) => {
+                const active = picks.includes(style.key);
+                return (
+                  <button
+                    key={style.key}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => {
+                      togglePick(style.key);
+                    }}
+                    className={`rounded-lg border p-2 text-left text-xs ${active ? "border-primary ring-2 ring-primary/30" : "border-border"}`}
+                  >
+                    <span className="flex gap-1">
+                      {style.palette.map((color) => (
+                        <span
+                          key={color}
+                          className="h-4 w-4 rounded-full border border-border"
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
+                    </span>
+                    <span className="mt-1 block font-medium">{style.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="brief-budget">Budget</Label>
+              <select
+                id="brief-budget"
+                value={budgetBand}
+                onChange={(event) => {
+                  setBudgetBand(event.target.value);
                 }}
-                className={`rounded-lg border p-2 text-left text-xs ${active ? "border-primary ring-2 ring-primary/30" : "border-border"}`}
+                className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
               >
-                <span className="flex gap-1">
-                  {style.palette.map((color) => (
-                    <span
-                      key={color}
-                      className="h-4 w-4 rounded-full border border-border"
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
-                </span>
-                <span className="mt-1 block font-medium">{style.label}</span>
-              </button>
-            );
-          })}
+                <option value="under_1k">Under 1k</option>
+                <option value="1k_5k">1k – 5k</option>
+                <option value="5k_15k">5k – 15k</option>
+                <option value="15k_plus">15k+</option>
+                <option value="not_sure">Not sure yet</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="brief-timeline">Timeline</Label>
+              <Input
+                id="brief-timeline"
+                value={timeline}
+                maxLength={120}
+                placeholder="E.g. before the holidays"
+                onChange={(event) => {
+                  setTimeline(event.target.value);
+                }}
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="brief-keep">Anything that must stay?</Label>
+            <Input
+              id="brief-keep"
+              value={keepItems}
+              maxLength={500}
+              placeholder="E.g. the sofa, the bookshelf"
+              onChange={(event) => {
+                setKeepItems(event.target.value);
+              }}
+            />
+          </div>
         </div>
-      </fieldset>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="brief-budget">Budget</Label>
-          <select
-            id="brief-budget"
-            value={budgetBand}
-            onChange={(event) => {
-              setBudgetBand(event.target.value);
-            }}
-            className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-          >
-            <option value="under_1k">Under 1k</option>
-            <option value="1k_5k">1k – 5k</option>
-            <option value="5k_15k">5k – 15k</option>
-            <option value="15k_plus">15k+</option>
-            <option value="not_sure">Not sure yet</option>
-          </select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="brief-timeline">Timeline</Label>
-          <Input
-            id="brief-timeline"
-            value={timeline}
-            maxLength={120}
-            placeholder="E.g. before the holidays"
-            onChange={(event) => {
-              setTimeline(event.target.value);
-            }}
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="brief-keep">Anything that must stay?</Label>
-        <Input
-          id="brief-keep"
-          value={keepItems}
-          maxLength={500}
-          placeholder="E.g. the sofa, the bookshelf"
-          onChange={(event) => {
-            setKeepItems(event.target.value);
-          }}
-        />
-      </div>
-
+      </details>
       <div className="space-y-2">
         <Label htmlFor="brief-photos">Photos of the room (up to {MAX_PHOTOS})</Label>
         <input
@@ -336,20 +340,6 @@ export function BriefForm({
             ))}
           </ul>
         )}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="brief-notes">Notes</Label>
-        <textarea
-          id="brief-notes"
-          rows={3}
-          maxLength={1000}
-          value={notes}
-          onChange={(event) => {
-            setNotes(event.target.value);
-          }}
-          className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
-        />
       </div>
 
       {/* Honeypot: hidden from people, tempting for bots. */}

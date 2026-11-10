@@ -1,9 +1,8 @@
-import { signOutAction } from "@/app/(auth)/actions";
+import { AccountMenu } from "./AccountMenu";
 import { AppNav } from "@/components/app/app-nav";
 import { getBalance, prisma } from "@roomdesigner/db";
 import { requireOnboarded, requireWorkspace } from "@/server/auth/session";
 import Link from "next/link";
-import { WorkspaceSwitcher } from "./workspace-switcher";
 
 function HouseIcon({ className = "h-5 w-5" }: { className?: string }) {
   return (
@@ -27,7 +26,6 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   await requireOnboarded();
   const { workspace, user } = await requireWorkspace();
   const credits = await getBalance(prisma, workspace.id);
-  const initial = (user.name.trim()[0] ?? "R").toUpperCase();
 
   return (
     <div className="min-h-dvh bg-background text-foreground">
@@ -42,38 +40,23 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             </span>
           </Link>
           <AppNav variant="sidebar" />
-          <div className="mt-auto space-y-2 border-t border-border pt-4">
-            <Link
-              href="/settings"
-              className="block text-sm text-foreground underline-offset-4 hover:underline"
-            >
-              Settings
-            </Link>
-            <Link
-              href="/#faq"
-              className="block text-sm text-foreground underline-offset-4 hover:underline"
-            >
-              Help
-            </Link>
-            <p className="truncate text-xs text-muted-foreground">{user.email}</p>
-            <form action={signOutAction}>
-              <button type="submit" className="text-sm text-foreground underline">
-                Sign out
-              </button>
-            </form>
-          </div>
         </aside>
 
         <div className="min-w-0 flex-1">
           <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-4 py-3">
             <div className="flex items-center gap-3">
-              <Link href="/app" className="flex items-center gap-2 lg:hidden">
+              <Link
+                href="/app"
+                aria-label="RoomDesigner"
+                className="flex items-center gap-2 lg:hidden"
+              >
                 <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-border text-foreground">
                   <HouseIcon className="h-4 w-4" />
                 </span>
-                <span className="text-sm font-semibold tracking-tight">RoomDesigner</span>
+                <span className="hidden text-sm font-semibold tracking-tight sm:inline">
+                  RoomDesigner
+                </span>
               </Link>
-              <WorkspaceSwitcher current="HOME" />
             </div>
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-medium">
@@ -111,13 +94,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
                 </svg>
                 New design
               </Link>
-              <Link
-                href="/settings"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground text-xs font-semibold text-white"
-                aria-label="Account settings"
-              >
-                {initial}
-              </Link>
+              <AccountMenu name={user.name} />
             </div>
           </header>
 

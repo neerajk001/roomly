@@ -1,5 +1,6 @@
 "use client";
 
+import { ConceptPreview } from "@/components/renders/ConceptPreview";
 import { ConceptEditWorkspace } from "@/components/renders/ConceptEditWorkspace";
 import { useConceptSelection } from "@/components/renders/use-concept-selection";
 import { ConceptEditHistory } from "@/components/renders/ConceptEditHistory";
@@ -23,6 +24,8 @@ import Link from "next/link";
 import { useCallback, useRef, useState, useTransition } from "react";
 
 export function RenderView({
+  roomType,
+  objectDetectionAvailable = false,
   roomId,
   projectId,
   hasPhoto,
@@ -30,6 +33,8 @@ export function RenderView({
   history,
   sourceUrl,
 }: {
+  roomType: string;
+  objectDetectionAvailable?: boolean;
   roomId: string;
   projectId: string;
   hasPhoto: boolean;
@@ -150,7 +155,12 @@ export function RenderView({
       formData.set("roomId", roomId);
       formData.set("projectId", projectId);
       formData.set("kind", "RESTYLE");
-      formData.set("includeItems", includeItemsForRequest);
+      formData.set(
+        "includeItems",
+        request.includeItems !== undefined
+          ? JSON.stringify(request.includeItems)
+          : includeItemsForRequest,
+      );
       formData.set("styleKey", request.styleKey);
       formData.set("quality", request.quality);
       formData.set("variations", String(request.variations));
@@ -246,12 +256,22 @@ export function RenderView({
 
   return (
     <div className="space-y-6">
-      <GeneratePanel
-        hasPhoto={hasPhoto}
-        pending={createPending}
-        error={panelError}
-        onCreate={submitRestyle}
-      />
+      <details
+        open={current === null || status === "FAILED" || !!panelError}
+        className="rounded-xl border border-border bg-card p-4"
+      >
+        <summary className="cursor-pointer text-sm font-semibold">Generate concepts</summary>
+        <div className="mt-4">
+          {" "}
+          <GeneratePanel
+            roomType={roomType}
+            hasPhoto={hasPhoto}
+            pending={createPending}
+            error={panelError}
+            onCreate={submitRestyle}
+          />
+        </div>
+      </details>
 
       <RenderStatusNotice message={polling.error} onRetry={polling.retry} />
       {jobs.length > 1 && (
@@ -410,20 +430,25 @@ export function RenderView({
 
       {current !== null && current.status === "SUCCEEDED" && (
         <div className="space-y-3">
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <ul className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 sm:grid sm:grid-cols-3">
             {current.outputs.map((output) => (
               <li
                 key={output.id}
-                className="group relative overflow-hidden rounded-lg border border-border"
+                className={
+                  "group relative w-[85%] shrink-0 snap-start overflow-hidden rounded-lg border sm:w-auto " +
+                  (selected?.id === output.id
+                    ? "border-foreground ring-2 ring-inset ring-foreground"
+                    : "border-border")
+                }
               >
                 <button
                   type="button"
                   className="block w-full"
                   onClick={() => {
                     selectOutput(output.id);
-                    setLightbox(`/api/render-outputs/${output.id}/file`);
                   }}
-                  aria-label={`Enlarge concept ${String(output.index + 1)}`}
+                  aria-label={`Select concept ${String(output.index + 1)}`}
+                  aria-pressed={selected?.id === output.id}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element -- signed URL, no optimizer */}
                   <img
@@ -433,15 +458,7 @@ export function RenderView({
                     className="aspect-[4/3] w-full object-cover transition-transform group-hover:scale-[1.02]"
                   />
                 </button>
-                <button
-                  type="button"
-                  disabled={editPending}
-                  aria-pressed={selected?.id === output.id}
-                  onClick={() => selectOutput(output.id)}
-                  className="w-full border-t border-border px-2 py-2 text-xs font-medium"
-                >
-                  Select concept {output.index + 1}
-                </button>
+
                 {output.directionLabel && (
                   <p className="border-t border-border px-2 py-1.5 text-xs font-medium">
                     {output.directionLabel}
@@ -459,31 +476,6 @@ export function RenderView({
                   >
                     {output.isFavorite ? "♥" : "♡"}
                   </button>
-                  <div className="flex items-center gap-1">
-                    <a
-                      href={`/api/render-outputs/${output.id}/file?variant=download`}
-                      className="rounded p-1 text-xs text-muted-foreground hover:text-foreground"
-                      aria-label="Download"
-                    >
-                      ↓
-                    </a>
-                    <button
-                      type="button"
-                      className="rounded px-1.5 py-0.5 text-xs text-muted-foreground hover:text-foreground"
-                      onClick={() => {
-                        openEditor(output.id);
-                        setEditError(null);
-                      }}
-                    >
-                      Edit this
-                    </button>
-                    <Link
-                      className="rounded px-1.5 py-1 text-xs text-primary underline"
-                      href={`/studio/projects/${projectId}/proposals/new?pin=${output.id}`}
-                    >
-                      Pin to proposal
-                    </Link>
-                  </div>
                 </div>
               </li>
             ))}
@@ -498,24 +490,56 @@ export function RenderView({
                 Selected concept {selected.index + 1}
                 {selected.directionLabel ? ` · ${selected.directionLabel}` : ""}
               </p>
-              <button
-                type="button"
-                onClick={() => openEditor(selected.id, undefined, "ideas")}
-                className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium"
-              >
-                Explore suggestions →
-              </button>
-              <ConceptEditHistory
-                jobs={jobs}
-                outputId={selected.id}
-                onSelect={(jobId, outputId) => selectOutput(outputId, jobId)}
-              />
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" onClick={() => openEditor(selected.id)}>
+                  Edit this
+                </Button>
+                <a
+                  className="rounded-lg border border-border px-3 py-2 text-sm"
+                  href={"/api/render-outputs/" + selected.id + "/download"}
+                >
+                  Download
+                </a>
+                <Link
+                  className="rounded-lg border border-border px-3 py-2 text-sm"
+                  href={"/studio/projects/" + projectId + "/proposals/new?pin=" + selected.id}
+                >
+                  Pin to proposal
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setLightbox(selected.url)}
+                  className="rounded-lg border border-border px-3 py-2 text-sm"
+                >
+                  View full design
+                </button>
+              </div>
+              <details>
+                <summary className="cursor-pointer text-sm">Ideas & versions</summary>
+                <div className="mt-3 space-y-3">
+                  {" "}
+                  <button
+                    type="button"
+                    onClick={() => openEditor(selected.id, undefined, "ideas")}
+                    className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium"
+                  >
+                    Explore suggestions →
+                  </button>
+                  <ConceptEditHistory
+                    jobs={jobs}
+                    outputId={selected.id}
+                    onSelect={(jobId, outputId) => selectOutput(outputId, jobId)}
+                  />
+                </div>
+              </details>
             </div>
           )}
 
           {sourceUrl !== undefined && sourceUrl !== null && selected !== null && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Before / after</p>
+            <details className="space-y-2">
+              <summary className="cursor-pointer text-sm font-medium">
+                Compare before & after
+              </summary>
               <div className="relative overflow-hidden rounded-lg border border-border">
                 {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
                 <img src={sourceUrl} alt="Before" className="block w-full" />
@@ -552,7 +576,7 @@ export function RenderView({
                   className="mt-1 w-full"
                 />
               </label>
-            </div>
+            </details>
           )}
         </div>
       )}
@@ -560,6 +584,7 @@ export function RenderView({
       {editingOutputId !== null && editingTarget && (
         <ConceptEditWorkspace
           key={editingTarget.id}
+          objectDetectionAvailable={objectDetectionAvailable}
           roomId={roomId}
           output={editingTarget}
           target={targets[editingTarget.id]}
@@ -577,29 +602,7 @@ export function RenderView({
         />
       )}
 
-      {lightbox !== null && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Concept preview"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/70 p-4"
-          onClick={() => {
-            setLightbox(null);
-          }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element -- signed URL, no optimizer */}
-          <img src={lightbox} alt="Concept visual" className="max-h-full max-w-full rounded-lg" />
-          <button
-            type="button"
-            className="absolute right-4 top-4 rounded-full bg-card/90 px-3 py-1 text-sm"
-            onClick={() => {
-              setLightbox(null);
-            }}
-          >
-            Close
-          </button>
-        </div>
-      )}
+      {lightbox !== null && <ConceptPreview url={lightbox} onClose={() => setLightbox(null)} />}
     </div>
   );
 }

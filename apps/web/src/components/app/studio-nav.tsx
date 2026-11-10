@@ -4,11 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const items = [
-  { href: "/studio", label: "Projects & proposals" },
-  { href: "/studio/clients", label: "Clients & briefs" },
-  { href: "/studio/rate-cards", label: "Rate cards" },
-  { href: "/studio/settings", label: "Studio settings" },
-  { href: "/settings", label: "Account settings" },
+  { href: "/studio", label: "Projects" },
+  { href: "/studio/clients", label: "Clients" },
 ];
 
 export function StudioNav({ mobile = false }: { mobile?: boolean }) {

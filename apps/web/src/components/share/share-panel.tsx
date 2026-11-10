@@ -2,7 +2,13 @@ import { ShareControls } from "@/components/share/share-controls";
 import { prisma } from "@roomdesigner/db";
 import { requireWorkspace } from "@/server/auth/session";
 
-export async function SharePanel({ projectId }: { projectId: string }) {
+export async function SharePanel({
+  projectId,
+  embedded = false,
+}: {
+  projectId: string;
+  embedded?: boolean;
+}) {
   const { workspace } = await requireWorkspace();
   const project = await prisma.project.findFirst({
     where: { id: projectId, workspaceId: workspace.id, deletedAt: null },
@@ -27,6 +33,7 @@ export async function SharePanel({ projectId }: { projectId: string }) {
 
   return (
     <ShareControls
+      embedded={embedded}
       projectId={projectId}
       token={project.shareToken}
       onlyFavorites={project.shareShowFavorites}

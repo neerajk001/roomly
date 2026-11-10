@@ -25,6 +25,15 @@ results-page form; costs, setup and all existing controls remain accessible.
 
 ## Current experience
 
+The [application simplification](design/friction-fixes.md) consolidates Home/My
+spaces into My rooms, opens single-room designs directly and moves mode/settings
+links into the profile menu. Results use one selected-design action bar; comparison,
+ideas and history stay secondary. Sharing opens in the room and Costs has one live
+panel. Saved filters are room/style filters with each output's assigned style.
+The correction passes package checks (76 web tests) and all six browser journeys
+across the final full/focused runs; see its report for precise verification scope.
+The subsequent production build passes. Existing G2/V4 manual review gates remain open.
+
 The [Home quick-start](design/home-quick-start.md) is one screen: a photo, room type,
 optional must-have checkboxes and Generate. All ten room types have distinct lists;
 changing the room clears its old picks. Nothing is automatically checked. These
@@ -33,7 +42,8 @@ extra-instructions, measurements, renter or budget questionnaire. Optional style
 selection sits behind one control; the default requests three contrasting ideas.
 Costs/measurements and detailed editing remain available after the first result.
 
-The earlier seven-step detailed flow is retained for Pro. Earlier batch reports
+Pro defaults to a combined project/client/room/photo quick-start. The earlier
+seven-step flow remains under optional detailed setup. Earlier batch reports
 describe its original delivery and do not define the current homeowner entry flow.
 
 Home and Pro use the same render/edit engine. Selecting a concept controls its

@@ -1,5 +1,6 @@
 "use client";
 
+import { ConceptPreview } from "@/components/renders/ConceptPreview";
 import { ConceptEditWorkspace } from "@/components/renders/ConceptEditWorkspace";
 import { useConceptSelection } from "@/components/renders/use-concept-selection";
 import { ConceptEditHistory } from "@/components/renders/ConceptEditHistory";
@@ -19,10 +20,10 @@ import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState, useTransition } from "react";
 
 interface HomeRoomResultsProps {
+  objectDetectionAvailable?: boolean;
   roomId: string;
   projectId: string;
   roomLabel: string;
-  dimensions: string;
   initialJob: RenderJobView | null;
   history: RenderJobView[];
   sourceUrl: string | null;
@@ -34,17 +35,11 @@ function styleLabelFor(styleKey: string | null): string {
   return getStyle(styleKey)?.label ?? "Modern";
 }
 
-function styleDescription(styleKey: string | null): string {
-  const hint = styleKey === null ? undefined : getStyle(styleKey)?.promptHint;
-  if (hint === undefined) return "A fresh concept based on your room and preferences.";
-  return hint.charAt(0).toUpperCase() + hint.slice(1) + ".";
-}
-
 export function HomeRoomResults({
+  objectDetectionAvailable = false,
   roomId,
   projectId,
   roomLabel,
-  dimensions,
   initialJob,
   history,
   sourceUrl,
@@ -250,128 +245,57 @@ export function HomeRoomResults({
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <Link
-            href="/app/spaces"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
-          >
-            <span aria-hidden="true">←</span> Back to my spaces
+          <Link href="/app" className="text-xs text-muted-foreground underline">
+            ← My rooms
           </Link>
-          <h1 className="mt-2 text-4xl font-semibold leading-[1.02] tracking-tight text-foreground sm:text-5xl">
-            {status === "SUCCEEDED"
-              ? "Your room, reimagined."
-              : `Design your ${roomLabel.toLowerCase()}`}
-          </h1>
-          <p className="mt-2 text-sm font-medium text-muted-foreground">
-            {roomLabel} · {dimensions}
-          </p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight">{roomLabel} designs</h1>
         </div>
-        <div className="flex flex-wrap items-stretch gap-3">
-          <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-sm">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-accent text-foreground">
-              {status === "SUCCEEDED" ? (
-                <svg
-                  className="h-5 w-5"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <polyline points="4 10 8 14 16 5" />
-                </svg>
-              ) : (
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-                </svg>
-              )}
-            </span>
-            <div>
-              <p className="text-sm font-semibold text-foreground">
-                {status === "SUCCEEDED"
-                  ? `${String(outputs.length)} concepts ready`
-                  : status === "FAILED"
-                    ? "Generation failed"
-                    : status === null
-                      ? "Ready to generate"
-                      : "Generating concepts..."}
-              </p>
-              <p className="mt-0.5 max-w-[230px] text-[11px] leading-snug text-muted-foreground">
-                {status === "SUCCEEDED"
-                  ? "Based on your photo and preferences."
-                  : status === "FAILED"
-                    ? (current?.errorMessage ?? "Your credits were refunded.")
-                    : status === null
-                      ? "Create 3 concepts from your room photo."
-                      : "This usually takes a few seconds."}
-              </p>
-            </div>
-          </div>
-          {status === "SUCCEEDED" && (
-            <button
-              type="button"
-              disabled={createPending}
-              onClick={() => {
-                submitRestyle({
-                  styleKey: styleKey ?? "modern",
-                  quality: "draft",
-                  variations: 3,
-                  notes: notes ?? "",
-                });
-              }}
-              className="inline-flex items-center gap-2 rounded-xl border border-border bg-primary px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all   hover:shadow-sm disabled:opacity-60"
-            >
-              Generate more
-              <span aria-hidden="true">✦</span>
-            </button>
-          )}
-          <Link
-            href={`/app/projects/${projectId}`}
-            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-foreground hover:text-white"
+        {status === "SUCCEEDED" && (
+          <button
+            type="button"
+            disabled={createPending}
+            onClick={() =>
+              submitRestyle({
+                styleKey: styleKey ?? "modern",
+                quality: "draft",
+                variations: 3,
+                notes: notes ?? "",
+              })
+            }
+            className="rounded-lg border border-border bg-card px-3 py-2 text-xs disabled:opacity-50"
           >
-            <svg
-              className="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-            </svg>
-            Edit brief
-          </Link>
-        </div>
-      </div>
+            Generate more · 3 credits
+          </button>
+        )}
+      </header>
 
       {jobs.length > 1 && (
-        <label className="block max-w-md space-y-2 text-sm font-medium">
-          Design history
-          <select
-            disabled={editPending}
-            value={currentId ?? ""}
-            onChange={(event) => {
-              setCurrentId(event.target.value);
-              setLightbox(null);
-              setEditingOutputId(null);
-              setEditError(null);
-            }}
-            className="block h-11 w-full min-w-0 rounded-lg border border-input bg-card px-3 text-sm"
-          >
-            {jobs.map((job, index) => (
-              <option key={job.id} value={job.id}>
-                {job.kind === "EDIT" ? `Edit: ${job.label}` : `Design set ${index + 1}`} ·{" "}
-                {job.status.toLowerCase()}
-              </option>
-            ))}
-          </select>
-        </label>
+        <details>
+          <summary className="cursor-pointer text-sm font-medium">Design history</summary>
+          <label className="mt-3 block max-w-md space-y-2 text-sm font-medium">
+            Previous generation
+            <select
+              disabled={editPending}
+              value={currentId ?? ""}
+              onChange={(event) => {
+                setCurrentId(event.target.value);
+                setLightbox(null);
+                setEditingOutputId(null);
+                setEditError(null);
+              }}
+              className="block h-11 w-full min-w-0 rounded-lg border border-input bg-card px-3 text-sm"
+            >
+              {jobs.map((job, index) => (
+                <option key={job.id} value={job.id}>
+                  {job.kind === "EDIT" ? `Edit: ${job.label}` : `Design set ${index + 1}`} ·{" "}
+                  {job.status.toLowerCase()}
+                </option>
+              ))}
+            </select>
+          </label>
+        </details>
       )}
 
       <RenderStatusNotice message={polling.error} onRetry={polling.retry} />
@@ -445,11 +369,11 @@ export function HomeRoomResults({
       {current !== null && status === "SUCCEEDED" && outputs.length > 0 && (
         <>
           <section>
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">
               Choose your favourite design
             </h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              {outputs.length} concept visuals based on your room, style and budget.
+              Choose a concept to edit, download or share.
             </p>
             {current.similarConcepts && (
               <p
@@ -460,11 +384,11 @@ export function HomeRoomResults({
                 extra credits were charged.
               </p>
             )}
-            <ul className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <ul className="mt-3 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 sm:grid sm:grid-cols-2 xl:grid-cols-3">
               {outputs.map((output, index) => {
                 const label = styleLabelFor(output.styleKey ?? styleKey);
                 return (
-                  <li key={output.id}>
+                  <li key={output.id} className="w-[85%] shrink-0 snap-start sm:w-auto">
                     <article
                       className={`relative flex h-full flex-col overflow-hidden border bg-card ${
                         selected?.id === output.id
@@ -477,10 +401,10 @@ export function HomeRoomResults({
                           type="button"
                           onClick={() => {
                             selectOutput(output.id);
-                            setLightbox(`/api/render-outputs/${output.id}/file`);
                           }}
                           className="block w-full"
-                          aria-label={`View concept ${String(index + 1)} full size`}
+                          aria-label={`Select concept ${String(index + 1)}`}
+                          aria-pressed={selected?.id === output.id}
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
                           <img
@@ -527,53 +451,6 @@ export function HomeRoomResults({
                         {output.directionLabel && (
                           <p className="mt-1 text-xs font-medium">{output.directionLabel}</p>
                         )}
-                        <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                          {styleDescription(output.styleKey ?? styleKey)}
-                        </p>
-                        <button
-                          type="button"
-                          disabled={editPending}
-                          aria-pressed={selected?.id === output.id}
-                          onClick={() => selectOutput(output.id)}
-                          className="mt-3 rounded-lg border border-border bg-muted px-3 py-2 text-sm font-medium"
-                        >
-                          Select concept {index + 1}
-                        </button>
-                        <div className="mt-auto flex gap-2 pt-3">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              selectOutput(output.id);
-                              setLightbox(`/api/render-outputs/${output.id}/file`);
-                            }}
-                            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-primary px-3 py-2 text-[11px] font-semibold text-white"
-                          >
-                            View full design <span aria-hidden="true">→</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              openEditor(output.id);
-                              setEditError(null);
-                            }}
-                            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-[11px] font-semibold text-foreground hover:bg-foreground/5"
-                          >
-                            <svg
-                              className="h-3.5 w-3.5"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              aria-hidden="true"
-                            >
-                              <path d="M12 20h9" />
-                              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                            </svg>
-                            Edit this design
-                          </button>
-                        </div>
                       </div>
                     </article>
                   </li>
@@ -585,28 +462,67 @@ export function HomeRoomResults({
             </p>
           </section>
 
-          {current?.status === "SUCCEEDED" && selected && (
-            <div className="space-y-3">
+          {selected && (
+            <section
+              aria-label="Selected design actions"
+              className="space-y-3 rounded-xl border border-border bg-card p-4"
+            >
               <p className="text-sm font-medium" role="status">
                 Selected concept {selected.index + 1}
-                {selected.directionLabel ? ` · ${selected.directionLabel}` : ""}
+                {selected.directionLabel ? " · " + selected.directionLabel : ""}
               </p>
-              <button
-                type="button"
-                onClick={() => openEditor(selected.id, undefined, "ideas")}
-                className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium"
-              >
-                Explore suggestions →
-              </button>
-              <ConceptEditHistory
-                jobs={jobs}
-                outputId={selected.id}
-                onSelect={(jobId, outputId) => selectOutput(outputId, jobId)}
-              />
-            </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={editPending}
+                  onClick={() => openEditor(selected.id)}
+                  className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white"
+                >
+                  Edit this design
+                </button>
+                <a
+                  href={"/api/render-outputs/" + selected.id + "/download"}
+                  className="rounded-lg border border-border px-4 py-2.5 text-sm"
+                >
+                  Download
+                </a>
+                <a
+                  href="#share-room"
+                  onClick={() => router.refresh()}
+                  className="rounded-lg border border-border px-4 py-2.5 text-sm"
+                >
+                  Share
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setLightbox("/api/render-outputs/" + selected.id + "/file")}
+                  className="rounded-lg border border-border px-4 py-2.5 text-sm"
+                >
+                  View full design
+                </button>
+              </div>
+              <details>
+                <summary className="cursor-pointer text-sm">Ideas & versions</summary>
+                <div className="mt-3 space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => openEditor(selected.id, undefined, "ideas")}
+                    className="rounded-lg border px-3 py-2 text-sm"
+                  >
+                    Explore suggestions →
+                  </button>
+                  <ConceptEditHistory
+                    jobs={jobs}
+                    outputId={selected.id}
+                    onSelect={(jobId, outputId) => selectOutput(outputId, jobId)}
+                  />
+                </div>
+              </details>
+            </section>
           )}
 
-          <div className="min-w-0">
+          <details className="min-w-0 rounded-xl border border-border bg-card p-3">
+            <summary className="cursor-pointer text-sm font-medium">Compare before & after</summary>
             <section className="rounded-xl border border-border bg-card">
               <div className="flex flex-wrap items-start justify-between gap-2 border-b border-border px-3 py-2.5">
                 <div>
@@ -721,57 +637,14 @@ export function HomeRoomResults({
                 )}
               </div>
             </section>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <Link
-              href="/app/spaces"
-              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground"
-            >
-              <span aria-hidden="true">←</span> Back to my spaces
-            </Link>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  if (selected !== null) toggleFavorite(selected);
-                }}
-                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-foreground/5"
-              >
-                <svg
-                  className="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M6 3h12v18l-6-4-6 4z" />
-                </svg>
-                Save to my spaces
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (selected !== null) {
-                    openEditor(selected.id);
-                    setEditError(null);
-                  }
-                }}
-                className="inline-flex items-center gap-2 rounded-xl border border-border bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm"
-              >
-                Edit this design <span aria-hidden="true">→</span>
-              </button>
-            </div>
-          </div>
+          </details>
         </>
       )}
 
       {editingOutputId !== null && editingTarget && (
         <ConceptEditWorkspace
           key={editingTarget.id}
+          objectDetectionAvailable={objectDetectionAvailable}
           roomId={roomId}
           output={editingTarget}
           target={targets[editingTarget.id]}
@@ -789,33 +662,7 @@ export function HomeRoomResults({
         />
       )}
 
-      {lightbox !== null && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Concept preview"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/70 p-4"
-          onClick={() => {
-            setLightbox(null);
-          }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
-          <img
-            src={lightbox}
-            alt="Concept visual"
-            className="max-h-full max-w-full rounded-xl border border-border bg-card"
-          />
-          <button
-            type="button"
-            className="absolute right-4 top-4 rounded-xl border border-border bg-card px-3 py-1 text-sm font-semibold text-foreground"
-            onClick={() => {
-              setLightbox(null);
-            }}
-          >
-            Close
-          </button>
-        </div>
-      )}
+      {lightbox !== null && <ConceptPreview url={lightbox} onClose={() => setLightbox(null)} />}
     </div>
   );
 }

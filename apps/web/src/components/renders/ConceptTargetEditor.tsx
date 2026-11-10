@@ -10,6 +10,7 @@ const INITIAL_TARGET: EditTarget = {
 };
 
 export function ConceptTargetEditor({
+  objectDetectionAvailable = false,
   roomId,
   outputId,
   imageUrl,
@@ -21,6 +22,7 @@ export function ConceptTargetEditor({
   children,
   actions,
 }: {
+  objectDetectionAvailable?: boolean;
   roomId: string;
   outputId: string;
   imageUrl: string;
@@ -140,99 +142,106 @@ export function ConceptTargetEditor({
         className="flex min-h-0 min-w-0 flex-col border-t border-border bg-card lg:border-t-0 lg:border-l"
       >
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Edit scope
-          </h2>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled={disabled}
-              aria-pressed={!target}
-              className={`rounded-lg border px-3 py-2 text-xs font-medium ${!target ? "border-foreground bg-foreground text-background" : "border-border"}`}
-              onClick={() => {
-                onChange(undefined);
-                setDrawing(false);
-                setPreview(null);
-              }}
-            >
-              Use whole image
-            </button>
-            <button
-              type="button"
-              disabled={disabled || imageFailed}
-              aria-pressed={!!target}
-              className={`rounded-lg border px-3 py-2 text-xs font-medium ${target ? "border-foreground bg-foreground text-background" : "border-border"}`}
-              onClick={() => {
-                onChange(target ?? INITIAL_TARGET);
-                setDrawing(true);
-                setError(null);
-              }}
-            >
-              Mark an area
-            </button>
-            <button
-              type="button"
-              disabled={disabled || pending}
-              aria-busy={pending}
-              className="rounded-lg border border-border px-3 py-2 text-xs font-medium disabled:opacity-50"
-              onClick={() =>
-                start(async () => {
+          <details open={!!target}>
+            <summary className="cursor-pointer text-sm font-medium">
+              Change a specific area (optional)
+            </summary>
+            <h2 className="mt-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Edit scope
+            </h2>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={disabled}
+                aria-pressed={!target}
+                className={`rounded-lg border px-3 py-2 text-xs font-medium ${!target ? "border-foreground bg-foreground text-background" : "border-border"}`}
+                onClick={() => {
+                  onChange(undefined);
+                  setDrawing(false);
+                  setPreview(null);
+                }}
+              >
+                Use whole image
+              </button>
+              <button
+                type="button"
+                disabled={disabled || imageFailed}
+                aria-pressed={!!target}
+                className={`rounded-lg border px-3 py-2 text-xs font-medium ${target ? "border-foreground bg-foreground text-background" : "border-border"}`}
+                onClick={() => {
+                  onChange(target ?? INITIAL_TARGET);
+                  setDrawing(true);
                   setError(null);
-                  try {
-                    const result = await getConceptAdviceAction({ roomId, outputId });
-                    if (result.advice) onAdvice(result.advice);
-                    else
-                      setError(
-                        result.error ?? "Objects could not be identified. Mark an area instead.",
-                      );
-                  } catch {
-                    setError("Objects could not be identified. Mark an area instead.");
-                  }
-                })
-              }
-            >
-              {pending ? "Finding objects…" : "Find objects"}
-            </button>
-          </div>
-          {pending && (
-            <p role="status" className="mt-2 text-xs">
-              Reviewing the selected concept…
-            </p>
-          )}
-          {error && (
-            <p role="alert" className="mt-2 text-xs text-destructive">
-              {error}
-            </p>
-          )}
-          {advice && (
-            <p className="mt-3 text-xs text-muted-foreground">
-              {advice.source === "demo"
-                ? "Demo mode: object detection is disabled. Mark an area manually."
-                : advice.objects?.length
-                  ? "Choose an object, then review its approximate bounds."
-                  : "No object bounds available. Mark an area manually."}
-            </p>
-          )}
-          {advice?.source === "ai" && !!advice.objects?.length && (
-            <div className="mb-3 flex flex-wrap gap-2">
-              {advice.objects.map((object, index) => (
+                }}
+              >
+                Mark an area
+              </button>
+              {objectDetectionAvailable && (
                 <button
-                  key={`${object.label}-${index}`}
                   type="button"
-                  disabled={disabled}
-                  aria-pressed={target === object}
-                  className="rounded-lg border border-border px-3 py-2 text-xs"
-                  onClick={() => {
-                    onChange(object);
-                    setDrawing(false);
-                  }}
+                  disabled={disabled || pending}
+                  aria-busy={pending}
+                  className="rounded-lg border border-border px-3 py-2 text-xs font-medium disabled:opacity-50"
+                  onClick={() =>
+                    start(async () => {
+                      setError(null);
+                      try {
+                        const result = await getConceptAdviceAction({ roomId, outputId });
+                        if (result.advice) onAdvice(result.advice);
+                        else
+                          setError(
+                            result.error ??
+                              "Objects could not be identified. Mark an area instead.",
+                          );
+                      } catch {
+                        setError("Objects could not be identified. Mark an area instead.");
+                      }
+                    })
+                  }
                 >
-                  {object.label}
+                  {pending ? "Finding objects…" : "Find objects"}
                 </button>
-              ))}
+              )}
             </div>
-          )}
-
+            {pending && (
+              <p role="status" className="mt-2 text-xs">
+                Reviewing the selected concept…
+              </p>
+            )}
+            {error && (
+              <p role="alert" className="mt-2 text-xs text-destructive">
+                {error}
+              </p>
+            )}
+            {advice && (
+              <p className="mt-3 text-xs text-muted-foreground">
+                {advice.source === "demo"
+                  ? "Demo mode: object detection is disabled. Mark an area manually."
+                  : advice.objects?.length
+                    ? "Choose an object, then review its approximate bounds."
+                    : "No object bounds available. Mark an area manually."}
+              </p>
+            )}
+            {advice?.source === "ai" && !!advice.objects?.length && (
+              <div className="mb-3 flex flex-wrap gap-2">
+                {advice.objects.map((object, index) => (
+                  <button
+                    key={`${object.label}-${index}`}
+                    type="button"
+                    disabled={disabled}
+                    aria-pressed={target === object}
+                    className="rounded-lg border border-border px-3 py-2 text-xs"
+                    onClick={() => {
+                      onChange(object);
+                      setDrawing(false);
+                    }}
+                  >
+                    {object.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </details>
           <div className="mt-5 border-t border-border pt-5">{children}</div>
           {target && (
             <details className="mt-5 border-t border-border pt-4">

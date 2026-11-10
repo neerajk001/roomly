@@ -1,15 +1,13 @@
-import { signOutAction } from "@/app/(auth)/actions";
+import { AccountMenu } from "@/components/app/AccountMenu";
 import { getBalance, prisma } from "@roomdesigner/db";
 import { requireOnboarded, requireWorkspace } from "@/server/auth/session";
 import Link from "next/link";
 import { StudioNav } from "@/components/app/studio-nav";
-import { WorkspaceSwitcher } from "@/components/app/workspace-switcher";
 
 export default async function StudioLayout({ children }: { children: React.ReactNode }) {
   await requireOnboarded();
   const { workspace, user } = await requireWorkspace();
   const credits = await getBalance(prisma, workspace.id);
-  const initial = (user.name.trim()[0] ?? "S").toUpperCase();
 
   return (
     <div className="min-h-dvh bg-background text-foreground">
@@ -21,14 +19,6 @@ export default async function StudioLayout({ children }: { children: React.React
           </Link>
           <p className="mt-1 truncate text-xs text-muted-foreground">{workspace.name}</p>
           <StudioNav />
-          <div className="mt-auto space-y-2 border-t border-border pt-4">
-            <p className="truncate text-xs text-muted-foreground">{user.email}</p>
-            <form action={signOutAction}>
-              <button type="submit" className="text-sm text-muted-foreground underline">
-                Sign out
-              </button>
-            </form>
-          </div>
         </aside>
 
         <div className="min-w-0 flex-1">
@@ -37,7 +27,6 @@ export default async function StudioLayout({ children }: { children: React.React
               <Link href="/studio" className="text-base font-semibold lg:hidden">
                 🌿 Studio
               </Link>
-              <WorkspaceSwitcher current="PRO" />
             </div>
             <div className="flex items-center gap-3">
               <Link
@@ -49,13 +38,7 @@ export default async function StudioLayout({ children }: { children: React.React
               <span className="rounded-full border border-border bg-card px-3 py-1 text-xs">
                 ◉ {credits} credits
               </span>
-              <Link
-                href="/studio/settings"
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white"
-                aria-label="Studio settings"
-              >
-                {initial}
-              </Link>
+              <AccountMenu name={user.name} studio />
             </div>
           </header>
 

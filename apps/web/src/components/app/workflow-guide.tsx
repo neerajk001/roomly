@@ -23,7 +23,7 @@ export function WorkflowGuide({ studio = false }: { studio?: boolean }) {
         {
           href: "/new",
           title: "1. Design your room",
-          body: "Upload a photo, choose what to keep, set a budget and pick your style.",
+          body: "Add a room photo and choose any optional must-have items.",
         },
         {
           href: "/app/spaces",

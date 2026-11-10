@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { saveEstimateAction, type SaveEstimateState } from "@/server/actions/studio-estimates";
 import { formatMoney } from "@roomdesigner/shared";
 import {
@@ -332,8 +331,9 @@ export function EstimateBuilder({
       </fieldset>
 
       {versions.length > 0 && (
-        <div className="space-y-1 border-t border-border pt-3">
-          <Label className="text-xs">Version history</Label>
+        <details className="space-y-1 border-t border-border pt-3">
+          <summary className="cursor-pointer text-sm font-medium">Version history</summary>
+
           <ul className="space-y-1 text-sm">
             {versions.map((version) => (
               <li key={version.id} className="flex justify-between gap-2 text-muted-foreground">
@@ -345,7 +345,7 @@ export function EstimateBuilder({
               </li>
             ))}
           </ul>
-        </div>
+        </details>
       )}
     </form>
   );

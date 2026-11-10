@@ -253,19 +253,6 @@ export default async function InspirationPage({
                       <p className="text-sm font-semibold text-foreground">{item.styleLabel}</p>
                       <p className="text-[11px] text-muted-foreground">{item.roomLabel}</p>
                     </div>
-                    <span className="text-muted-foreground" aria-hidden="true">
-                      <svg
-                        className="h-4 w-4"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M6 3h12v18l-6-4-6 4z" />
-                      </svg>
-                    </span>
                   </div>
                   <div className="mt-auto flex items-center justify-between gap-2 pt-3">
                     <Link
@@ -275,9 +262,6 @@ export default async function InspirationPage({
                       <span>Use this style</span>
                       <span aria-hidden="true">→</span>
                     </Link>
-                    <span className="text-muted-foreground" aria-hidden="true">
-                      ⋮
-                    </span>
                   </div>
                 </div>
               </article>

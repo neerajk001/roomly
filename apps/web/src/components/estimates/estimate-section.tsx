@@ -27,7 +27,9 @@ export async function EstimateSection({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Cost range</CardTitle>
+        <CardTitle>
+          <h3>Cost range</h3>
+        </CardTitle>
         <CardDescription>
           Illustrative defaults for your currency, shown as a rough ±20% range. Toggle categories to
           see the range update.

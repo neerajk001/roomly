@@ -11,9 +11,11 @@ const initialState: ProjectFormState = {};
 export function NewProjectForm({
   basePath,
   clients,
+  autoFocus = true,
 }: {
   basePath: "/app" | "/studio";
   clients?: { id: string; name: string }[];
+  autoFocus?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(createProjectAction, initialState);
 
@@ -34,7 +36,7 @@ export function NewProjectForm({
           maxLength={120}
           placeholder="E.g. Living room refresh"
           aria-invalid={state.fieldErrors?.name !== undefined ? true : undefined}
-          autoFocus
+          autoFocus={autoFocus}
         />
         {state.fieldErrors?.name?.map((message) => (
           <p key={message} role="alert" className="text-xs text-destructive">

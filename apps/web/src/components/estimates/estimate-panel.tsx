@@ -1,12 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  CATEGORY_IMPACT,
-  formatMoney,
-  typicalSizeFor,
-  type ScopeItem,
-} from "@roomdesigner/shared";
+import { CATEGORY_IMPACT, formatMoney, typicalSizeFor, type ScopeItem } from "@roomdesigner/shared";
 import { computeEstimate, rankChanges, type RateItem } from "@roomdesigner/estimate";
 import { track } from "@/lib/analytics";
 import Link from "next/link";
@@ -40,7 +35,10 @@ export function EstimatePanel(props: EstimatePanelProps) {
 
   const typical = typicalSizeFor(props.roomType);
   const usedTypical =
-    props.usedTypicalSize || props.widthMm === null || props.lengthMm === null || props.heightMm === null;
+    props.usedTypicalSize ||
+    props.widthMm === null ||
+    props.lengthMm === null ||
+    props.heightMm === null;
 
   const result = useMemo(() => {
     const room = {
@@ -107,39 +105,42 @@ export function EstimatePanel(props: EstimatePanelProps) {
         </ol>
       </div>
 
-      <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">Categories</legend>
-        <ul className="grid gap-1.5 sm:grid-cols-2">
-          {props.scope.map((item) => {
-            const line = result.lines.find((entry) => entry.itemKey === item.itemKey);
-            const active = selected.has(item.itemKey);
-            return (
-              <li key={item.itemKey}>
-                <label className="flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2 text-sm">
-                  <span className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={active}
-                      onChange={() => {
-                        setSelected((current) => {
-                          const next = new Set(current);
-                          if (next.has(item.itemKey)) next.delete(item.itemKey);
-                          else next.add(item.itemKey);
-                          return next;
-                        });
-                      }}
-                    />
-                    {item.label}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {line !== undefined ? formatMoney(line.totalMinor, props.currency) : "—"}
-                  </span>
-                </label>
-              </li>
-            );
-          })}
-        </ul>
-      </fieldset>
+      <details>
+        <summary className="cursor-pointer text-sm font-medium">Adjust cost categories</summary>
+        <fieldset className="mt-3 space-y-2">
+          <legend className="text-sm font-medium">Categories</legend>
+          <ul className="grid gap-1.5 sm:grid-cols-2">
+            {props.scope.map((item) => {
+              const line = result.lines.find((entry) => entry.itemKey === item.itemKey);
+              const active = selected.has(item.itemKey);
+              return (
+                <li key={item.itemKey}>
+                  <label className="flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2 text-sm">
+                    <span className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={active}
+                        onChange={() => {
+                          setSelected((current) => {
+                            const next = new Set(current);
+                            if (next.has(item.itemKey)) next.delete(item.itemKey);
+                            else next.add(item.itemKey);
+                            return next;
+                          });
+                        }}
+                      />
+                      {item.label}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {line !== undefined ? formatMoney(line.totalMinor, props.currency) : "—"}
+                    </span>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+        </fieldset>
+      </details>
 
       <Button asChild variant="outline" size="sm">
         <Link href={`/app/projects/${props.projectId}/rooms/${props.roomId}/shopping-list`}>

@@ -19,8 +19,8 @@ describe("experience navigation", () => {
       const html = renderToStaticMarkup(createElement(StudioNav, { mobile }));
       expect(html).toMatch(/<a(?=[^>]*href="\/studio\/clients")(?=[^>]*aria-current="page")[^>]*>/);
       expect(html).not.toMatch(/<a(?=[^>]*href="\/studio")(?=[^>]*aria-current)[^>]*>/);
-      expect(html).toContain('href="/settings"');
-      expect(html).toContain('href="/studio/rate-cards"');
+      expect(html).not.toContain('href="/settings"');
+      expect(html).not.toContain('href="/studio/rate-cards"');
     }
   });
 

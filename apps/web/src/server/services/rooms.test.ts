@@ -1,6 +1,7 @@
 import { prisma } from "@roomdesigner/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createRoom, getRoom, updateRoom, removeRoomPhoto } from "./rooms";
+import { createDesignProject } from "./design-projects";
 import { getProject } from "./projects";
 import { createRender } from "./renders";
 import { listRoomRenderJobs } from "./render-history";
@@ -48,6 +49,43 @@ afterAll(async () => {
 const ctx = (): { userId: string; workspaceId: string } => ({ userId, workspaceId });
 
 describe("createRoom", () => {
+  it("creates a named project and first room together, and rejects another workspace's client", async () => {
+    const client = await prisma.client.create({ data: { workspaceId, name: "Quick client" } });
+    try {
+      const input = {
+        name: "Kitchen project",
+        clientId: client.id,
+        roomType: "KITCHEN" as const,
+        renterMode: false,
+        keepList: [],
+      };
+      const created = await createDesignProject(prisma, { ...ctx(), currency: "INR" }, input);
+      const project = await prisma.project.findFirstOrThrow({
+        where: { id: created.projectId, workspaceId },
+        include: { rooms: true },
+      });
+      expect(project.clientId).toBe(client.id);
+      expect(project.rooms).toHaveLength(1);
+      expect(project.rooms[0]).toMatchObject({
+        id: created.roomId,
+        type: "KITCHEN",
+        widthMm: null,
+      });
+      await expect(
+        createDesignProject(
+          prisma,
+          { ...ctx(), workspaceId: "another-workspace", currency: "INR" },
+          input,
+        ),
+      ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    } finally {
+      await prisma.project.updateMany({
+        where: { workspaceId, clientId: client.id },
+        data: { clientId: null },
+      });
+      await prisma.client.deleteMany({ where: { id: client.id, workspaceId } });
+    }
+  });
   it("uses confirmed brief photos in projects, rooms and render generation", async () => {
     const link = await prisma.briefLink.create({
       data: { workspaceId, token: crypto.randomUUID() },

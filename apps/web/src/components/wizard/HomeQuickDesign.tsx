@@ -49,8 +49,17 @@ const createdRoomSchema = z
   })
   .refine((value) => Boolean(value.error || (value.projectId && value.roomId)));
 
-export function HomeQuickDesign({ initialStyle }: { initialStyle?: string }) {
+export function HomeQuickDesign({
+  initialStyle,
+  clients,
+}: {
+  initialStyle?: string;
+  clients?: { id: string; name: string }[];
+}) {
   const router = useRouter();
+  const studio = clients !== undefined;
+  const [projectName, setProjectName] = useState("");
+  const [clientId, setClientId] = useState("");
   const [roomType, setRoomType] = useState<ChecklistRoomType>("LIVING_ROOM");
   const [includeItems, setIncludeItems] = useState<string[]>([]);
   const [style, setStyle] = useState(initialStyle ?? "");
@@ -107,6 +116,8 @@ export function HomeQuickDesign({ initialStyle }: { initialStyle?: string }) {
       form.set(
         "payload",
         JSON.stringify({
+          ...(studio && projectName.trim() ? { name: projectName.trim() } : {}),
+          ...(studio && clientId ? { clientId } : {}),
           roomType,
           widthMm: null,
           lengthMm: null,
@@ -124,7 +135,7 @@ export function HomeQuickDesign({ initialStyle }: { initialStyle?: string }) {
       }
       const context = { projectId: result.projectId, roomId: result.roomId };
       setCreated(context);
-      roomPath = `/app/projects/${context.projectId}/rooms/${context.roomId}`;
+      roomPath = `${studio ? "/studio" : "/app"}/projects/${context.projectId}/rooms/${context.roomId}`;
       setProgress("Uploading your photo…");
       const response = await fetch("/api/uploads/presign", {
         method: "POST",
@@ -182,12 +193,45 @@ export function HomeQuickDesign({ initialStyle }: { initialStyle?: string }) {
       <header>
         <p className="text-xs font-medium text-muted-foreground">A fresh start for your room</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-          Your room. Three new ideas.
+          {studio ? "Start a client project" : "Your room. Three new ideas."}
         </h1>
         <p className="mt-3 max-w-xl text-sm text-muted-foreground">
           Add a photo, choose the room and pick any must-haves. We’ll take it from there.
         </p>
       </header>
+      {studio && (
+        <div className="grid gap-4 rounded-xl border border-border bg-card p-5 sm:grid-cols-2">
+          <label className="text-sm font-medium">
+            Project name (optional)
+            <input
+              aria-label="Project name"
+              disabled={busy || !!created}
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              maxLength={120}
+              placeholder="We can name it from the room"
+              className="mt-2 block h-11 w-full rounded-lg border border-border bg-background px-3"
+            />
+          </label>
+          <label className="text-sm font-medium">
+            Client (optional)
+            <select
+              aria-label="Client"
+              disabled={busy || !!created}
+              value={clientId}
+              onChange={(e) => setClientId(e.target.value)}
+              className="mt-2 block h-11 w-full rounded-lg border border-border bg-background px-3"
+            >
+              <option value="">No client yet</option>
+              {clients?.map((client) => (
+                <option key={client.id} value={client.id}>
+                  {client.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
       <div className="grid gap-6 md:grid-cols-[0.9fr_1.1fr]">
         <section className="rounded-2xl border border-border bg-card p-5">
           <label htmlFor="quick-room-photo" className="block text-base font-semibold">
@@ -320,6 +364,9 @@ export function HomeQuickDesign({ initialStyle }: { initialStyle?: string }) {
                 </option>
               ))}
             </select>
+            <Link href="/app/inspiration" className="mt-3 inline-block text-sm underline">
+              Browse room inspiration →
+            </Link>
           </details>
         </section>
       </div>
@@ -345,7 +392,7 @@ export function HomeQuickDesign({ initialStyle }: { initialStyle?: string }) {
         {created && !busy ? (
           <Link
             className="rounded-lg bg-foreground px-5 py-3 text-sm font-semibold text-background"
-            href={`/app/projects/${created.projectId}/rooms/${created.roomId}`}
+            href={`${studio ? "/studio" : "/app"}/projects/${created.projectId}/rooms/${created.roomId}`}
           >
             Open saved room →
           </Link>

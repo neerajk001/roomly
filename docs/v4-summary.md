@@ -1,10 +1,16 @@
 # Pro mode — current implementation summary
 
-Updated 2026-11-09. This replaces the early V4 snapshot whose gaps were completed
+Updated 2026-11-10. This replaces the early V4 snapshot whose gaps were completed
 in later core-flow batches. See [project status](project-status.md) and the unchanged
 [V4 review checklist](spec/phases/v4-pro-mode.md) for outstanding acceptance gates.
 
 ## What works
+
+- [Application simplification](design/friction-fixes.md): combined client/project/
+  room/photo entry, optional detailed setup, room-aware generation choices, grouped
+  advanced controls and one selected-concept toolbar. Rooms and designs share one
+  project tab; rates/settings move to the profile menu. Professional capabilities
+  and explicit proposal sending/approval remain available.
 
 - Studio profile: name, brand color, units, currency, contacts, terms and validated
   logo upload. Pro results omit the free-workspace platform watermark.
@@ -22,7 +28,7 @@ in later core-flow batches. See [project status](project-status.md) and the unch
   sent content/branding/estimate/options; image-bearing branded PDFs generated on
   demand in the web app; public preview/download/approval/change requests; durable
   notification outbox handled by the worker with idempotent delivery.
-- Studio dashboard/project tabs expose rooms, renders, estimates, proposals and
+- Studio dashboard/project tabs expose combined rooms/designs, estimates, proposals and
   activity. Client approval closes the proposal with the chosen option/name/time.
 - Shared guided-design batches provide selected-style/direction metadata, contrast
   and bounded similarity retry, selected-concept suggestions, independent text and

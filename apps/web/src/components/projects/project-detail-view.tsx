@@ -311,17 +311,28 @@ export async function ProjectDetailView({
           </section>
         )}
 
-        <Card id="add-room">
-          <CardHeader>
-            <CardTitle>Add a room</CardTitle>
-            <CardDescription>
-              Enter the measurements and add 1–3 photos. We never send dimensions to the AI model.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <RoomForm projectId={projectId} basePath={basePath} unitSystem={workspace.unitSystem} />
-          </CardContent>
-        </Card>
+        <details
+          id="add-room"
+          className="rounded-xl border border-border bg-card p-4"
+          open={rooms.length === 0}
+        >
+          <summary className="cursor-pointer text-sm font-semibold">Add a room</summary>
+          <Card className="mt-4 border-0 shadow-none">
+            <CardHeader>
+              <CardTitle>Add a room</CardTitle>
+              <CardDescription>
+                Start with the room type. Measurements can be added when you prepare an estimate.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <RoomForm
+                projectId={projectId}
+                basePath={basePath}
+                unitSystem={workspace.unitSystem}
+              />
+            </CardContent>
+          </Card>
+        </details>
       </ProjectTabs>
     </div>
   );

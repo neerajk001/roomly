@@ -8,6 +8,7 @@ import { ConceptTargetEditor } from "./ConceptTargetEditor";
 import { ConceptAdvicePanel } from "./ConceptAdvicePanel";
 
 export function ConceptEditWorkspace({
+  objectDetectionAvailable = false,
   roomId,
   output,
   target,
@@ -21,6 +22,7 @@ export function ConceptEditWorkspace({
   onApply,
   onClose,
 }: {
+  objectDetectionAvailable?: boolean;
   roomId: string;
   output: RenderOutputView;
   target?: EditTarget;
@@ -90,6 +92,7 @@ export function ConceptEditWorkspace({
             </Dialog.Close>
           </header>
           <ConceptTargetEditor
+            objectDetectionAvailable={objectDetectionAvailable}
             roomId={roomId}
             outputId={output.id}
             imageUrl={output.url}

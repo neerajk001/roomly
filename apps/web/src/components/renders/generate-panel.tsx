@@ -1,25 +1,23 @@
 "use client";
-
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { STYLES, totalCreditCost } from "@roomdesigner/shared";
-import Link from "next/link";
 import { useState } from "react";
-
+import { STYLES, checklistForRoom, totalCreditCost } from "@roomdesigner/shared";
+import { Button } from "@/components/ui/button";
 export interface RestyleRequest {
   styleKey: string;
   quality: "draft" | "final";
   variations: number;
   notes: string;
   stagingItems: string[];
+  includeItems?: string[];
 }
-
 export function GeneratePanel({
+  roomType,
   hasPhoto,
   pending,
   error,
   onCreate,
 }: {
+  roomType: string;
   hasPhoto: boolean;
   pending: boolean;
   error: string | null;
@@ -29,198 +27,125 @@ export function GeneratePanel({
   const [quality, setQuality] = useState<"draft" | "final">("draft");
   const [variations, setVariations] = useState(3);
   const [notes, setNotes] = useState("");
-  const [staging, setStaging] = useState<string[]>([]);
-  const [dismissedFor, setDismissedFor] = useState<string | null>(null);
-  const creditsError = error !== null && /credit/i.test(error);
-  const showCreditsModal = creditsError && dismissedFor !== error;
-
-  const cost = totalCreditCost(quality, variations);
-
-  const selectClass =
-    "h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
-
+  const [items, setItems] = useState<string[]>([]);
   return (
-    <div className="space-y-5">
+    <section className="space-y-4">
       {!hasPhoto && (
-        <p className="rounded-md bg-amber-500/10 px-3 py-2 text-sm text-amber-800">
-          Add a photo of this room before generating.
-        </p>
+        <p className="text-sm text-muted-foreground">Add a room photo in Room setup first.</p>
       )}
-
-      <fieldset className="space-y-2">
-        <legend className="text-sm font-medium text-foreground">Style</legend>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <label className="block text-sm font-medium">
+        Design style
+        <select
+          aria-label="Design style"
+          value={styleKey}
+          onChange={(e) => setStyleKey(e.target.value)}
+          className="mt-2 block h-11 w-full rounded-lg border border-border bg-background px-3"
+        >
           {STYLES.map((style) => (
-            <button
-              key={style.key}
-              type="button"
-              aria-pressed={styleKey === style.key}
-              onClick={() => {
-                setStyleKey(style.key);
-              }}
-              className={`rounded-lg border p-2 text-left text-xs transition-colors ${
-                styleKey === style.key
-                  ? "border-primary bg-primary/5 ring-2 ring-primary/30"
-                  : "border-border hover:bg-muted/50"
-              }`}
-            >
-              <span className="block font-medium text-foreground">{style.label}</span>
-              <span className="mt-0.5 line-clamp-2 block text-[11px] text-muted-foreground">
-                {style.promptHint}
-              </span>
-            </button>
+            <option key={style.key} value={style.key}>
+              {style.label}
+            </option>
           ))}
-        </div>
-      </fieldset>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="variations">Variations</Label>
-          <select
-            id="variations"
-            className={selectClass}
-            value={variations}
-            onChange={(event) => {
-              setVariations(Number.parseInt(event.target.value, 10));
-            }}
-          >
-            {[1, 2, 3, 4].map((count) => (
-              <option key={count} value={count}>
-                {count}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="quality">Quality</Label>
-          <select
-            id="quality"
-            className={selectClass}
-            value={quality}
-            onChange={(event) => {
-              setQuality(event.target.value === "final" ? "final" : "draft");
-            }}
-          >
-            <option value="draft">Draft (faster, cheaper)</option>
-            <option value="final">Final (best quality — recommended)</option>
-          </select>
-        </div>
-      </div>
-
-      <fieldset className="space-y-2">
-        <legend className="text-sm font-medium text-foreground">Stage this room (optional)</legend>
-        <p className="text-xs text-muted-foreground">
-          Empty room? Pick what to add. Existing items that already fit are kept.
-        </p>
-        <div className="flex flex-wrap gap-1.5">
-          {[
-            ["sofa", "Sofa"],
-            ["dining-table", "Dining table"],
-            ["rug", "Rug"],
-            ["flooring", "Flooring"],
-            ["curtains", "Curtains"],
-            ["plants", "Plants"],
-            ["art", "Art"],
-            ["lighting", "Lighting"],
-            ["storage", "Storage"],
-          ].map(([key, label]) => {
-            const active = staging.includes(key ?? "");
-            return (
-              <button
-                key={key}
-                type="button"
-                aria-pressed={active}
-                onClick={() => {
-                  const value = key ?? "";
-                  setStaging((current) =>
-                    current.includes(value)
-                      ? current.filter((item) => item !== value)
-                      : [...current, value],
-                  );
-                }}
-                className={`rounded-full border px-2.5 py-1 text-xs ${
-                  active
-                    ? "border-primary bg-primary/10 text-foreground"
-                    : "border-border text-muted-foreground"
-                }`}
+        </select>
+      </label>
+      <details className="rounded-lg border border-border p-3">
+        <summary className="cursor-pointer text-sm font-medium">
+          Preferences & generation options
+        </summary>
+        <div className="mt-4 space-y-4">
+          <fieldset>
+            <legend className="mb-2 text-sm font-medium">Items to include (optional)</legend>
+            <div className="grid grid-cols-2 gap-2">
+              {checklistForRoom(roomType).map(([id, label]) => (
+                <label
+                  key={id}
+                  className="flex items-center gap-2 rounded-lg border border-border p-2 text-sm"
+                >
+                  <input
+                    type="checkbox"
+                    checked={items.includes(id)}
+                    onChange={(e) =>
+                      setItems((previous) =>
+                        e.target.checked
+                          ? [...previous, id]
+                          : previous.filter((item) => item !== id),
+                      )
+                    }
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <label className="block text-sm">
+            Client instructions
+            <textarea
+              aria-label="Client instructions"
+              rows={2}
+              maxLength={300}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="mt-2 block w-full rounded-lg border border-border bg-background p-3"
+            />
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="text-sm">
+              Variations
+              <select
+                aria-label="Variations"
+                value={variations}
+                onChange={(e) => setVariations(Number(e.target.value))}
+                className="mt-2 block h-10 w-full rounded-lg border border-border bg-background px-2"
               >
-                {label}
-              </button>
-            );
-          })}
+                {[1, 2, 3, 4].map((count) => (
+                  <option key={count} value={count}>
+                    {count}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm">
+              Quality
+              <select
+                aria-label="Quality"
+                value={quality}
+                onChange={(e) => setQuality(e.target.value === "final" ? "final" : "draft")}
+                className="mt-2 block h-10 w-full rounded-lg border border-border bg-background px-2"
+              >
+                <option value="draft">Draft</option>
+                <option value="final">Best quality</option>
+              </select>
+            </label>
+          </div>
         </div>
-      </fieldset>
-
-      <div className="space-y-2">
-        <Label htmlFor="notes">Notes (optional)</Label>
-        <textarea
-          id="notes"
-          maxLength={300}
-          rows={2}
-          value={notes}
-          onChange={(event) => {
-            setNotes(event.target.value);
-          }}
-          placeholder="E.g. keep the rug and the shelf on the left"
-          className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-        />
-      </div>
-
-      {error !== null && !creditsError && (
-        <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+      </details>
+      {error && (
+        <p role="alert" className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
           {error}
         </p>
       )}
-
-      {showCreditsModal && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Not enough credits"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/60 p-4"
-        >
-          <div className="w-full max-w-sm space-y-3 rounded-xl bg-background p-5 shadow-xl">
-            <h2 className="text-lg font-semibold text-foreground">Not enough credits</h2>
-            <p className="text-sm text-muted-foreground">{error}</p>
-            <div className="flex flex-wrap gap-2">
-              <Link
-                href="/pricing"
-                className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground"
-              >
-                Get more credits
-              </Link>
-              <button
-                type="button"
-                onClick={() => {
-                  setDismissedFor(error);
-                }}
-                className="rounded-md border border-border px-3 py-2 text-sm"
-              >
-                Not now
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="flex flex-wrap items-center gap-3">
         <Button
           type="button"
-          disabled={!hasPhoto || pending}
-          aria-busy={pending}
-          onClick={() => {
-            onCreate({ styleKey, quality, variations, notes, stagingItems: staging });
-          }}
+          disabled={pending || !hasPhoto}
+          onClick={() =>
+            onCreate({
+              styleKey,
+              quality,
+              variations,
+              notes,
+              stagingItems: [],
+              includeItems: items,
+            })
+          }
         >
-          {pending ? "Starting…" : `Generate ${variations} concept${variations === 1 ? "" : "s"}`}
+          {pending ? "Starting…" : "Generate " + variations + " concepts"}
         </Button>
-        <span className="text-sm text-muted-foreground">
-          Costs <strong className="text-foreground">{cost}</strong> credit{cost === 1 ? "" : "s"}
+        <span className="text-xs text-muted-foreground">
+          {totalCreditCost(quality, variations)} credits
         </span>
       </div>
-      <p className="text-xs text-muted-foreground">
-        AI-generated concept visual. Not to scale. Dimensions are never sent to the image model.
-      </p>
-    </div>
+      <p className="text-xs text-muted-foreground">AI-generated concept visuals. Not to scale.</p>
+    </section>
   );
 }

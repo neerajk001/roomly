@@ -88,7 +88,6 @@ export default async function StudioHomePage({
 
   return (
     <div className="space-y-10">
-      <WorkflowGuide studio />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Your studio, in one place.</h1>
@@ -128,9 +127,6 @@ export default async function StudioHomePage({
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold tracking-tight">Projects</h2>
-          <Link href="/studio" className="text-xs text-primary underline">
-            Latest first ▾
-          </Link>
         </div>
         {projects.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border bg-card/60 p-8 text-center">
@@ -225,4 +221,3 @@ export default async function StudioHomePage({
     </div>
   );
 }
-import { WorkflowGuide } from "@/components/app/workflow-guide";

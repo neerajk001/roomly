@@ -3,6 +3,7 @@ import { prisma } from "@roomdesigner/db";
 import { requireSession } from "@/server/auth/session";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 
 export const metadata = { title: "Welcome" };
 
@@ -24,7 +25,15 @@ function HouseIcon() {
   );
 }
 
-export default async function OnboardingPage() {
+export default async function OnboardingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mode?: string }>;
+}) {
+  const intent = z
+    .enum(["home", "pro"])
+    .catch("home")
+    .parse((await searchParams).mode);
   const session = await requireSession();
   if (session.user.onboardedAt != null) {
     redirect(session.user.mode === "PRO" ? "/studio" : "/app");
@@ -58,14 +67,6 @@ export default async function OnboardingPage() {
                 RoomDesigner
               </span>
             </Link>
-            <div className="flex items-center gap-3">
-              <span className="text-[11px] font-semibold tracking-normal text-muted-foreground">
-                Choose your experience
-              </span>
-              <span className="h-2 w-32 overflow-hidden bg-foreground/10">
-                <span className="block h-full w-1/2 bg-primary" />
-              </span>
-            </div>
           </header>
 
           <div className="mt-8 max-w-2xl">
@@ -79,34 +80,11 @@ export default async function OnboardingPage() {
 
           <div className="mt-8">
             <ModeCards
+              initialMode={intent === "pro" ? "PRO" : "HOME"}
               defaultCurrency={membership.workspace.currency}
               defaultUnitSystem={membership.workspace.unitSystem}
             />
           </div>
-        </div>
-
-        {/* Step indicator */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-3 text-xs font-medium text-muted-foreground">
-          <span className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-white">
-              1
-            </span>
-            Choose your workspace
-          </span>
-          <span className="h-px w-10 bg-foreground/30" aria-hidden="true" />
-          <span className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full border border-border text-[11px] font-semibold text-foreground">
-              2
-            </span>
-            See the right dashboard
-          </span>
-          <span className="h-px w-10 bg-foreground/30" aria-hidden="true" />
-          <span className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full border border-border text-[11px] font-semibold text-foreground">
-              3
-            </span>
-            Start a design
-          </span>
         </div>
       </div>
     </div>

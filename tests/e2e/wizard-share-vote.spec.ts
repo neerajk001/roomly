@@ -14,8 +14,8 @@ test("wizard renders, favorite, create share link, vote anonymously", async ({ p
   }
   await signInWithOtp(page, { name: "E2E Share", email: uniqueEmail("e2e-share") });
   await page.waitForURL("**/onboarding");
-  await page.getByRole("button", { name: /Continue as homeowner/ }).click();
-  await page.getByRole("button", { name: "Open my home workspace" }).click();
+  await page.getByRole("button", { name: "Homeowner", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.waitForURL("**/app");
 
   // One Home screen; every room has its own optional must-have list.
@@ -124,8 +124,32 @@ test("wizard renders, favorite, create share link, vote anonymously", async ({ p
   await expect(page.getByRole("button", { name: "Remove from favorites" }).first()).toBeVisible();
   expect((await favoritePersisted).ok()).toBe(true);
 
+  const secondFavorite = page.waitForResponse(
+    (response) =>
+      response.url().includes("/api/render-outputs/") && response.request().method() === "PATCH",
+  );
+  await page.getByRole("button", { name: "Add to favorites", exact: true }).first().click();
+  expect((await secondFavorite).ok()).toBe(true);
+  await page.goto("/app/saved");
+  await expect(page.getByRole("heading", { name: "Saved designs", exact: true })).toBeVisible();
+  const secondStyle = STYLES.find((style) => style.key === generated.outputs[1]?.styleKey)?.label;
+  if (!secondStyle) throw new Error("Missing second concept style");
+  await expect(page.getByRole("list").getByText(secondStyle, { exact: true })).toBeVisible();
+  // The room library opens a single-room project directly.
   // Back to the project and create a share link
-  await page.goto(`/app/projects/${projectId}`);
+  await page.goto("/app");
+  await expect(page.getByRole("heading", { name: "My rooms", exact: true })).toBeVisible();
+  const roomLink = page.locator(
+    'a[href="/app/projects/' +
+      projectId +
+      "/rooms/" +
+      /\/rooms\/([^/]+)$/.exec(roomUrl)?.[1] +
+      '"]',
+  );
+  await roomLink.click();
+  await expect(page).toHaveURL(roomUrl);
+  await page.getByRole("link", { name: "Share", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: "Share designs", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Create share link" }).click();
   const shareLink = page.getByText(/\/share\/[A-Za-z0-9_-]+/);
   await expect(shareLink).toBeVisible({ timeout: 30_000 });

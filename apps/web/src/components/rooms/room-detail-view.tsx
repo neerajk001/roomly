@@ -1,5 +1,6 @@
+import { getServerEnv } from "@roomdesigner/config/env";
 import { RoomWorkspace } from "./RoomWorkspace";
-import { RoomCostSummary } from "./RoomCostSummary";
+import { SharePanel } from "@/components/share/share-panel";
 import { RoomBriefSummary } from "./RoomBriefSummary";
 import {
   outputConceptLabel,
@@ -20,7 +21,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { prisma } from "@roomdesigner/db";
 import { presignGet } from "@roomdesigner/storage";
 import { requireWorkspace } from "@/server/auth/session";
-import { getRoughEstimate } from "@/server/services/estimates";
 import { getRoom, openingListSchema } from "@/server/services/rooms";
 import { RoomForm } from "@/components/projects/room-form";
 import { listRoomRenderJobs } from "@/server/services/render-history";
@@ -155,33 +155,25 @@ export async function RoomDetailView({
   );
 
   if (basePath === "/app") {
-    const [rough, projectMeta] = await Promise.all([
-      getRoughEstimate(prisma, { userId: user.id, workspaceId: workspace.id }, roomId, {
-        persist: false,
-      }),
-      prisma.project.findFirst({
-        where: { id: projectId, workspaceId: workspace.id },
-        select: { keepList: true, notes: true },
-      }),
-    ]);
-    const top = [...rough.lines]
-      .sort((a, b) => b.totalMinor - a.totalMinor)
-      .slice(0, 3)
-      .map((line) => ({ label: line.label, totalMinor: line.totalMinor }));
+    const projectMeta = await prisma.project.findFirst({
+      where: { id: projectId, workspaceId: workspace.id },
+      select: { keepList: true, notes: true },
+    });
 
     return (
       <RoomWorkspace
         key={detail.room.id}
         hasPhoto={photos.length > 0}
         shoppingHref={`/app/projects/${projectId}/rooms/${roomId}/shopping-list`}
-        shareHref={`/app/projects/${projectId}#share`}
+        share={<SharePanel projectId={projectId} embedded />}
+        manageHref={`/app/projects/${projectId}`}
         designs={
           <HomeRoomResults
             key={detail.room.id}
+            objectDetectionAvailable={getServerEnv().ADVICE_PROVIDER === "openai"}
             roomId={detail.room.id}
             projectId={projectId}
             roomLabel={roomLabel}
-            dimensions={dimensions}
             initialJob={initialJob}
             history={jobViews}
             sourceUrl={photos[0]?.url ?? null}
@@ -190,14 +182,6 @@ export async function RoomDetailView({
         }
         costs={
           <>
-            <RoomCostSummary
-              estimate={{
-                currency: rough.currency,
-                lowMinor: rough.lowMinor,
-                highMinor: rough.highMinor,
-                top,
-              }}
-            />
             <section id="cost-breakdown" aria-label="Cost breakdown and priorities">
               <EstimateSection projectId={projectId} roomId={detail.room.id} />
             </section>
@@ -254,6 +238,8 @@ export async function RoomDetailView({
           <section aria-label="Generate concepts">
             <RenderView
               key={detail.room.id}
+              roomType={detail.room.type}
+              objectDetectionAvailable={getServerEnv().ADVICE_PROVIDER === "openai"}
               roomId={detail.room.id}
               projectId={projectId}
               hasPhoto={photos.length > 0}

@@ -20,8 +20,8 @@ function waitForCompletedRender(page: Page) {
 async function signUpAndOnboardHome(page: Page): Promise<void> {
   await signInWithOtp(page, { name: "E2E Renderer", email: uniqueEmail("e2e-render") });
   await page.waitForURL("**/onboarding");
-  await page.getByRole("button", { name: /Continue as homeowner/ }).click();
-  await page.getByRole("button", { name: "Open my home workspace" }).click();
+  await page.getByRole("button", { name: "Homeowner", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.waitForURL("**/app");
 }
 
@@ -82,6 +82,20 @@ test("full render flow: project, room, photo, 3 concepts, favorite, chat edit", 
   const base = renderJobStatusSchema.parse(await (await baseCompleted).json());
   const second = base.outputs[1];
   expect(second).toBeDefined();
+  await page.getByRole("link", { name: "Share", exact: true }).click();
+  const sharing = page.getByRole("dialog", { name: "Share designs", exact: true });
+  await expect(sharing).toBeVisible();
+  await expect(
+    sharing.getByRole("button", { name: "Create share link", exact: true }),
+  ).toBeDisabled();
+  await sharing
+    .getByRole("checkbox", { name: "Only show favorited images", exact: true })
+    .uncheck();
+  await expect(
+    sharing.getByRole("button", { name: "Create share link", exact: true }),
+  ).toBeEnabled();
+  await sharing.getByRole("button", { name: "Close", exact: true }).click();
+  await expect(page.getByRole("link", { name: "Share", exact: true })).toBeFocused();
   // Explicit concept selection drives comparison and survives a reload.
   const beforeSelection = await page.getByAltText("After", { exact: true }).getAttribute("src");
   await page.getByRole("button", { name: "Select concept 2", exact: true }).click();
@@ -94,8 +108,15 @@ test("full render flow: project, room, photo, 3 concepts, favorite, chat edit", 
     "aria-pressed",
     "true",
   );
+  await page.getByRole("button", { name: "View full design", exact: true }).click();
+  const preview = page.getByRole("dialog", { name: "Concept preview", exact: true });
+  await expect(preview).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(preview).not.toBeVisible();
+  await expect(page.getByRole("button", { name: "View full design", exact: true })).toBeFocused();
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.screenshot({ path: "test-results/room-designs-desktop.png", fullPage: true });
+  await page.getByText("Ideas & versions", { exact: true }).click();
   await page.getByRole("button", { name: "Explore suggestions →", exact: true }).click();
   const editor = page.getByRole("dialog", { name: "Edit this concept", exact: true });
   await expect(editor).toBeVisible();
@@ -111,11 +132,13 @@ test("full render flow: project, room, photo, 3 concepts, favorite, chat edit", 
   await expect(composer).toHaveValue("");
   await composer.fill("add a small accent");
   await page.getByRole("button", { name: "Back to designs", exact: true }).click();
-  await page.getByRole("button", { name: "Edit this design", exact: true }).nth(1).click();
+  await page.getByRole("button", { name: "Select concept 2", exact: true }).click();
+  await page.getByRole("button", { name: "Edit this design", exact: true }).click();
   await expect(composer).toHaveValue("make the sofa deep green");
   await expect(page.getByText(/^Editing concept 2/)).toBeVisible();
   await expect(composer).toBeFocused();
-  await page.getByRole("button", { name: "Find objects", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Find objects", exact: true })).toHaveCount(0);
+  await page.getByText("Change a specific area (optional)", { exact: true }).click();
   await expect(
     page.getByText("Demo mode: object detection is disabled. Mark an area manually."),
   ).toBeVisible();
@@ -138,12 +161,14 @@ test("full render flow: project, room, photo, 3 concepts, favorite, chat edit", 
   await page.getByRole("button", { name: "Back to designs", exact: true }).click();
   await page.getByRole("button", { name: "Select concept 1", exact: true }).click();
   await page.getByRole("button", { name: "Edit this design", exact: true }).first().click();
+  await page.getByText("Change a specific area (optional)", { exact: true }).click();
   await expect(page.getByRole("button", { name: "Use whole image", exact: true })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
   await page.getByRole("button", { name: "Back to designs", exact: true }).click();
-  await page.getByRole("button", { name: "Edit this design", exact: true }).nth(1).click();
+  await page.getByRole("button", { name: "Select concept 2", exact: true }).click();
+  await page.getByRole("button", { name: "Edit this design", exact: true }).click();
   await page.getByText("Adjust selection edges", { exact: true }).click();
   await expect(leftEdge).toHaveValue("260");
   await expect(page.getByRole("button", { name: "Apply change", exact: true })).toBeInViewport();
@@ -161,13 +186,11 @@ test("full render flow: project, room, photo, 3 concepts, favorite, chat edit", 
   await composer.press("Escape");
   await expect(editor).not.toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Edit this design", exact: true }).nth(1),
+    page.getByRole("button", { name: "Edit this design", exact: true }).first(),
   ).toBeFocused();
   // Costs and setup have dedicated space; switching sections retains the chosen concept.
   await page.getByRole("tab", { name: "Costs", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "Estimated cost range", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Cost range", exact: true })).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Choose your favourite design", exact: true }),
   ).not.toBeVisible();
@@ -183,36 +206,38 @@ test("full render flow: project, room, photo, 3 concepts, favorite, chat edit", 
   const favorite = page.getByRole("button", { name: "Add to favorites" }).first();
   await favorite.click();
   await expect(page.getByRole("button", { name: "Remove from favorites" }).first()).toBeVisible();
-  await page.getByRole("button", { name: "Edit this design", exact: true }).nth(1).click();
+  await page.getByRole("button", { name: "Select concept 2", exact: true }).click();
+  await page.getByRole("button", { name: "Edit this design", exact: true }).click();
   await expect(composer).toHaveValue("make the sofa deep green");
 
   // Refine the selected second concept and verify the actual server-side lineage.
   const editCompleted = waitForCompletedRender(page);
   await page.getByRole("button", { name: "Apply change" }).click();
-  await expect(page.getByText("1 concepts ready", { exact: true })).toBeVisible({
-    timeout: 90_000,
-  });
-  await expect(page.getByAltText("Concept 1")).toBeVisible();
   const edited = renderJobStatusSchema.parse(await (await editCompleted).json());
+  await expect(page.getByAltText("Concept 1", { exact: true })).toBeVisible();
+  await expect(page.getByAltText(/^Concept \d+$/)).toHaveCount(1);
   expect(edited.sourceOutputId).toBe(second?.id);
   expect(edited.editTarget).toEqual({
     label: "Selected area",
     region: { left: 260, top: 250, right: 750, bottom: 750 },
   });
+  await page.getByText("Ideas & versions", { exact: true }).click();
   const family = page
     .locator("details")
-    .filter({ has: page.getByText(/^Changes for this concept/) });
+    .filter({ has: page.getByText(/^Changes for this concept/) })
+    .last();
   await family.locator("summary").click();
   await expect(family.getByRole("button", { name: /^Original concept 2/ })).toBeVisible();
   await expect(family.getByRole("button", { name: /^Original concept 1/ })).toHaveCount(0);
-  const history = page.getByLabel("Design history");
+  await page.getByText("Design history", { exact: true }).click();
+  const history = page.getByLabel("Previous generation");
   const editedId = await history.inputValue();
   const originalId = await history.locator("option").first().getAttribute("value");
   await history.selectOption(originalId ?? "");
   await expect(page.getByAltText("Concept 3")).toBeVisible();
   await expect(page.getByRole("button", { name: "Remove from favorites" }).first()).toBeVisible();
   await history.selectOption(editedId);
-  await expect(page.getByText("1 concepts ready", { exact: true })).toBeVisible();
+  await expect(page.getByAltText(/^Concept \d+$/)).toHaveCount(1);
   await page.getByAltText("Concept 1").scrollIntoViewIfNeeded();
   await expect
     .poll(() =>

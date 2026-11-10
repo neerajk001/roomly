@@ -794,3 +794,22 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
 - Update current documentation, run required checks and full browser flows using fake providers, commit and stop for review.
 - Verification found the active local worker uses the real provider and shares the default queue. Add validated `QUEUE_SCHEMA` (default unchanged), set both Playwright processes to `pgboss_e2e`, and mock queue delivery in metadata-only service tests. This isolates fake test jobs without stopping the user's development server or worker. Verified the constructor's schema option against [official pg-boss documentation](https://github.com/timgit/pg-boss/blob/master/docs/api/constructor.md).
 - Final verification: `pnpm typecheck`, `pnpm lint` and `pnpm test` pass across all 11 packages (75 web, 27 shared, 17 worker, 9 config tests). All six Playwright journeys pass sequentially in 6.6 minutes; production build passes afterwards. Reviewed desktop/375px quick-start and editor screenshots; source formatting, Markdown links, env wiring and whitespace checks pass. Cleaned five recorded browser-test accounts/workspaces only. An earlier overlapping run's generation timeout was superseded by this isolated sequential pass, not counted as a success. No billing, paid AI call, new model, new asset, dependency or application-data migration was added. G2/manual V4 review remains open; stop for review after this maintenance commit.
+
+## 2026-11-10 — Approved application simplification plan
+
+- Implement the application-friction audit as V4 maintenance; do not start billing or a new phase.
+- Consolidate Home and My spaces into one room library; preserve legacy URLs and multi-room management.
+- Open single-room entries directly and retain explicit project management access.
+- Compact Home/Pro headers and mobile navigation; move settings/help/mode switching into one account menu.
+- Reduce onboarding to concise role choices and one submission while preserving professional setup.
+- Make concept cards select; put edit/download/share actions on the selected concept and comparison/history behind explicit controls.
+- Share from the room with explicit public scope and link creation; keep revoke/regenerate accessible in secondary settings.
+- Keep one live cost panel and move planning checklist access into Costs.
+- Replace misleading Saved collections with honest filters and resolve each output's assigned style.
+- Remove decorative action icons and stale/duplicated copy; gate object detection by actual capability.
+- Consolidate professional entry, use room-specific inclusion choices and fold advanced generation, brief, estimate and proposal controls.
+- Shorten landing repetition and align process copy with quick-start; retain paired imagery and core information.
+- Preserve tenant scoping, validation, visible credit costs, failure recovery and explicit sharing/send safeguards.
+- Update meaningful browser checks, run typecheck/lint/tests and sequential fake-provider browser/build checks, document and commit.
+- Verified Prisma 7 nested writes against [official relation-query documentation](https://www.prisma.io/docs/orm/v7/prisma-client/queries/relation-queries); project and first room use one nested creation. Kept mutation logic in a service and added client-isolation coverage. Experience routing is explicit: Home `/new`, Pro `/studio/projects/new`, with the optional detailed wizard inside Studio.
+- Final application simplification verification: typecheck/lint/all package tests pass (76 web tests), without new lint warnings. Five browser journeys passed in the final full run; the Home journey's remaining removed-badge/history assertions were corrected and its complete focused rerun passed. All six journeys are verified on unchanged final application code. Reviewed desktop/375px layouts, profile switching, Pro quick-start, explicit sharing scope, assigned Saved styles, mask/source/version preservation and client approval. Final production build passes (3m54s). Formatting, Markdown links, env wiring and whitespace checks pass. Cleaned five final full-run test accounts plus the focused Home account; no user data removed. Billing, paid image calls, new model selection and deployment remain excluded. Existing G2/V4 manual gates stay open; stop for review after committing.

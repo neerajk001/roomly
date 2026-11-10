@@ -4,8 +4,9 @@ Start with [current project status](../project-status.md). These batches extend
 the existing Home/Pro experience; their numbers are independent of V1–V6 phases.
 
 Next simplification recommendations are recorded in the
-[application friction audit](application-friction-audit.md). It is an audit,
-not an implemented change to the flows below.
+[application friction audit](application-friction-audit.md), followed by the
+[implementation report](friction-fixes.md). The audit itself
+records findings before implementation.
 
 | Batch | Scope | Report |
 |---|---|---|

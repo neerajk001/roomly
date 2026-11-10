@@ -92,38 +92,44 @@ export function ProposalBuilder({
             ))}
           </select>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="proposal-expiry">Valid for (days)</Label>
-          <Input
-            id="proposal-expiry"
-            name="expiresInDays"
-            inputMode="numeric"
-            defaultValue={initial?.expiresInDays ?? 14}
-          />
-        </div>
-        <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="proposal-intro">Intro</Label>
-          <textarea
-            id="proposal-intro"
-            name="intro"
-            rows={3}
-            maxLength={2000}
-            defaultValue={initial?.intro}
-            className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
-          />
-        </div>
-        <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="proposal-terms">Terms</Label>
-          <textarea
-            id="proposal-terms"
-            name="terms"
-            rows={4}
-            maxLength={4000}
-            defaultValue={initial?.terms ?? defaultTerms}
-            className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
-          />
-        </div>
       </div>
+      <details className="rounded-xl border border-border p-4">
+        <summary className="cursor-pointer text-sm font-medium">Document details</summary>
+        <div className="mt-4 space-y-4">
+          {" "}
+          <div className="space-y-2">
+            <Label htmlFor="proposal-expiry">Valid for (days)</Label>
+            <Input
+              id="proposal-expiry"
+              name="expiresInDays"
+              inputMode="numeric"
+              defaultValue={initial?.expiresInDays ?? 14}
+            />
+          </div>
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="proposal-intro">Intro</Label>
+            <textarea
+              id="proposal-intro"
+              name="intro"
+              rows={3}
+              maxLength={2000}
+              defaultValue={initial?.intro}
+              className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+            />
+          </div>
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="proposal-terms">Terms</Label>
+            <textarea
+              id="proposal-terms"
+              name="terms"
+              rows={4}
+              maxLength={4000}
+              defaultValue={initial?.terms ?? defaultTerms}
+              className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+            />
+          </div>
+        </div>
+      </details>
       {initial?.revisesId !== undefined && (
         <label className="flex items-start gap-2 text-sm">
           <input

@@ -5,7 +5,8 @@
 Home starts with a photo, room type and optional must-haves. No extra-instructions,
 measurement, budget or renter questionnaire is required before the first image.
 Optional style control remains available; the default generates three contrasting
-ideas. The detailed Pro flow remains available.
+ideas. Pro now shares this quick-start with optional client/project fields; its
+detailed flow remains available under optional setup.
 
 Checklist items mean **include this kind of item**, not preserve an exact object
 from the photo. Nothing is preselected. Selecting another room clears the old

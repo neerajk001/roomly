@@ -2,10 +2,20 @@ import { EmailOtpForm } from "@/components/auth/email-otp-form";
 import { GoogleButton } from "@/components/auth/google-button";
 import { getServerEnv } from "@roomdesigner/config/env";
 import Link from "next/link";
+import { z } from "zod";
 
 export const metadata = { title: "Create account" };
 
-export default async function SignUpPage() {
+export default async function SignUpPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mode?: string }>;
+}) {
+  const intent = z
+    .enum(["home", "pro"])
+    .catch("home")
+    .parse((await searchParams).mode);
+  const callbackURL = intent === "pro" ? "/onboarding?mode=pro" : "/onboarding";
   const env = getServerEnv();
   const googleEnabled =
     env.GOOGLE_CLIENT_ID !== undefined && env.GOOGLE_CLIENT_SECRET !== undefined;
@@ -18,7 +28,7 @@ export default async function SignUpPage() {
           Start designing in a few minutes. We&apos;ll verify your email with a one-time code.
         </p>
       </div>
-      <EmailOtpForm mode="sign-up" callbackURL="/onboarding" />
+      <EmailOtpForm mode="sign-up" callbackURL={callbackURL} />
       {googleEnabled && (
         <>
           <div className="flex items-center gap-3 text-xs tracking-normal text-slate-400">
@@ -26,7 +36,7 @@ export default async function SignUpPage() {
             or
             <span className="h-px flex-1 bg-border" />
           </div>
-          <GoogleButton callbackURL="/onboarding" />
+          <GoogleButton callbackURL={callbackURL} />
         </>
       )}
       <p className="text-center text-sm text-muted-foreground">

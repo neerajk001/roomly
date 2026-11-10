@@ -3,8 +3,7 @@
 import { Children, isValidElement, useId, useState, type ReactNode } from "react";
 
 const TABS = [
-  ["rooms", "Rooms"],
-  ["renders", "Renders"],
+  ["rooms", "Rooms & designs"],
   ["estimates", "Estimate"],
   ["proposals", "Proposals"],
   ["activity", "Activity"],
@@ -65,13 +64,13 @@ export function ProjectTabs({ enabled, children }: { enabled: boolean; children:
           tabIndex={0}
         >
           {sections.filter(
-            (section) => isValidElement<{ id?: string }>(section) && section.props.id === id,
+            (section) =>
+              isValidElement<{ id?: string }>(section) &&
+              (section.props.id === id ||
+                (id === "rooms" && ["renders", "add-room"].includes(section.props.id ?? ""))),
           )}
         </div>
       ))}
-      {sections.filter(
-        (section) => isValidElement<{ id?: string }>(section) && section.props.id === "add-room",
-      )}
     </div>
   );
 }

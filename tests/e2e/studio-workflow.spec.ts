@@ -9,9 +9,9 @@ test("designer brief, concept, estimate, proposal and anonymous approval", async
   test.setTimeout(420_000);
   await signInWithOtp(page, { name: "E2E Designer", email: uniqueEmail("e2e-studio") });
   await page.waitForURL("**/onboarding");
-  await page.getByRole("button", { name: /Continue as professional/ }).click();
+  await page.getByRole("button", { name: "Professional", exact: true }).click();
   await page.getByLabel("Studio name").fill("E2E Design Studio");
-  await page.getByRole("button", { name: "Open my design studio" }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.waitForURL("**/studio");
   await page.goto("/studio/clients");
   await page.getByLabel("Name", { exact: true }).fill("E2E Client");
@@ -30,6 +30,7 @@ test("designer brief, concept, estimate, proposal and anonymous approval", async
     await client
       .getByLabel("What do you want to change?")
       .fill("A calm living room with warm lighting");
+    await client.getByText("Preferences & constraints (optional)", { exact: true }).click();
     await client.getByRole("button", { name: "Modern", exact: true }).click();
     await client.locator('input[type="file"]').setInputFiles("tests/e2e/fixtures/room.jpg");
     await expect(client.getByText("Uploaded", { exact: true })).toBeVisible({ timeout: 45_000 });
@@ -54,6 +55,7 @@ test("designer brief, concept, estimate, proposal and anonymous approval", async
     await expect(page.getByAltText("Concept 3")).toBeVisible({ timeout: 120_000 });
     await page.setViewportSize({ width: 375, height: 812 });
     await page.getByRole("button", { name: "Edit this", exact: true }).first().click();
+    await page.getByText("Change a specific area (optional)", { exact: true }).click();
     await page.getByRole("button", { name: "Mark an area", exact: true }).click();
     await page.getByText("Adjust selection edges", { exact: true }).click();
     await expect(page.getByRole("slider", { name: "left edge", exact: true })).toHaveValue("250");
@@ -63,6 +65,7 @@ test("designer brief, concept, estimate, proposal and anonymous approval", async
     await expect(page.getByRole("button", { name: "Apply change", exact: true })).toBeInViewport();
     await page.screenshot({ path: "test-results/pro-area-selection-mobile.png" });
     await page.getByRole("button", { name: "Use whole image", exact: true }).click();
+    await page.getByText("Change a specific area (optional)", { exact: true }).click();
     await expect(
       page.getByRole("button", { name: "Use whole image", exact: true }),
     ).toHaveAttribute("aria-pressed", "true");
@@ -72,7 +75,7 @@ test("designer brief, concept, estimate, proposal and anonymous approval", async
     await page.getByRole("button", { name: "Save as new version" }).click();
     await expect(page.getByText("Saved estimate v1", { exact: true })).toBeVisible();
     await page.goto(projectUrl);
-    await page.getByRole("tab", { name: "Renders", exact: true }).click();
+    await page.getByRole("tab", { name: "Rooms & designs", exact: true }).click();
     await expect(page.getByAltText(/Concept visual for/).first()).toBeVisible();
     await page.getByRole("tab", { name: "Proposals", exact: true }).click();
     await page.getByRole("link", { name: "New proposal", exact: true }).click();

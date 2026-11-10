@@ -6,6 +6,11 @@ delivery is retained in its [batch report](design/README.md).
 
 ## What works
 
+- The [application simplification](design/friction-fixes.md) merges Home/My spaces
+  into My rooms with direct single-room access, compact navigation and one profile
+  menu. Results have a selected-design action bar and in-room sharing; costs have
+  one interactive range. Saved uses accurate room/style filters and output styles.
+
 - Room pages have separate Designs, Costs and Room setup sections. Costs and setup
   retain all their controls without filling the design results. Editing opens a
   dedicated fitted canvas with an inspector and persistent Apply action; mobile

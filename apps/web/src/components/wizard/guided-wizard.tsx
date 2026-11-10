@@ -1,7 +1,7 @@
 "use client";
 
 import { uploadToStorage } from "@/lib/upload-storage";
-import { createGuidedProjectAction, goToRoomAction } from "@/server/actions/wizard";
+import { createGuidedProjectAction } from "@/server/actions/wizard";
 import { createRenderAction } from "@/server/actions/renders";
 import {
   BUDGET_TIERS,
@@ -135,9 +135,11 @@ function capitalize(value: string): string {
 export function GuidedWizard({
   currency,
   initialStyle,
+  basePath = "/app",
 }: {
   currency: string;
   initialStyle?: string;
+  basePath?: "/app" | "/studio";
 }) {
   const router = useRouter();
   const [draft, setDraft] = useState<Draft>(() =>
@@ -347,7 +349,7 @@ export function GuidedWizard({
         return;
       }
       window.localStorage.removeItem(STORAGE_KEY);
-      await goToRoomAction(created.projectId, created.roomId);
+      router.push(`${basePath}/projects/${created.projectId}/rooms/${created.roomId}`);
       router.refresh();
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Something went wrong.");
@@ -989,7 +991,7 @@ export function GuidedWizard({
                   <button
                     type="button"
                     onClick={() => {
-                      router.push("/app/spaces");
+                      router.push(basePath);
                     }}
                     className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
                   >
@@ -1255,7 +1257,7 @@ export function GuidedWizard({
               type="button"
               onClick={() => {
                 if (draft.step === 0) {
-                  router.push("/app");
+                  router.push(basePath);
                 } else {
                   back();
                 }

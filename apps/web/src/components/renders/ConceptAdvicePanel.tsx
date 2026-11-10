@@ -76,7 +76,7 @@ export function ConceptAdvicePanel({
               No changes suggested for this concept. You can still describe your own edit.
             </p>
           ) : (
-            <ul className="grid gap-3 sm:grid-cols-3">
+            <ul className="grid gap-3">
               {advice.suggestions.map((suggestion) => (
                 <li
                   key={suggestion.title}

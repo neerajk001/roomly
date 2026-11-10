@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition, type PointerEvent } from "react";
+import { useRef, useState, useTransition, type PointerEvent, type ReactNode } from "react";
 import { editRegionSchema, type ConceptAdvice, type EditTarget } from "@roomdesigner/shared";
 import { getConceptAdviceAction } from "@/server/actions/concept-advice";
 
@@ -18,6 +18,8 @@ export function ConceptTargetEditor({
   onChange,
   onAdvice,
   disabled,
+  children,
+  actions,
 }: {
   roomId: string;
   outputId: string;
@@ -27,6 +29,8 @@ export function ConceptTargetEditor({
   onChange(target: EditTarget | undefined): void;
   onAdvice(advice: ConceptAdvice): void;
   disabled: boolean;
+  children?: ReactNode;
+  actions?: ReactNode;
 }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -53,106 +57,15 @@ export function ConceptTargetEditor({
     };
   }
   return (
-    <details className="my-3 rounded-lg border border-border p-3" open={target ? true : undefined}>
-      <summary className="cursor-pointer text-sm font-medium">
-        Choose an object or area (optional)
-      </summary>
-      <p className="mt-2 text-xs text-muted-foreground">
-        Select an object or mark a rectangle. Review its edges: everything inside can change; the
-        area outside is protected.
-      </p>
-      <div className="my-3 flex flex-wrap gap-2">
-        <button
-          type="button"
-          disabled={disabled || pending}
-          className="rounded-lg border border-border px-3 py-2 text-xs disabled:opacity-50"
-          onClick={() =>
-            start(async () => {
-              setError(null);
-              try {
-                const result = await getConceptAdviceAction({ roomId, outputId });
-                if (result.advice) onAdvice(result.advice);
-                else
-                  setError(
-                    result.error ?? "Objects could not be identified. Mark an area instead.",
-                  );
-              } catch {
-                setError("Objects could not be identified. Mark an area instead.");
-              }
-            })
-          }
-        >
-          {pending ? "Looking for objects…" : "Find objects"}
-        </button>
-        <button
-          type="button"
-          disabled={disabled || imageFailed}
-          className="rounded-lg border border-border px-3 py-2 text-xs"
-          onClick={() => {
-            onChange(target ?? INITIAL_TARGET);
-            setDrawing(true);
-            setError(null);
-          }}
-        >
-          Mark an area
-        </button>
-        {target && (
-          <button
-            type="button"
-            disabled={disabled}
-            className="rounded-lg border border-border px-3 py-2 text-xs"
-            onClick={() => {
-              onChange(undefined);
-              setDrawing(false);
-              setPreview(null);
-            }}
-          >
-            Use whole image
-          </button>
-        )}
-      </div>
-      {pending && (
-        <p role="status" className="text-xs">
-          Reviewing the selected concept…
-        </p>
-      )}
-      {error && (
-        <p role="alert" className="my-2 text-xs text-destructive">
-          {error}
-        </p>
-      )}
-      {advice && (
-        <p className="mb-2 text-xs text-muted-foreground">
-          {advice.source === "demo"
-            ? "Demo mode: object detection is disabled. Mark an area manually."
-            : advice.objects?.length
-              ? "Approximate object bounds. Choose one, then adjust the rectangle as needed."
-              : "No object bounds available for this concept. Mark an area manually."}
-        </p>
-      )}
-      {advice?.source === "ai" && !!advice.objects?.length && (
-        <div className="mb-3 flex flex-wrap gap-2">
-          {advice.objects.map((object, index) => (
-            <button
-              key={`${object.label}-${index}`}
-              type="button"
-              disabled={disabled}
-              aria-pressed={target === object}
-              className="rounded-lg border border-border px-3 py-2 text-xs"
-              onClick={() => {
-                onChange(object);
-                setDrawing(false);
-              }}
-            >
-              {object.label}
-            </button>
-          ))}
+    <div className="grid min-h-0 flex-1 grid-rows-[minmax(170px,34dvh)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_360px] lg:grid-rows-1">
+      <div className="flex min-h-0 min-w-0 flex-col bg-muted/70">
+        <div className="flex shrink-0 items-center justify-between px-4 pt-3 text-xs text-muted-foreground">
+          <span>Concept preview</span>
+          <span>{target ? "Selected area" : "Whole image"}</span>
         </div>
-      )}
-      {target && (
-        <>
+        <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden p-3 sm:p-5">
           <div
-            className={`relative overflow-hidden rounded-lg bg-muted ${drawing && !disabled ? "touch-none cursor-crosshair" : ""}`}
+            className={`relative inline-block min-w-0 max-w-full overflow-hidden rounded-lg bg-muted ${drawing && !disabled ? "touch-none cursor-crosshair" : ""}`}
             role="group"
             aria-label="Draw editable area"
             onPointerDown={(event) => {
@@ -191,7 +104,7 @@ export function ConceptTargetEditor({
               src={imageUrl}
               alt="Concept area selection"
               draggable={false}
-              className="block h-auto w-full select-none"
+              className="block max-h-[26dvh] w-auto max-w-full select-none lg:max-h-[calc(100dvh-190px)]"
               onError={() => {
                 setImageFailed(true);
                 setError(
@@ -213,40 +126,152 @@ export function ConceptTargetEditor({
               />
             )}
           </div>
-          <p role="status" className="mt-2 text-xs">
-            {drawing
-              ? "Drag across the image, or adjust the edges below."
-              : `Editing only: ${target.label}. Adjust the edges below if needed.`}
-          </p>
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            {(["left", "top", "right", "bottom"] as const).map((edge) => (
-              <label key={edge} className="text-xs capitalize">
-                {edge} edge ({target.region[edge] / 10}%)
-                <input
-                  aria-label={`${edge} edge`}
-                  type="range"
-                  min={edge === "right" || edge === "bottom" ? 10 : 0}
-                  max={edge === "left" || edge === "top" ? 990 : 1000}
-                  step={10}
-                  value={target.region[edge]}
-                  disabled={disabled || imageFailed}
-                  className="mt-2 block w-full accent-black"
-                  onChange={(event) => {
-                    const result = editRegionSchema.safeParse({
-                      ...target.region,
-                      [edge]: Number(event.target.value),
-                    });
-                    if (result.success) {
-                      onChange({ ...target, region: result.data });
-                      setError(null);
-                    } else setError("Keep the edges apart and the area below 80% of the image.");
-                  }}
-                />
-              </label>
-            ))}
+        </div>
+        <p role="status" className="shrink-0 px-4 pb-3 text-center text-xs text-muted-foreground">
+          {drawing
+            ? "Drag over the object or area you want to change."
+            : target
+              ? "The marked rectangle can change. The rest stays protected."
+              : "Select an area for a focused change, or edit the whole image."}
+        </p>
+      </div>
+      <aside
+        aria-label="Concept edit controls"
+        className="flex min-h-0 min-w-0 flex-col border-t border-border bg-card lg:border-t-0 lg:border-l"
+      >
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Edit scope
+          </h2>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={disabled}
+              aria-pressed={!target}
+              className={`rounded-lg border px-3 py-2 text-xs font-medium ${!target ? "border-foreground bg-foreground text-background" : "border-border"}`}
+              onClick={() => {
+                onChange(undefined);
+                setDrawing(false);
+                setPreview(null);
+              }}
+            >
+              Use whole image
+            </button>
+            <button
+              type="button"
+              disabled={disabled || imageFailed}
+              aria-pressed={!!target}
+              className={`rounded-lg border px-3 py-2 text-xs font-medium ${target ? "border-foreground bg-foreground text-background" : "border-border"}`}
+              onClick={() => {
+                onChange(target ?? INITIAL_TARGET);
+                setDrawing(true);
+                setError(null);
+              }}
+            >
+              Mark an area
+            </button>
+            <button
+              type="button"
+              disabled={disabled || pending}
+              aria-busy={pending}
+              className="rounded-lg border border-border px-3 py-2 text-xs font-medium disabled:opacity-50"
+              onClick={() =>
+                start(async () => {
+                  setError(null);
+                  try {
+                    const result = await getConceptAdviceAction({ roomId, outputId });
+                    if (result.advice) onAdvice(result.advice);
+                    else
+                      setError(
+                        result.error ?? "Objects could not be identified. Mark an area instead.",
+                      );
+                  } catch {
+                    setError("Objects could not be identified. Mark an area instead.");
+                  }
+                })
+              }
+            >
+              {pending ? "Finding objects…" : "Find objects"}
+            </button>
           </div>
-        </>
-      )}
-    </details>
+          {pending && (
+            <p role="status" className="mt-2 text-xs">
+              Reviewing the selected concept…
+            </p>
+          )}
+          {error && (
+            <p role="alert" className="mt-2 text-xs text-destructive">
+              {error}
+            </p>
+          )}
+          {advice && (
+            <p className="mt-3 text-xs text-muted-foreground">
+              {advice.source === "demo"
+                ? "Demo mode: object detection is disabled. Mark an area manually."
+                : advice.objects?.length
+                  ? "Choose an object, then review its approximate bounds."
+                  : "No object bounds available. Mark an area manually."}
+            </p>
+          )}
+          {advice?.source === "ai" && !!advice.objects?.length && (
+            <div className="mb-3 flex flex-wrap gap-2">
+              {advice.objects.map((object, index) => (
+                <button
+                  key={`${object.label}-${index}`}
+                  type="button"
+                  disabled={disabled}
+                  aria-pressed={target === object}
+                  className="rounded-lg border border-border px-3 py-2 text-xs"
+                  onClick={() => {
+                    onChange(object);
+                    setDrawing(false);
+                  }}
+                >
+                  {object.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-5 border-t border-border pt-5">{children}</div>
+          {target && (
+            <details className="mt-5 border-t border-border pt-4">
+              <summary className="cursor-pointer text-xs font-medium">
+                Adjust selection edges
+              </summary>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                {(["left", "top", "right", "bottom"] as const).map((edge) => (
+                  <label key={edge} className="text-xs capitalize">
+                    {edge} edge ({target.region[edge] / 10}%)
+                    <input
+                      aria-label={`${edge} edge`}
+                      type="range"
+                      min={edge === "right" || edge === "bottom" ? 10 : 0}
+                      max={edge === "left" || edge === "top" ? 990 : 1000}
+                      step={10}
+                      value={target.region[edge]}
+                      disabled={disabled || imageFailed}
+                      className="mt-2 block w-full accent-black"
+                      onChange={(event) => {
+                        const result = editRegionSchema.safeParse({
+                          ...target.region,
+                          [edge]: Number(event.target.value),
+                        });
+                        if (result.success) {
+                          onChange({ ...target, region: result.data });
+                          setError(null);
+                        } else
+                          setError("Keep the edges apart and the area below 80% of the image.");
+                      }}
+                    />
+                  </label>
+                ))}
+              </div>
+            </details>
+          )}
+        </div>
+        <div className="shrink-0 border-t border-border bg-card p-3 sm:p-4">{actions}</div>
+      </aside>
+    </div>
   );
 }

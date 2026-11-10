@@ -11,7 +11,7 @@ async function startBoss(): Promise<PgBoss> {
   const env = getServerEnv();
   const boss = new PgBoss({
     connectionString: env.QUEUE_DATABASE_URL ?? env.DATABASE_URL,
-    schema: "pgboss",
+    schema: env.QUEUE_SCHEMA,
   });
   boss.on("error", (error) => {
     console.error(JSON.stringify({ channel: "queue", event: "error", message: error.message }));

@@ -8,6 +8,7 @@ import {
 import { getServerEnv } from "@roomdesigner/config/env";
 
 export interface AdviceContext {
+  includeItems?: string[];
   roomType: string;
   style: string;
   direction: string | null;

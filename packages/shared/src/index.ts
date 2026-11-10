@@ -61,3 +61,4 @@ export {
   type RoomNeedsInput,
 } from "./room-needs";
 export * from "./edit-target";
+export * from "./room-checklists";

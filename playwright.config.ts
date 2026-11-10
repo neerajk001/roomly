@@ -33,6 +33,7 @@ export default defineConfig({
       // Never inherit the local dev auth bypass: the E2E tests exercise real auth.
       DEV_AUTH_BYPASS: "false",
       IMAGE_PROVIDER: "fake",
+      QUEUE_SCHEMA: "pgboss_e2e",
       ADVICE_PROVIDER: "fake",
       EMAIL_PROVIDER: "console",
     },

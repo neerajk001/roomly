@@ -147,6 +147,15 @@ and requested job IDs. Status reads are cancellable and bounded; a paused read c
 be resumed without creating another job. Unconfirmed mutation responses preserve
 the user's draft and are never automatically resubmitted.
 
+Home quick-start additionally stores optional `includeItems` in job params. The
+shared catalog defines distinct item IDs/labels for all ten room types. The service
+authorizes the room and checks selections against its stored type before reserving
+credits; the worker checks again. Curated labels reach every concept prompt with
+compact-sizing/circulation/fixed-architecture constraints. These are inclusion
+preferences, not exact-object keep rules. Edits inherit them but can explicitly
+remove/replace a category; Generate more carries them forward. Legacy
+`stagingItems` are still parsed independently for backward compatibility.
+
 ## Status API
 
 `GET /api/renders/:id` returns `{ id, status, errorMessage?, outputs: [{ id, thumbUrl, url, isFavorite }] }`. Scoped by workspace. The UI polls every 2s with a cap, then backs off. Signed GET URLs expire (e.g. 1 hour). Do not store signed URLs in the DB.

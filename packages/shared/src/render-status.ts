@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { editTargetSchema } from "./edit-target";
 import { conceptAdviceSchema } from "./concept-advice";
+import { roomIncludeItemsSchema } from "./room-checklists";
 
 export const renderOutputViewSchema = z.object({
   id: z.string(),
@@ -13,6 +14,7 @@ export const renderOutputViewSchema = z.object({
   advice: conceptAdviceSchema.optional(),
 });
 export const renderJobStatusSchema = z.object({
+  includeItems: roomIncludeItemsSchema.optional(),
   id: z.string(),
   kind: z.enum(["RESTYLE", "EDIT"]),
   status: z.enum(["QUEUED", "RUNNING", "SUCCEEDED", "FAILED", "CANCELED"]),

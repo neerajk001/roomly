@@ -48,6 +48,8 @@ test("full render flow: project, room, photo, 3 concepts, favorite, chat edit", 
   await page.waitForURL(/\/rooms\/[^/]+$/);
   await page.locator('input[type="file"]').setInputFiles("tests/e2e/fixtures/room.jpg");
   await expect(page.getByAltText("Room photo")).toBeVisible({ timeout: 30_000 });
+  await page.getByRole("tab", { name: "Designs", exact: true }).click();
+  await expect(page.getByLabel("Width (m)", { exact: true })).not.toBeVisible();
 
   // Generate 3 concepts
   let failedStatusReads = 0;
@@ -92,21 +94,27 @@ test("full render flow: project, room, photo, 3 concepts, favorite, chat edit", 
     "aria-pressed",
     "true",
   );
-  await page.getByRole("button", { name: "Get suggestions", exact: true }).click();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.screenshot({ path: "test-results/room-designs-desktop.png", fullPage: true });
+  await page.getByRole("button", { name: "Explore suggestions →", exact: true }).click();
+  const editor = page.getByRole("dialog", { name: "Edit this concept", exact: true });
+  await expect(editor).toBeVisible();
+  await editor.getByRole("button", { name: "Get suggestions", exact: true }).click();
   await expect(page.getByText(/Demo suggestions · based on preferences/)).toBeVisible();
   await page.getByRole("button", { name: "Use this idea", exact: true }).first().click();
   const composer = page.getByRole("textbox", { name: "Describe a change to this concept" });
   await expect(composer).toHaveValue(/portable lamp/);
   await composer.fill("make the sofa deep green");
+  await page.getByRole("button", { name: "Back to designs", exact: true }).click();
   await page.getByRole("button", { name: "Select concept 1", exact: true }).click();
   await page.getByRole("button", { name: "Edit this design", exact: true }).first().click();
   await expect(composer).toHaveValue("");
   await composer.fill("add a small accent");
+  await page.getByRole("button", { name: "Back to designs", exact: true }).click();
   await page.getByRole("button", { name: "Edit this design", exact: true }).nth(1).click();
   await expect(composer).toHaveValue("make the sofa deep green");
   await expect(page.getByText(/^Editing concept 2/)).toBeVisible();
   await expect(composer).toBeFocused();
-  await page.getByText("Choose an object or area (optional)", { exact: true }).click();
   await page.getByRole("button", { name: "Find objects", exact: true }).click();
   await expect(
     page.getByText("Demo mode: object detection is disabled. Mark an area manually."),
@@ -122,22 +130,61 @@ test("full render flow: project, room, photo, 3 concepts, favorite, chat edit", 
   await page.mouse.down();
   await page.mouse.move(box.x + box.width * 0.75, box.y + box.height * 0.75, { steps: 5 });
   await page.mouse.up();
+  await page.getByText("Adjust selection edges", { exact: true }).click();
   const leftEdge = page.getByRole("slider", { name: "left edge", exact: true });
   await leftEdge.focus();
   await leftEdge.press("ArrowRight");
   await expect(leftEdge).toHaveValue("260");
+  await page.getByRole("button", { name: "Back to designs", exact: true }).click();
   await page.getByRole("button", { name: "Select concept 1", exact: true }).click();
   await page.getByRole("button", { name: "Edit this design", exact: true }).first().click();
-  await page.getByText("Choose an object or area (optional)", { exact: true }).click();
-  await expect(page.getByRole("button", { name: "Use whole image", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Use whole image", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await page.getByRole("button", { name: "Back to designs", exact: true }).click();
   await page.getByRole("button", { name: "Edit this design", exact: true }).nth(1).click();
+  await page.getByText("Adjust selection edges", { exact: true }).click();
   await expect(leftEdge).toHaveValue("260");
-  await page.screenshot({ path: "test-results/concept-2-refinement-mobile.png", fullPage: true });
+  await expect(page.getByRole("button", { name: "Apply change", exact: true })).toBeInViewport();
+  await expect(page.getByAltText("Concept area selection")).toBeInViewport();
+  const imageBox = await page.getByAltText("Concept area selection").boundingBox();
+  const canvasBox = await selection.boundingBox();
+  expect(imageBox?.width).toBeCloseTo(canvasBox?.width ?? 0, 0);
+  expect(imageBox?.height).toBeCloseTo(canvasBox?.height ?? 0, 0);
+  await page.screenshot({ path: "test-results/room-editor-desktop.png" });
+  await page.setViewportSize({ width: 375, height: 812 });
+  await expect(page.getByRole("button", { name: "Apply change", exact: true })).toBeInViewport();
+  await expect(page.getByAltText("Concept area selection")).toBeInViewport();
+  expect(await editor.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+  await page.screenshot({ path: "test-results/room-editor-mobile.png" });
+  await composer.press("Escape");
+  await expect(editor).not.toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Edit this design", exact: true }).nth(1),
+  ).toBeFocused();
+  // Costs and setup have dedicated space; switching sections retains the chosen concept.
+  await page.getByRole("tab", { name: "Costs", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Estimated cost range", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Choose your favourite design", exact: true }),
+  ).not.toBeVisible();
+  await page.getByRole("tab", { name: "Room setup", exact: true }).click();
+  await expect(page.getByLabel("Width (m)", { exact: true })).toBeVisible();
+  await page.getByRole("tab", { name: "Designs", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Select concept 2", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
 
   // Favorite the first concept
   const favorite = page.getByRole("button", { name: "Add to favorites" }).first();
   await favorite.click();
   await expect(page.getByRole("button", { name: "Remove from favorites" }).first()).toBeVisible();
+  await page.getByRole("button", { name: "Edit this design", exact: true }).nth(1).click();
+  await expect(composer).toHaveValue("make the sofa deep green");
 
   // Refine the selected second concept and verify the actual server-side lineage.
   const editCompleted = waitForCompletedRender(page);

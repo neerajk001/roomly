@@ -1,8 +1,7 @@
 "use client";
 
-import { ConceptTargetEditor } from "@/components/renders/ConceptTargetEditor";
+import { ConceptEditWorkspace } from "@/components/renders/ConceptEditWorkspace";
 import { useConceptSelection } from "@/components/renders/use-concept-selection";
-import { ConceptAdvicePanel } from "@/components/renders/ConceptAdvicePanel";
 import { ConceptEditHistory } from "@/components/renders/ConceptEditHistory";
 import type { ConceptAdvice, EditTarget } from "@roomdesigner/shared";
 import { requestRender } from "@/lib/request-render";
@@ -14,17 +13,10 @@ import type {
   RenderJobView,
   RenderOutputView,
 } from "@/components/renders/types";
-import { formatMoney, getStyle } from "@roomdesigner/shared";
+import { getStyle } from "@roomdesigner/shared";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-
-export interface EstimateSummary {
-  currency: string;
-  lowMinor: number;
-  highMinor: number;
-  top: { label: string; totalMinor: number }[];
-}
+import { useCallback, useRef, useState, useTransition } from "react";
 
 interface HomeRoomResultsProps {
   roomId: string;
@@ -34,8 +26,6 @@ interface HomeRoomResultsProps {
   initialJob: RenderJobView | null;
   history: RenderJobView[];
   sourceUrl: string | null;
-  estimate: EstimateSummary;
-  keepList: string[];
   notes: string | null;
 }
 
@@ -58,8 +48,6 @@ export function HomeRoomResults({
   initialJob,
   history,
   sourceUrl,
-  estimate,
-  keepList,
   notes,
 }: HomeRoomResultsProps) {
   const router = useRouter();
@@ -68,12 +56,7 @@ export function HomeRoomResults({
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [editingOutputId, setEditingOutputId] = useState<string | null>(null);
   const [targets, setTargets] = useState<Record<string, EditTarget | undefined>>({});
-  const editorRef = useRef<HTMLTextAreaElement>(null);
-  useEffect(() => {
-    if (!editingOutputId) return;
-    editorRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
-    editorRef.current?.focus({ preventScroll: true });
-  }, [editingOutputId]);
+  const [editorTab, setEditorTab] = useState<"edit" | "ideas">("edit");
   const [editError, setEditError] = useState<string | null>(null);
   const [panelError, setPanelError] = useState<string | null>(null);
   const [mode, setMode] = useState<"side" | "slider">("side");
@@ -84,6 +67,7 @@ export function HomeRoomResults({
 
   const current = jobs.find((job) => job.id === currentId) ?? null;
   const status = current?.status ?? null;
+  const includeItemsForRequest = JSON.stringify(current?.includeItems ?? []);
   const outputs = current?.outputs ?? [];
   const { selected, choose, drafts, setDraft } = useConceptSelection(
     roomId,
@@ -104,16 +88,13 @@ export function HomeRoomResults({
     setEditingOutputId(null);
     setEditError(null);
   };
-  const openEditor = (outputId: string, text?: string) => {
+  const openEditor = (outputId: string, text?: string, tab: "edit" | "ideas" = "edit") => {
     if (editPending) return;
     choose(outputId);
     setEditingOutputId(outputId);
     setEditError(null);
     if (text !== undefined) setDraft(outputId, text);
-    if (editingOutputId === outputId) {
-      editorRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
-      editorRef.current?.focus({ preventScroll: true });
-    }
+    setEditorTab(tab);
   };
   const rememberAdvice = (outputId: string, advice: ConceptAdvice) =>
     setJobs((previous) =>
@@ -137,6 +118,7 @@ export function HomeRoomResults({
         label: incoming.label ?? (incoming.kind === "EDIT" ? "Edit" : "Base concept"),
         sourceOutputId: incoming.sourceOutputId ?? null,
         editTarget: incoming.editTarget,
+        includeItems: incoming.includeItems,
         styleKey: incoming.styleKey,
         similarConcepts: incoming.similarConcepts ?? false,
       };
@@ -207,36 +189,34 @@ export function HomeRoomResults({
       .finally(() => savingFavorites.current.delete(output.id));
   };
 
-  const submitRestyle = useCallback(
-    (input: {
-      styleKey: string;
-      quality: "draft" | "final";
-      variations: number;
-      notes: string;
-    }) => {
-      setPanelError(null);
-      startCreate(async () => {
-        const formData = new FormData();
-        formData.set("roomId", roomId);
-        formData.set("projectId", projectId);
-        formData.set("kind", "RESTYLE");
-        formData.set("styleKey", input.styleKey);
-        formData.set("quality", input.quality);
-        formData.set("variations", String(input.variations));
-        if (input.notes.trim() !== "") formData.set("notes", input.notes);
-        const result = await requestRender(formData);
-        if (result.error !== undefined) {
-          setPanelError(result.error);
-          return;
-        }
-        if (result.jobId !== undefined) {
-          startJob(result.jobId, "RESTYLE", "Base concept", input.styleKey);
-          router.refresh();
-        }
-      });
-    },
-    [projectId, roomId, router, startJob],
-  );
+  const submitRestyle = (input: {
+    styleKey: string;
+    quality: "draft" | "final";
+    variations: number;
+    notes: string;
+  }) => {
+    setPanelError(null);
+    startCreate(async () => {
+      const formData = new FormData();
+      formData.set("roomId", roomId);
+      formData.set("projectId", projectId);
+      formData.set("kind", "RESTYLE");
+      formData.set("includeItems", includeItemsForRequest);
+      formData.set("styleKey", input.styleKey);
+      formData.set("quality", input.quality);
+      formData.set("variations", String(input.variations));
+      if (input.notes.trim() !== "") formData.set("notes", input.notes);
+      const result = await requestRender(formData);
+      if (result.error !== undefined) {
+        setPanelError(result.error);
+        return;
+      }
+      if (result.jobId !== undefined) {
+        startJob(result.jobId, "RESTYLE", "Base concept", input.styleKey);
+        router.refresh();
+      }
+    });
+  };
 
   const submitEdit = () => {
     if (editingOutputId === null) return;
@@ -611,14 +591,13 @@ export function HomeRoomResults({
                 Selected concept {selected.index + 1}
                 {selected.directionLabel ? ` · ${selected.directionLabel}` : ""}
               </p>
-              <ConceptAdvicePanel
-                key={selected.id}
-                roomId={roomId}
-                outputId={selected.id}
-                advice={selected.advice}
-                onAdvice={(advice) => rememberAdvice(selected.id, advice)}
-                onUse={(text) => openEditor(selected.id, text)}
-              />
+              <button
+                type="button"
+                onClick={() => openEditor(selected.id, undefined, "ideas")}
+                className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium"
+              >
+                Explore suggestions →
+              </button>
               <ConceptEditHistory
                 jobs={jobs}
                 outputId={selected.id}
@@ -627,7 +606,7 @@ export function HomeRoomResults({
             </div>
           )}
 
-          <div className="grid gap-4 lg:grid-cols-[1.35fr_1fr]">
+          <div className="min-w-0">
             <section className="rounded-xl border border-border bg-card">
               <div className="flex flex-wrap items-start justify-between gap-2 border-b border-border px-3 py-2.5">
                 <div>
@@ -742,95 +721,7 @@ export function HomeRoomResults({
                 )}
               </div>
             </section>
-
-            <section className="rounded-xl border border-border bg-card p-4">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <h2 className="text-base font-semibold text-foreground">Estimated cost range</h2>
-                  <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
-                    Based on your room measurements and selected scope. This range is shared across
-                    concepts; prices may vary by location and provider.
-                  </p>
-                </div>
-                <span className="shrink-0 rounded-xl border border-border bg-card px-2 py-1 text-[11px] font-semibold">
-                  {estimate.currency}
-                </span>
-              </div>
-              <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
-                {formatMoney(estimate.lowMinor, estimate.currency)} –{" "}
-                {formatMoney(estimate.highMinor, estimate.currency)}
-              </p>
-              <p className="mt-4 text-xs font-semibold text-foreground">
-                Suggested estimate priorities
-              </p>
-              <ul className="mt-2 divide-y divide-border">
-                {estimate.top.map((item) => (
-                  <li
-                    key={item.label}
-                    className="flex items-center justify-between gap-2 py-2 text-xs"
-                  >
-                    <span className="truncate text-muted-foreground">{item.label}</span>
-                    <span className="shrink-0 font-semibold text-foreground">
-                      {formatMoney(item.totalMinor, estimate.currency)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href="#cost-breakdown"
-                className="mt-3 block rounded-xl border border-border bg-card px-3 py-2 text-center text-xs font-semibold text-foreground transition-colors hover:bg-foreground hover:text-white"
-              >
-                View itemized costs →
-              </Link>
-            </section>
           </div>
-
-          <details className="rounded-xl border border-border bg-card">
-            <summary className="flex cursor-pointer items-center justify-between gap-2 px-4 py-3 text-sm font-semibold text-foreground">
-              <span className="flex items-center gap-2">
-                <svg
-                  className="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <rect x="3" y="3" width="18" height="18" />
-                  <path d="M3 9h18" />
-                  <path d="M9 21V9" />
-                </svg>
-                Room details &amp; selected items
-              </span>
-              <span aria-hidden="true">⌄</span>
-            </summary>
-            <div className="border-t border-border px-4 py-3">
-              <dl className="grid gap-3 text-xs sm:grid-cols-2">
-                <div>
-                  <dt className="text-muted-foreground">Room</dt>
-                  <dd className="font-semibold text-foreground">{roomLabel}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Dimensions</dt>
-                  <dd className="font-semibold text-foreground">{dimensions}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Keep items</dt>
-                  <dd className="font-semibold text-foreground">
-                    {keepList.length > 0 ? keepList.join(", ") : "None"}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Notes</dt>
-                  <dd className="font-semibold text-foreground">
-                    {notes === null || notes === "" ? "None" : notes}
-                  </dd>
-                </div>
-              </dl>
-            </div>
-          </details>
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Link
@@ -878,96 +769,24 @@ export function HomeRoomResults({
         </>
       )}
 
-      {editingOutputId !== null && (
-        <section className="rounded-xl border border-border bg-card p-4">
-          <h2 className="text-base font-semibold text-foreground">Edit this concept</h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Describe one change. Edits run at best quality (3 credits).
-          </p>
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {["warmer lighting", "add plants", "change rug", "lighter walls"].map((example) => (
-              <button
-                key={example}
-                type="button"
-                onClick={() => {
-                  setInstruction(example);
-                }}
-                className="rounded-xl border border-border bg-card px-2.5 py-1 text-xs text-foreground hover:bg-foreground/5"
-              >
-                {example}
-              </button>
-            ))}
-          </div>
-          {editError !== null && (
-            <p
-              role="alert"
-              className="mt-2 border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700"
-            >
-              {editError}
-            </p>
-          )}
-          {editingTarget && (
-            <div className="my-3 flex items-center gap-3 rounded-lg border border-border bg-muted p-2">
-              {/* eslint-disable-next-line @next/next/no-img-element -- signed concept thumbnail */}
-              <img
-                src={editingTarget.thumbUrl}
-                alt="Concept being edited"
-                className="h-16 w-20 rounded object-cover"
-              />
-              <p className="text-sm font-medium">
-                Editing concept {editingTarget.index + 1}
-                {editingTarget.directionLabel ? ` · ${editingTarget.directionLabel}` : ""}
-              </p>
-            </div>
-          )}
-          {editingTarget && (
-            <ConceptTargetEditor
-              key={editingTarget.id}
-              roomId={roomId}
-              outputId={editingTarget.id}
-              imageUrl={editingTarget.url}
-              advice={editingTarget.advice}
-              target={targets[editingTarget.id]}
-              disabled={editPending}
-              onChange={(target) =>
-                setTargets((previous) => ({ ...previous, [editingTarget.id]: target }))
-              }
-              onAdvice={(advice) => rememberAdvice(editingTarget.id, advice)}
-            />
-          )}
-          <textarea
-            ref={editorRef}
-            aria-label="Describe a change to this concept"
-            value={instruction}
-            maxLength={300}
-            rows={3}
-            onChange={(event) => {
-              setInstruction(event.target.value);
-            }}
-            placeholder="E.g. make the sofa a deep green, keep everything else the same"
-            className="mt-2 w-full rounded-xl border border-border bg-card px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
-          />
-          <div className="mt-2 flex items-center gap-2">
-            <button
-              type="button"
-              disabled={editPending || instruction.trim().length < 3}
-              onClick={submitEdit}
-              aria-busy={editPending}
-              className="rounded-xl border border-border bg-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-            >
-              {editPending ? "Starting..." : "Apply change"}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setEditingOutputId(null);
-              }}
-              className="rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground"
-            >
-              Cancel
-            </button>
-          </div>
-        </section>
+      {editingOutputId !== null && editingTarget && (
+        <ConceptEditWorkspace
+          key={editingTarget.id}
+          roomId={roomId}
+          output={editingTarget}
+          target={targets[editingTarget.id]}
+          instruction={instruction}
+          initialTab={editorTab}
+          pending={editPending}
+          error={editError}
+          onTarget={(target) =>
+            setTargets((previous) => ({ ...previous, [editingTarget.id]: target }))
+          }
+          onInstruction={setInstruction}
+          onAdvice={(advice) => rememberAdvice(editingTarget.id, advice)}
+          onApply={submitEdit}
+          onClose={() => setEditingOutputId(null)}
+        />
       )}
 
       {lightbox !== null && (

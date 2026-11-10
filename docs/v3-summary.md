@@ -1,16 +1,22 @@
 # Home mode — current implementation summary
 
-Updated 2026-11-09. See [project status](project-status.md) for the combined
+Updated 2026-11-10. See [project status](project-status.md) for the combined
 Home/Pro implementation and open review gates. Test evidence for each guided-design
 delivery is retained in its [batch report](design/README.md).
 
 ## What works
 
-- The seven-step /app/new flow covers photos, room details/typical-size help,
-  keep-items, renter restrictions, design tradition and room-specific looks,
-  optional budget, then review and extra notes. It uses 25 distinct photographic
-  style atlases rather than repeated placeholder photos. Budget tier and custom
-  amount are optional. Validated non-file preferences survive refresh.
+- Room pages have separate Designs, Costs and Room setup sections. Costs and setup
+  retain all their controls without filling the design results. Editing opens a
+  dedicated fitted canvas with an inspector and persistent Apply action; mobile
+  uses bounded panes. Ideas and manual/object tools stay inside that workspace.
+
+- The Home entry flow is now one screen: photo, room type and optional must-have
+  checkboxes, then Generate. Each of the ten room types has its own list. Room
+  changes clear previous picks. No extra-instructions or other questionnaire is
+  required. Style choice is optional; three contrasting ideas are the default.
+  Validated non-file preferences survive refresh; photo files must be reselected.
+  The earlier detailed wizard and its 25 photographic style atlases remain in Pro.
 - Every selected style maps to an output. Contrasting auto-picks and creative
   directions make alternatives more distinct; heuristic near-copy detection can
   replace one slot once, with honest remaining-similarity feedback.

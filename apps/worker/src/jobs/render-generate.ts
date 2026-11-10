@@ -18,7 +18,14 @@ import {
   compositeSelectedArea,
 } from "@roomdesigner/storage";
 import { getServerEnv } from "@roomdesigner/config/env";
-import { BUDGET_TIERS, conceptDirectionFor, getStyle, outputStyleKey } from "@roomdesigner/shared";
+import {
+  BUDGET_TIERS,
+  conceptDirectionFor,
+  getStyle,
+  outputStyleKey,
+  roomIncludesAreValid,
+  roomIncludesPrompt,
+} from "@roomdesigner/shared";
 import { randomUUID } from "node:crypto";
 import { renderParamsSchema, type RenderParams } from "./render-params";
 import { improveConceptDiversity } from "./concept-diversity";
@@ -117,6 +124,9 @@ export async function processRenderJob(
     const params = renderParamsSchema.safeParse(job.params);
     if (
       !params.success ||
+      (params.success &&
+        params.data.includeItems !== undefined &&
+        !roomIncludesAreValid(job.room.type, params.data.includeItems)) ||
       (params.data.styleKeys?.length ?? 0) > job.variations ||
       (params.data.editTarget &&
         (job.kind !== "EDIT" || job.variations !== 1 || !params.data.sourceOutputId))
@@ -320,6 +330,9 @@ function buildPromptForJob(
     const budget = BUDGET_TIERS.find((tier) => tier.key === params.budgetTier);
     return [
       base,
+      ...(params.includeItems?.length
+        ? [roomIncludesPrompt(job.room.type, params.includeItems, "edit")]
+        : []),
       ...(params.editTarget
         ? [
             `Edit only the selected masked area (${JSON.stringify(params.editTarget.label)}). The rest of the image is protected. Keep the target's position and scale unless explicitly asked otherwise.`,
@@ -344,9 +357,12 @@ function buildPromptForJob(
   const directed = params.stagingItems?.length
     ? `${budgetDirected}\nRequested staging focus: ${params.stagingItems.join(", ")}. Respect the keep-items and renter constraints above.`
     : budgetDirected;
-  return params.notes !== undefined && params.notes !== ""
-    ? `${directed}\nAdditional notes: ${params.notes}`
+  const withItems = params.includeItems?.length
+    ? `${directed}\n${roomIncludesPrompt(job.room.type, params.includeItems)}`
     : directed;
+  return params.notes !== undefined && params.notes !== ""
+    ? `${withItems}\nAdditional notes: ${params.notes}`
+    : withItems;
 }
 
 async function finalizeFailure(

@@ -11,6 +11,13 @@ the existing Home/Pro experience; their numbers are independent of V1–V6 phase
 | 4 | Object/area selection, masks and protected outside pixels | [Complete](guided-design-batch-4.md) |
 | 5 | Core-flow recovery, final UX testing and documentation reconciliation | [Complete](guided-design-batch-5.md) |
 
+Follow-up: [Room workspace UX correction](room-workspace-ux.md) addresses the
+overcrowded results page with separate room sections and a dedicated editor.
+
+Current Home entry: [one-screen quick-start](home-quick-start.md) replaces the
+homeowner questionnaire with a photo, room type and room-specific must-haves.
+The older detailed wizard remains in Pro; the batch reports retain delivery history.
+
 Automatic suggestions/detection are opt-in; demo mode does not analyze images.
 Real-model fidelity remains G2 review. Billing is excluded from these batches.
 

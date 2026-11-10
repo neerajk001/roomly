@@ -3,12 +3,14 @@ import {
   designPreferencesSchema,
   diversityReportSchema,
   editTargetSchema,
+  roomIncludeItemsSchema,
 } from "@roomdesigner/shared";
 
 export const renderParamsSchema = z
   .object({
     ...designPreferencesSchema.shape,
     sourceOutputId: z.string().optional(),
+    includeItems: roomIncludeItemsSchema.optional(),
     editTarget: editTargetSchema.optional(),
     sourceDirectionLabel: z.string().optional(),
     conceptPlanVersion: z.literal(1).optional(),

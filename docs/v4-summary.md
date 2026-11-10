@@ -27,6 +27,9 @@ in later core-flow batches. See [project status](project-status.md) and the unch
 - Shared guided-design batches provide selected-style/direction metadata, contrast
   and bounded similarity retry, selected-concept suggestions, independent text and
   area targets, protected masked edits and concept-family history in Pro too.
+- Pro rooms now separate Designs, Costs and Room setup. The shared modal editor
+  keeps the source canvas, selection tools, text changes and Apply action together
+  instead of appending a large editor and setup forms below the result gallery.
 
 ## Verification and open review
 

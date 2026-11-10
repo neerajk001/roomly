@@ -16,6 +16,7 @@ import {
   outputStyleKey,
   outputConceptLabel,
   type ConceptAdvice,
+  roomIncludeItemsSchema,
 } from "@roomdesigner/shared";
 import { AppError } from "../app-error";
 import type { CreateRenderContext } from "./renders";
@@ -30,6 +31,7 @@ const contextParamsSchema = z.object({
   notes: z.string().optional(),
   budgetTier: z.string().optional(),
   sourceDirectionLabel: z.string().optional(),
+  includeItems: roomIncludeItemsSchema.optional(),
 });
 
 interface AdviceDeps {
@@ -152,6 +154,7 @@ export async function getConceptAdvice(
     renterMode: output.job.room.project.renterMode,
     budgetTier: preferences.budgetTier ?? null,
     notes: preferences.notes ?? "",
+    includeItems: preferences.includeItems ?? [],
   };
   try {
     const content = conceptAdviceContentSchema.parse(

@@ -4,6 +4,8 @@ const nextConfig: NextConfig = {
   distDir: process.env.E2E === "1" ? ".next-e2e" : ".next",
   poweredByHeader: false,
   reactStrictMode: true,
+  // Keep the development status badge from covering fixed mobile editor actions.
+  devIndicators: false,
   // sharp and the Prisma runtime are native/server modules: keep them out of
   // the client/server bundle graph.
   serverExternalPackages: [

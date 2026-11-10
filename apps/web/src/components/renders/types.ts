@@ -12,6 +12,7 @@ export interface RenderOutputView {
 }
 
 export interface RenderJobView {
+  includeItems?: string[];
   sourceOutputId?: string | null;
   editTarget?: EditTarget;
   similarConcepts?: boolean;
@@ -26,6 +27,7 @@ export interface RenderJobView {
 }
 
 export interface RenderJobStatusResponse {
+  includeItems?: string[];
   sourceOutputId?: string | null;
   editTarget?: EditTarget;
   label?: string;

@@ -20,6 +20,7 @@ const formSchema = z.object({
   instruction: z.string().optional(),
   notes: z.string().optional(),
   stagingItems: z.string().optional(),
+  includeItems: z.string().max(2000).optional(),
   styleKeys: z.string().optional(),
   traditionKey: z.string().optional(),
   budgetTier: z.string().optional(),
@@ -43,6 +44,7 @@ export async function createRenderAction(
     instruction: formData.get("instruction") ?? undefined,
     notes: formData.get("notes") ?? undefined,
     stagingItems: formData.get("stagingItems") ?? undefined,
+    includeItems: formData.get("includeItems") ?? undefined,
     variations: formData.get("variations") ?? undefined,
     quality: formData.get("quality") ?? undefined,
     sourceOutputId: formData.get("sourceOutputId") ?? undefined,
@@ -61,7 +63,9 @@ export async function createRenderAction(
   }
   let styleKeys: unknown;
   let editTarget: unknown;
+  let includeItems: unknown;
   try {
+    includeItems = parsed.data.includeItems ? JSON.parse(parsed.data.includeItems) : undefined;
     editTarget = parsed.data.editTarget ? JSON.parse(parsed.data.editTarget) : undefined;
     styleKeys = parsed.data.styleKeys ? JSON.parse(parsed.data.styleKeys) : undefined;
   } catch {
@@ -72,6 +76,7 @@ export async function createRenderAction(
     stagingItems,
     styleKeys,
     editTarget,
+    includeItems,
   });
   if (!input.success) {
     return { error: input.error.issues[0]?.message ?? "Check the render options." };

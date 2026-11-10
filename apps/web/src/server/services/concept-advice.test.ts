@@ -5,6 +5,9 @@ import type { ConceptAdviceProvider } from "@roomdesigner/ai";
 import { getConceptAdvice } from "./concept-advice";
 import { createRender } from "./renders";
 
+// These service tests inspect jobs; actual queue delivery is covered by Playwright.
+vi.mock("../queue", () => ({ enqueueRender: vi.fn(async () => undefined) }));
+
 let userId = "";
 let workspaceId = "";
 let roomId = "";
@@ -82,6 +85,7 @@ beforeAll(async () => {
         traditionKey: "global",
         notes: "Leave a reading corner",
         budgetTier: "budget",
+        includeItems: ["sofa", "floor-lamp"],
       },
     },
   });
@@ -209,6 +213,7 @@ describe("image-specific advice service", () => {
     expect(job.params).toMatchObject({
       adviceSpendByDay: { [new Date().toISOString().slice(0, 10)]: 200 },
       notes: "Leave a reading corner",
+      includeItems: ["sofa", "floor-lamp"],
     });
     expect(await dailyAiSpendMicros(prisma)).toBeGreaterThanOrEqual(200);
   });
@@ -248,6 +253,7 @@ describe("image-specific advice service", () => {
     expect(edit.params).toMatchObject({
       sourceOutputId: outputIds[1],
       sourceDirectionLabel: "Warm & tactile",
+      includeItems: ["sofa", "floor-lamp"],
       editTarget,
       budgetTier: "budget",
       notes: "Leave a reading corner",
@@ -271,5 +277,19 @@ describe("image-specific advice service", () => {
       ),
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
     expect(await prisma.creditLedger.count({ where: { workspaceId } })).toBe(ledgerBefore);
+  });
+  it("rejects cross-room must-haves before reserving credits", async () => {
+    const before = await prisma.creditLedger.count({ where: { workspaceId } });
+    await expect(
+      createRender(prisma, ctx(), {
+        roomId,
+        kind: "RESTYLE",
+        styleKey: "modern",
+        variations: 3,
+        quality: "draft",
+        includeItems: ["counter-organizers"],
+      }),
+    ).rejects.toMatchObject({ code: "INVALID_INPUT" });
+    expect(await prisma.creditLedger.count({ where: { workspaceId } })).toBe(before);
   });
 });

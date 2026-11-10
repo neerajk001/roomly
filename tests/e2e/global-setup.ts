@@ -12,6 +12,7 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
     env: {
       ...process.env,
       IMAGE_PROVIDER: "fake",
+      QUEUE_SCHEMA: "pgboss_e2e",
       ADVICE_PROVIDER: "fake",
       EMAIL_PROVIDER: "console",
       AUTH_REQUIRE_EMAIL_VERIFICATION: "false",

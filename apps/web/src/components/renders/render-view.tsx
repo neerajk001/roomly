@@ -1,8 +1,7 @@
 "use client";
 
-import { ConceptTargetEditor } from "@/components/renders/ConceptTargetEditor";
+import { ConceptEditWorkspace } from "@/components/renders/ConceptEditWorkspace";
 import { useConceptSelection } from "@/components/renders/use-concept-selection";
-import { ConceptAdvicePanel } from "@/components/renders/ConceptAdvicePanel";
 import { ConceptEditHistory } from "@/components/renders/ConceptEditHistory";
 import type { ConceptAdvice, EditTarget } from "@roomdesigner/shared";
 import { requestRender } from "@/lib/request-render";
@@ -21,7 +20,7 @@ import type {
 import { STYLES } from "@roomdesigner/shared";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useRef, useState, useTransition } from "react";
 
 export function RenderView({
   roomId,
@@ -44,12 +43,7 @@ export function RenderView({
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [editingOutputId, setEditingOutputId] = useState<string | null>(null);
   const [targets, setTargets] = useState<Record<string, EditTarget | undefined>>({});
-  const editorRef = useRef<HTMLTextAreaElement>(null);
-  useEffect(() => {
-    if (!editingOutputId) return;
-    editorRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
-    editorRef.current?.focus({ preventScroll: true });
-  }, [editingOutputId]);
+  const [editorTab, setEditorTab] = useState<"edit" | "ideas">("edit");
   const [editError, setEditError] = useState<string | null>(null);
   const [panelError, setPanelError] = useState<string | null>(null);
   const [lastRestyle, setLastRestyle] = useState<RestyleRequest | null>(null);
@@ -64,6 +58,7 @@ export function RenderView({
   const current = jobs.find((job) => job.id === currentId) ?? null;
   const favorites = (current?.outputs ?? []).filter((output) => output.isFavorite);
   const status = current?.status ?? null;
+  const includeItemsForRequest = JSON.stringify(current?.includeItems ?? []);
   const { selected, choose, drafts, setDraft } = useConceptSelection(
     roomId,
     jobs,
@@ -83,16 +78,13 @@ export function RenderView({
     setEditingOutputId(null);
     setEditError(null);
   };
-  const openEditor = (outputId: string, text?: string) => {
+  const openEditor = (outputId: string, text?: string, tab: "edit" | "ideas" = "edit") => {
     if (editPending) return;
     choose(outputId);
     setEditingOutputId(outputId);
     setEditError(null);
     if (text !== undefined) setDraft(outputId, text);
-    if (editingOutputId === outputId) {
-      editorRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
-      editorRef.current?.focus({ preventScroll: true });
-    }
+    setEditorTab(tab);
   };
   const rememberAdvice = (outputId: string, advice: ConceptAdvice) =>
     setJobs((previous) =>
@@ -116,6 +108,7 @@ export function RenderView({
         label: incoming.label ?? (incoming.kind === "EDIT" ? "Edit" : "Base concept"),
         sourceOutputId: incoming.sourceOutputId ?? null,
         editTarget: incoming.editTarget,
+        includeItems: incoming.includeItems,
         styleKey: incoming.styleKey,
         similarConcepts: incoming.similarConcepts ?? false,
       };
@@ -149,36 +142,34 @@ export function RenderView({
     [],
   );
 
-  const submitRestyle = useCallback(
-    (request: RestyleRequest) => {
-      setPanelError(null);
-      setLastRestyle(request);
-      startCreate(async () => {
-        const formData = new FormData();
-        formData.set("roomId", roomId);
-        formData.set("projectId", projectId);
-        formData.set("kind", "RESTYLE");
-        formData.set("styleKey", request.styleKey);
-        formData.set("quality", request.quality);
-        formData.set("variations", String(request.variations));
-        if (request.notes.trim() !== "") formData.set("notes", request.notes);
-        if (request.stagingItems.length > 0) {
-          formData.set("stagingItems", JSON.stringify(request.stagingItems));
-        }
-        const result = await requestRender(formData);
-        if (result.error !== undefined) {
-          setPanelError(result.error);
-          return;
-        }
-        if (result.jobId !== undefined) {
-          track("render_requested", { kind: "RESTYLE", variations: request.variations });
-          startJob(result.jobId, "RESTYLE", "Base concept", request.styleKey);
-          router.refresh();
-        }
-      });
-    },
-    [projectId, roomId, router, startJob],
-  );
+  const submitRestyle = (request: RestyleRequest) => {
+    setPanelError(null);
+    setLastRestyle(request);
+    startCreate(async () => {
+      const formData = new FormData();
+      formData.set("roomId", roomId);
+      formData.set("projectId", projectId);
+      formData.set("kind", "RESTYLE");
+      formData.set("includeItems", includeItemsForRequest);
+      formData.set("styleKey", request.styleKey);
+      formData.set("quality", request.quality);
+      formData.set("variations", String(request.variations));
+      if (request.notes.trim() !== "") formData.set("notes", request.notes);
+      if (request.stagingItems.length > 0) {
+        formData.set("stagingItems", JSON.stringify(request.stagingItems));
+      }
+      const result = await requestRender(formData);
+      if (result.error !== undefined) {
+        setPanelError(result.error);
+        return;
+      }
+      if (result.jobId !== undefined) {
+        track("render_requested", { kind: "RESTYLE", variations: request.variations });
+        startJob(result.jobId, "RESTYLE", "Base concept", request.styleKey);
+        router.refresh();
+      }
+    });
+  };
 
   const onRenderComplete = useCallback(
     (data: RenderJobStatusResponse) => {
@@ -507,14 +498,13 @@ export function RenderView({
                 Selected concept {selected.index + 1}
                 {selected.directionLabel ? ` · ${selected.directionLabel}` : ""}
               </p>
-              <ConceptAdvicePanel
-                key={selected.id}
-                roomId={roomId}
-                outputId={selected.id}
-                advice={selected.advice}
-                onAdvice={(advice) => rememberAdvice(selected.id, advice)}
-                onUse={(text) => openEditor(selected.id, text)}
-              />
+              <button
+                type="button"
+                onClick={() => openEditor(selected.id, undefined, "ideas")}
+                className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium"
+              >
+                Explore suggestions →
+              </button>
               <ConceptEditHistory
                 jobs={jobs}
                 outputId={selected.id}
@@ -567,101 +557,24 @@ export function RenderView({
         </div>
       )}
 
-      {editingOutputId !== null && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Edit this concept</CardTitle>
-            <CardDescription>
-              Describe one change. Edits run at best quality (3 credits).
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex flex-wrap gap-1.5">
-              {["warmer lighting", "add plants", "change rug", "lighter walls"].map((example) => (
-                <button
-                  key={example}
-                  type="button"
-                  onClick={() => {
-                    setInstruction(example);
-                  }}
-                  className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted/50"
-                >
-                  {example}
-                </button>
-              ))}
-            </div>
-            {editError !== null && (
-              <p
-                role="alert"
-                className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
-              >
-                {editError}
-              </p>
-            )}
-            {editingTarget && (
-              <div className="my-3 flex items-center gap-3 rounded-lg border border-border bg-muted p-2">
-                {/* eslint-disable-next-line @next/next/no-img-element -- signed concept thumbnail */}
-                <img
-                  src={editingTarget.thumbUrl}
-                  alt="Concept being edited"
-                  className="h-16 w-20 rounded object-cover"
-                />
-                <p className="text-sm font-medium">
-                  Editing concept {editingTarget.index + 1}
-                  {editingTarget.directionLabel ? ` · ${editingTarget.directionLabel}` : ""}
-                </p>
-              </div>
-            )}
-            {editingTarget && (
-              <ConceptTargetEditor
-                key={editingTarget.id}
-                roomId={roomId}
-                outputId={editingTarget.id}
-                imageUrl={editingTarget.url}
-                advice={editingTarget.advice}
-                target={targets[editingTarget.id]}
-                disabled={editPending}
-                onChange={(target) =>
-                  setTargets((previous) => ({ ...previous, [editingTarget.id]: target }))
-                }
-                onAdvice={(advice) => rememberAdvice(editingTarget.id, advice)}
-              />
-            )}
-            <textarea
-              ref={editorRef}
-              aria-label="Describe a change to this concept"
-              value={instruction}
-              maxLength={300}
-              rows={3}
-              onChange={(event) => {
-                setInstruction(event.target.value);
-              }}
-              placeholder="E.g. make the sofa a deep green, keep everything else the same"
-              className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-            />
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                size="sm"
-                disabled={editPending || instruction.trim().length < 3}
-                onClick={submitEdit}
-                aria-busy={editPending}
-              >
-                {editPending ? "Starting…" : "Apply change"}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  setEditingOutputId(null);
-                }}
-              >
-                Cancel
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      {editingOutputId !== null && editingTarget && (
+        <ConceptEditWorkspace
+          key={editingTarget.id}
+          roomId={roomId}
+          output={editingTarget}
+          target={targets[editingTarget.id]}
+          instruction={instruction}
+          initialTab={editorTab}
+          pending={editPending}
+          error={editError}
+          onTarget={(target) =>
+            setTargets((previous) => ({ ...previous, [editingTarget.id]: target }))
+          }
+          onInstruction={setInstruction}
+          onAdvice={(advice) => rememberAdvice(editingTarget.id, advice)}
+          onApply={submitEdit}
+          onClose={() => setEditingOutputId(null)}
+        />
       )}
 
       {lightbox !== null && (

@@ -59,6 +59,10 @@ export const serverEnvSchema = z
     // Optional direct (non-pooled) Postgres URL for pg-boss. Only needed when
     // DATABASE_URL points at a transaction pooler; otherwise it falls back.
     QUEUE_DATABASE_URL: optionalUrl,
+    QUEUE_SCHEMA: z
+      .string()
+      .regex(/^[a-z_][a-z0-9_]{0,49}$/)
+      .default("pgboss"),
 
     // auth
     BETTER_AUTH_SECRET: z.string().min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),

@@ -1,6 +1,9 @@
 import { expect, test } from "@playwright/test";
 import { signInWithOtp, uniqueEmail } from "./auth-helpers";
 import { STYLES } from "../../packages/shared/src/styles";
+import { ROOM_CHECKLISTS } from "../../packages/shared/src/room-checklists";
+import { recommendContrastingStyles } from "../../packages/shared/src/concept-directions";
+import { renderJobStatusSchema } from "../../packages/shared/src/render-status";
 
 test("wizard renders, favorite, create share link, vote anonymously", async ({ page, browser }) => {
   test.setTimeout(300_000);
@@ -15,75 +18,40 @@ test("wizard renders, favorite, create share link, vote anonymously", async ({ p
   await page.getByRole("button", { name: "Open my home workspace" }).click();
   await page.waitForURL("**/app");
 
-  // Guided wizard
+  // One Home screen; every room has its own optional must-have list.
   await page.goto("/new");
   await page.setViewportSize({ width: 375, height: 812 });
-  await page.locator('input[type="file"]').first().setInputFiles("tests/e2e/fixtures/room.jpg");
-  await page.getByRole("button", { name: "Continue" }).click();
-
-  // Room step: use typical sizes
-  await page.getByLabel("Room type", { exact: true }).selectOption("KITCHEN");
-  await page.getByText("I'm not sure about the exact dimensions").click();
-  await page.getByRole("button", { name: "Continue" }).click();
-  // Keep / renter steps
-  await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByRole("button", { name: "Continue" }).click();
-  // Tradition first, then room-specific looks. Every selected look gets a concept.
-  await expect(page.getByRole("heading", { name: "Find your design direction" })).toBeVisible();
-  await page.getByRole("button", { name: /^India / }).click();
-  await page.getByRole("button", { name: "Choose contrasting looks for me" }).click();
-  await expect(page.getByRole("button", { name: /^Indian/, pressed: true })).toHaveCount(3);
-  await expect(page.getByRole("button", { name: /^Indian heritage/ })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  await expect(page.getByRole("button", { name: /^Indian minimal/ })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  for (const label of [
-    "Indian contemporary",
-    "Indian heritage",
-    "Indian minimal",
-    "Indian craft",
-  ]) {
-    const look = page.getByRole("button", { name: new RegExp(`^${label}`) });
-    if ((await look.getAttribute("aria-pressed")) === "true") await look.click();
+  await expect(page.getByRole("heading", { name: "Your room. Three new ideas." })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("textbox")).toHaveCount(0);
+  await page.getByLabel("Room photo", { exact: true }).setInputFiles("tests/e2e/fixtures/room.jpg");
+  await expect(page.getByRole("button", { name: "Generate 3 ideas", exact: true })).toBeEnabled();
+  for (const room of ROOM_CHECKLISTS) {
+    await page.getByLabel("Room type", { exact: true }).selectOption(room.key);
+    await expect(page.getByRole("checkbox")).toHaveCount(room.items.length);
+    await expect(page.getByRole("checkbox", { checked: true })).toHaveCount(0);
+    for (const [, label] of room.items)
+      await expect(page.getByRole("checkbox", { name: label, exact: true })).toBeVisible();
+    await page.getByRole("checkbox").first().check();
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
   }
-  await page.getByRole("button", { name: /^Indian contemporary/ }).click();
-  await page.getByRole("button", { name: /^Indian minimal/ }).click();
-  await page.getByRole("button", { name: /^Indian craft/ }).click();
-  await expect(page.getByRole("img", { name: "Indian craft kitchen reference" })).toBeVisible();
-  await expect(page.getByRole("img", { name: "Indian craft kitchen reference" })).toHaveCSS(
-    "left",
-    /-/,
+  await page.getByLabel("Room type", { exact: true }).selectOption("KITCHEN");
+  await expect(page.getByRole("checkbox", { name: "Sofa", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("checkbox", { checked: true })).toHaveCount(0);
+  await page.getByRole("checkbox", { name: "Countertop organizers", exact: true }).check();
+  await page.getByRole("checkbox", { name: "Breakfast stools", exact: true }).check();
+  await page.getByText("Choose a style (optional)", { exact: true }).click();
+  await page.getByLabel("Design style", { exact: true }).selectOption("indian-contemporary");
+  await page.getByLabel("Design style", { exact: true }).selectOption("");
+  await page.getByText("Choose a style (optional)", { exact: true }).click();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
   );
-  await page.screenshot({ path: "test-results/guided-style-mobile.png", fullPage: true });
-  const overflow = await page.evaluate(() => ({
-    width: window.innerWidth,
-    scroll: document.documentElement.scrollWidth,
-    elements: [...document.querySelectorAll("body *")]
-      .filter((el) => el.getBoundingClientRect().right > window.innerWidth + 1)
-      .slice(0, 12)
-      .map((el) => ({ tag: el.tagName, className: el.className })),
-  }));
-  expect(overflow.scroll, JSON.stringify(overflow)).toBeLessThanOrEqual(overflow.width);
-  await page.getByRole("button", { name: "Continue" }).click();
-  // Budget is optional, and a selected tier can be cleared.
-  await page.getByRole("button", { name: /^Premium/ }).click();
-  await page.getByRole("button", { name: "No budget preference" }).click();
-  await expect(page.getByRole("button", { name: /^Premium/ })).toHaveAttribute(
-    "aria-pressed",
-    "false",
-  );
-  await page.getByRole("button", { name: /^Budget-friendly/ }).click();
-  await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByLabel("Variations", { exact: true }).selectOption("2");
-  await expect(page.getByRole("button", { name: /Generate 2 concepts/ }).first()).toBeDisabled();
-  await page.getByLabel("Variations", { exact: true }).selectOption("3");
+  await page.screenshot({ path: "test-results/home-quick-start-mobile.png", fullPage: true });
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.screenshot({ path: "test-results/guided-review-desktop.png", fullPage: true });
-  // Final step: generate
+  await page.screenshot({ path: "test-results/home-quick-start-desktop.png", fullPage: true });
   // Exercise the similar-results feedback independently of the fake provider's tint choices.
   await page.route("**/api/renders/*", async (route) => {
     if (route.request().method() !== "GET") {
@@ -101,18 +69,28 @@ test("wizard renders, favorite, create share link, vote anonymously", async ({ p
       await route.fulfill({ response, json: { ...body, similarConcepts: true } });
     } else await route.fulfill({ response });
   });
-  await page
-    .getByRole("button", { name: /Generate 3 concepts/ })
-    .first()
-    .click();
-
+  const completed = page.waitForResponse(
+    async (response) => {
+      if (!/\/api\/renders\/[^/]+$/.test(response.url()) || response.request().method() !== "GET")
+        return false;
+      try {
+        return renderJobStatusSchema.parse(await response.json()).status === "SUCCEEDED";
+      } catch {
+        return false;
+      }
+    },
+    { timeout: 120000 },
+  );
+  await page.getByRole("button", { name: "Generate 3 ideas", exact: true }).click();
   await page.waitForURL(/\/rooms\/[^/]+$/, { timeout: 120_000 });
   const roomUrl = page.url();
   const projectId = /\/projects\/([^/]+)\//.exec(roomUrl)?.[1] ?? "";
   await expect(page.getByAltText("Concept 1")).toBeVisible({ timeout: 120_000 });
-  await expect(page.getByText("01 · Indian contemporary", { exact: true })).toBeVisible();
-  await expect(page.getByText("02 · Indian minimal", { exact: true })).toBeVisible();
-  await expect(page.getByText("03 · Indian craft", { exact: true })).toBeVisible();
+  const generated = renderJobStatusSchema.parse(await (await completed).json());
+  expect(generated.includeItems).toEqual(["counter-organizers", "breakfast-stools"]);
+  expect(generated.outputs.map((output) => output.styleKey)).toEqual(
+    recommendContrastingStyles("global", 3),
+  );
   for (const direction of ["Light & open", "Warm & tactile", "Bold & expressive"])
     await expect(page.getByText(direction, { exact: true })).toBeVisible();
   await expect(page.getByText(/Some concepts are visually similar/)).toBeVisible();

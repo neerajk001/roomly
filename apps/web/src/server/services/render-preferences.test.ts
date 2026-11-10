@@ -17,6 +17,17 @@ describe("render preference boundary", () => {
       createRenderSchema.safeParse({ roomId: "room", kind: "RESTYLE", styleKey: "modern" }).success,
     ).toBe(true);
   });
+  it("validates known must-have item IDs without changing legacy staging items", () => {
+    expect(
+      createRenderSchema.parse({ ...base, includeItems: ["counter-organizers"] }),
+    ).toMatchObject({ includeItems: ["counter-organizers"] });
+    expect(createRenderSchema.safeParse({ ...base, includeItems: ["unknown"] }).success).toBe(
+      false,
+    );
+    expect(createRenderSchema.safeParse({ ...base, includeItems: ["sofa", "sofa"] }).success).toBe(
+      false,
+    );
+  });
   it("allows validated areas only for a single-image edit", () => {
     const editTarget = { label: "Sofa", region: { left: 100, top: 200, right: 500, bottom: 700 } };
     const edit = {

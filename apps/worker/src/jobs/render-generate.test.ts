@@ -283,6 +283,7 @@ describe("processRenderJob", () => {
             styleKeys: ["indian-minimal", "indian-craft", "indian-heritage"],
             budgetTier: "budget",
             notes: "Leave space for reading",
+            includeItems: ["sofa", "floor-lamp"],
             stagingItems: ["lighting", "storage"],
           },
         },
@@ -313,6 +314,10 @@ describe("processRenderJob", () => {
         expect(prompts[index]).toContain("Leave space for reading");
         expect(prompts[index]).toContain("affordable off-the-shelf");
         expect(prompts[index]).toContain("lighting, storage");
+        expect(prompts[index]).toContain(
+          "Include these requested item categories in every concept: Sofa, Floor lamp",
+        );
+        expect(prompts[index]).toContain("avoid overcrowding");
       }
       const job = await prisma.renderJob.findFirstOrThrow({
         where: { id: fixture.jobId, workspaceId: fixture.workspaceId },

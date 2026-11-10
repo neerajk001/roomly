@@ -3,6 +3,9 @@
 Completed batch report. For the current combined implementation and open review
 items, see [project status](../project-status.md) and the [batch index](README.md).
 
+Home's initial seven-step experience described below has since been replaced by
+the [one-screen quick-start](home-quick-start.md). The detailed wizard remains in Pro.
+
 - [x] Design-tradition catalog with stable legacy style keys.
 - [x] Distinct photographic previews for the selected room type.
 - [x] Tradition → style → optional budget → review flow.

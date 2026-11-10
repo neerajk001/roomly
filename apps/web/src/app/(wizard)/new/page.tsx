@@ -1,4 +1,5 @@
 import { GuidedWizard } from "@/components/wizard/guided-wizard";
+import { HomeQuickDesign } from "@/components/wizard/HomeQuickDesign";
 import { STYLES } from "@roomdesigner/shared";
 import { requireOnboarded, requireWorkspace } from "@/server/auth/session";
 
@@ -10,11 +11,13 @@ export default async function NewDesignPage({
   searchParams: Promise<{ style?: string }>;
 }) {
   await requireOnboarded();
-  const { workspace } = await requireWorkspace();
+  const { user, workspace } = await requireWorkspace();
   const { style } = await searchParams;
   const initialStyle =
     style !== undefined && STYLES.some((entry) => entry.key === style) ? style : undefined;
-  return (
+  return user.mode === "PRO" ? (
     <GuidedWizard currency={workspace.currency} initialStyle={initialStyle} />
+  ) : (
+    <HomeQuickDesign initialStyle={initialStyle} />
   );
 }

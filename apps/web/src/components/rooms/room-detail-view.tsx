@@ -1,3 +1,6 @@
+import { RoomWorkspace } from "./RoomWorkspace";
+import { RoomCostSummary } from "./RoomCostSummary";
+import { RoomBriefSummary } from "./RoomBriefSummary";
 import {
   outputConceptLabel,
   readDiversityReport,
@@ -5,6 +8,7 @@ import {
   savedConceptAdvice,
   renderSourceOutputId,
   savedEditTarget,
+  savedRoomIncludes,
 } from "@roomdesigner/shared";
 import { EstimateSection } from "@/components/estimates/estimate-section";
 import { RoomPhotos } from "@/components/projects/room-photos";
@@ -81,6 +85,7 @@ export async function RoomDetailView({
       styleKey: job.styleKey,
       similarConcepts: readDiversityReport(job.params)?.similarConcepts ?? false,
       editTarget: savedEditTarget(job.params),
+      includeItems: savedRoomIncludes(job.params),
       sourceOutputId:
         renderSourceOutputId(job.params) ??
         (job.kind === "EDIT" ? (outputByAsset.get(job.sourceAssetId) ?? null) : null),
@@ -165,51 +170,63 @@ export async function RoomDetailView({
       .map((line) => ({ label: line.label, totalMinor: line.totalMinor }));
 
     return (
-      <div className="space-y-6">
-        <HomeRoomResults
-          key={detail.room.id}
-          roomId={detail.room.id}
-          projectId={projectId}
-          roomLabel={roomLabel}
-          dimensions={dimensions}
-          initialJob={initialJob}
-          history={jobViews}
-          sourceUrl={photos[0]?.url ?? null}
-          estimate={{
-            currency: rough.currency,
-            lowMinor: rough.lowMinor,
-            highMinor: rough.highMinor,
-            top,
-          }}
-          keepList={projectMeta?.keepList ?? []}
-          notes={projectMeta?.notes ?? null}
-        />
-        <nav aria-label="Room workflow" className="flex flex-wrap gap-3 text-sm underline">
-          <Link href="#cost-breakdown">Cost breakdown & priorities</Link>
-          <Link href="#room-details">Edit room details</Link>
-          <Link href={`/app/projects/${projectId}/rooms/${roomId}/shopping-list`}>
-            Shopping list
-          </Link>
-          <Link href={`/app/projects/${projectId}#share`}>Share & get feedback</Link>
-        </nav>
-        <section id="cost-breakdown" aria-label="Cost breakdown and priorities">
-          <EstimateSection projectId={projectId} roomId={detail.room.id} />
-        </section>
-        {roomEditor}
-        {
-          <Card>
-            <CardHeader>
-              <CardTitle>Room photos</CardTitle>
-              <CardDescription>
-                Upload a clear photo so the AI can create concepts for this room.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RoomPhotos roomId={detail.room.id} photos={photos} />
-            </CardContent>
-          </Card>
+      <RoomWorkspace
+        key={detail.room.id}
+        hasPhoto={photos.length > 0}
+        shoppingHref={`/app/projects/${projectId}/rooms/${roomId}/shopping-list`}
+        shareHref={`/app/projects/${projectId}#share`}
+        designs={
+          <HomeRoomResults
+            key={detail.room.id}
+            roomId={detail.room.id}
+            projectId={projectId}
+            roomLabel={roomLabel}
+            dimensions={dimensions}
+            initialJob={initialJob}
+            history={jobViews}
+            sourceUrl={photos[0]?.url ?? null}
+            notes={projectMeta?.notes ?? null}
+          />
         }
-      </div>
+        costs={
+          <>
+            <RoomCostSummary
+              estimate={{
+                currency: rough.currency,
+                lowMinor: rough.lowMinor,
+                highMinor: rough.highMinor,
+                top,
+              }}
+            />
+            <section id="cost-breakdown" aria-label="Cost breakdown and priorities">
+              <EstimateSection projectId={projectId} roomId={detail.room.id} />
+            </section>
+          </>
+        }
+        setup={
+          <>
+            {roomEditor}
+            <RoomBriefSummary
+              roomLabel={roomLabel}
+              dimensions={dimensions}
+              keepList={projectMeta?.keepList ?? []}
+              notes={projectMeta?.notes ?? null}
+            />
+            <Card>
+              <CardHeader>
+                <CardTitle>Room photos</CardTitle>
+                <CardDescription>
+                  The first photo is used as the source for your designs. Upload a clear view of the
+                  whole room.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RoomPhotos roomId={detail.room.id} photos={photos} />
+              </CardContent>
+            </Card>
+          </>
+        }
+      />
     );
   }
 
@@ -230,51 +247,57 @@ export async function RoomDetailView({
           {ceilingLine}
         </p>
       </div>
-
-      <section aria-labelledby="generate-heading">
-        <h2 id="generate-heading" className="sr-only">
-          Generate concepts
-        </h2>
-        <RenderView
-          key={detail.room.id}
-          roomId={detail.room.id}
-          projectId={projectId}
-          hasPhoto={photos.length > 0}
-          initialJob={initialJob}
-          history={jobViews}
-          sourceUrl={photos[0]?.url ?? null}
-        />
-      </section>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Estimate</CardTitle>
-          <CardDescription>
-            Build an editable estimate from your rate card. Each save creates a version.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button asChild size="sm">
-            <Link href={`/studio/projects/${projectId}/rooms/${detail.room.id}/estimate`}>
-              Build estimate
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
-
-      {roomEditor}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Room photos</CardTitle>
-          <CardDescription>
-            The first photo is used as the source for renders. Photos are stored without EXIF data.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <RoomPhotos roomId={detail.room.id} photos={photos} />
-        </CardContent>
-      </Card>
+      <RoomWorkspace
+        key={detail.room.id}
+        hasPhoto={photos.length > 0}
+        designs={
+          <section aria-label="Generate concepts">
+            <RenderView
+              key={detail.room.id}
+              roomId={detail.room.id}
+              projectId={projectId}
+              hasPhoto={photos.length > 0}
+              initialJob={initialJob}
+              history={jobViews}
+              sourceUrl={photos[0]?.url ?? null}
+            />
+          </section>
+        }
+        costs={
+          <Card>
+            <CardHeader>
+              <CardTitle>Estimate</CardTitle>
+              <CardDescription>
+                Build an editable estimate from your rate card. Each save creates a version.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild size="sm">
+                <Link href={`/studio/projects/${projectId}/rooms/${detail.room.id}/estimate`}>
+                  Build estimate
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        }
+        setup={
+          <>
+            {roomEditor}
+            <Card>
+              <CardHeader>
+                <CardTitle>Room photos</CardTitle>
+                <CardDescription>
+                  The first photo is used as the source for your designs. Upload a clear view of the
+                  whole room.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RoomPhotos roomId={detail.room.id} photos={photos} />
+              </CardContent>
+            </Card>
+          </>
+        }
+      />
     </div>
   );
 }

@@ -747,3 +747,40 @@ Provisional decisions: no new dependencies beyond the stack; logo uploads reuse 
 - Deployment docs and rollback targets now match the existing host-Nginx web/worker Compose file. Bootstrap text accurately describes prerequisites and separate host proxy/TLS setup; no host configuration or deployment was performed.
 - Verification: all 11 packages pass typecheck/lint/tests (73 web tests); all six Playwright journeys pass, including five injected status failures followed by read-only recovery, targeted Home edits and Pro approval. Production build passes with fake providers. Mobile screenshots reviewed; five E2E accounts/workspaces cleaned up; changed Markdown links, env-template coverage, shell syntax and diff checks pass.
 - Real-model quality/fidelity, detection/boundary review, manual V4 usability timing and CI/live-release evidence remain pending. No billing, new imagery, paid call, model selection or migration was included. Stop after committing for human review.
+
+## 2026-11-09 — Room workspace UX correction plan
+
+- User feedback shows that feature completion left the room screen overcrowded; restructure the workflow without dropping capabilities.
+- Treat the room organization and shared editor as one integrated current-phase correction, not a new product phase.
+- Separate Designs, Costs and Room setup into explicit accessible navigation with independently retained state.
+- Keep setup/photos and full cost controls out of the design results; retain clear access and useful empty states.
+- Move editing out of the document flow into a focused, accessible modal workspace shared by Home and Pro.
+- Fit the entire image to the available canvas; never position selection overlays over letterboxed padding.
+- Keep text changes, object/area tools and Apply action together; use a side inspector on desktop and bounded mobile panes.
+- Offer a separate Ideas view inside the editor rather than appending suggestion cards to the results page.
+- Keep selected-concept drafts, masks, credit behavior, provider guards and edit lineage unchanged.
+- Preserve keyboard focus, Escape/back navigation, scroll position and source-specific targets when entering/leaving editing.
+- Update browser tests for the explicit workspace navigation and modal editing, including desktop and 375px containment checks.
+- Use existing Radix dialog/tabs primitives; verify official docs and installed Next.js docs. Add no dependencies or generated imagery.
+- Update current status and a UX correction report, run required checks and browser regression, then commit for review.
+- The initial Home/Pro browser runs pass with the new room tabs, fitted modal editor, preserved drafts/targets, source lineage, cost/setup navigation and exact overlay/image bounds. Mobile review found Next's development badge covering part of the fixed Apply button, so hide only that badge using documented `devIndicators: false`; compile/runtime errors remain enabled.
+
+## 2026-11-10 — Home quick-start and room-specific checklist plan
+
+- User approved replacing the homeowner questionnaire with one screen: photo, room type, optional must-have items and Generate.
+- Cover every available room type with its own curated checklist, including a neutral Other list; never reuse the living-room list as a fallback.
+- Checkboxes mean items to include, not exact objects to preserve; start empty and allow immediate generation without picks.
+- Clear room-specific picks on room change so bedroom/kitchen requests cannot inherit a living-room sofa.
+- Keep style choice optional behind an explicit control; default to three contrasting ideas with no mandatory style step.
+- Remove measurements, budget, keep-items, renter questions and extra instructions from the initial Home screen; retain later setup/cost/editor capabilities.
+- Preserve the detailed Pro flow and legacy job/draft compatibility.
+- Introduce a separate validated room-item catalog and payload field rather than reinterpreting legacy staging preferences.
+- Authorize the room first, then validate selected items against its server-owned room type; validate again in the worker.
+- Convert stable item IDs to curated prompt text for every concept; include all requested items while prioritizing walkways, usable space and fixed architecture.
+- Persist selected must-haves in job JSON; inherit them on edits and Generate more without a schema migration.
+- Validate upload responses, retain the created room on recoverable upload/generation failures, and do not automatically repeat an unconfirmed generation.
+- Add catalog/service/worker and browser coverage for all ten lists, switching rooms, optional generation, no instruction field and end-to-end prompt propagation.
+- Complete the pending workspace UX verification sequentially with no concurrent build/regeneration; keep the earlier timeout recorded accurately.
+- Update current documentation, run required checks and full browser flows using fake providers, commit and stop for review.
+- Verification found the active local worker uses the real provider and shares the default queue. Add validated `QUEUE_SCHEMA` (default unchanged), set both Playwright processes to `pgboss_e2e`, and mock queue delivery in metadata-only service tests. This isolates fake test jobs without stopping the user's development server or worker. Verified the constructor's schema option against [official pg-boss documentation](https://github.com/timgit/pg-boss/blob/master/docs/api/constructor.md).
+- Final verification: `pnpm typecheck`, `pnpm lint` and `pnpm test` pass across all 11 packages (75 web, 27 shared, 17 worker, 9 config tests). All six Playwright journeys pass sequentially in 6.6 minutes; production build passes afterwards. Reviewed desktop/375px quick-start and editor screenshots; source formatting, Markdown links, env wiring and whitespace checks pass. Cleaned five recorded browser-test accounts/workspaces only. An earlier overlapping run's generation timeout was superseded by this isolated sequential pass, not counted as a success. No billing, paid AI call, new model, new asset, dependency or application-data migration was added. G2/manual V4 review remains open; stop for review after this maintenance commit.

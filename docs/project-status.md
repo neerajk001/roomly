@@ -1,35 +1,48 @@
 # Current project status
 
-Updated 2026-11-09. This page describes the checked-in implementation. Dated
+Updated 2026-11-10. This page describes the checked-in implementation. Dated
 summaries and `DECISIONS.md` retain historical evidence; the V1–V6 phase checklists
 remain the review gates and must not be treated as proof of production readiness.
 
 ## Guided-design delivery
 
-| Batch | Implemented behavior | Status |
-|---|---|---|
+| Batch                                | Implemented behavior                                                                                                             | Status   |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | [1](design/guided-design-batch-1.md) | Design tradition → room-specific look → optional budget → review; 25 preview atlases; every selected style assigned to an output | Complete |
-| [2](design/guided-design-batch-2.md) | Contrasting picks and creative directions; conservative similarity detection; one bounded replacement attempt | Complete |
-| [3](design/guided-design-batch-3.md) | Remembered concept selection, comparison/save/edit targeting, on-demand suggestions, separate drafts and concept-family history | Complete |
-| [4](design/guided-design-batch-4.md) | Approximate object bounds, manual area selection, aligned masks, outside-area preservation and target metadata | Complete |
-| [5](design/guided-design-batch-5.md) | Submission/status recovery, room/history state fixes, environment/test wiring and documentation reconciliation | Complete |
+| [2](design/guided-design-batch-2.md) | Contrasting picks and creative directions; conservative similarity detection; one bounded replacement attempt                    | Complete |
+| [3](design/guided-design-batch-3.md) | Remembered concept selection, comparison/save/edit targeting, on-demand suggestions, separate drafts and concept-family history  | Complete |
+| [4](design/guided-design-batch-4.md) | Approximate object bounds, manual area selection, aligned masks, outside-area preservation and target metadata                   | Complete |
+| [5](design/guided-design-batch-5.md) | Submission/status recovery, room/history state fixes, environment/test wiring and documentation reconciliation                   | Complete |
 
 Guided-design batch 5 is separate from **V5 billing**, which is excluded from this
 work. No new marketing/style imagery was generated after batch 1.
 
+The subsequent [room workspace UX correction](design/room-workspace-ux.md)
+separates **Designs / Costs / Room setup** and moves editing into a focused modal
+canvas with a side inspector (stacked bounded panes on mobile). Suggestions live
+in the editor's Ideas view. These features are no longer appended as one long
+results-page form; costs, setup and all existing controls remain accessible.
+
 ## Current experience
 
-The seven-step Home wizard asks for photos, room details, kept items, renter
-restrictions, design tradition and room-specific looks, optional budget direction,
-then review and extra notes. Tradition and looks share the design step. Users can
-choose budget-friendly, mid-range, premium or no tier, retain a custom amount,
-and request contrasting looks. Up to three chosen styles map to generated slots.
+The [Home quick-start](design/home-quick-start.md) is one screen: a photo, room type,
+optional must-have checkboxes and Generate. All ten room types have distinct lists;
+changing the room clears its old picks. Nothing is automatically checked. These
+are categories to include, not exact objects to preserve. There is no initial
+extra-instructions, measurements, renter or budget questionnaire. Optional style
+selection sits behind one control; the default requests three contrasting ideas.
+Costs/measurements and detailed editing remain available after the first result.
+
+The earlier seven-step detailed flow is retained for Pro. Earlier batch reports
+describe its original delivery and do not define the current homeowner entry flow.
 
 Home and Pro use the same render/edit engine. Selecting a concept controls its
 comparison, suggestions and editor. Selection survives reload; text drafts and
 area selections stay separate per concept while the page is open. An edit shows
 the exact source, retains its style/mood/notes/budget/keep-items/renter context,
-and creates a linked version. The user explicitly applies each change.
+and creates a linked version. The user explicitly applies each change. The editor
+fits the entire source image, keeps Apply visible, traps focus and restores the
+opener on exit. Setup and estimate sections retain their state when switching tabs.
 
 Real vision analysis can return up to three refinement ideas and eight approximate
 object rectangles. Users review/adjust object bounds or mark an area manually
@@ -69,7 +82,7 @@ analysis does not infer exact dimensions, prices, retailer availability or quote
   all in-flight image costs globally.
 - Billing, retailer catalogs, layout engines, 3D and construction guarantees are
   excluded. Draft text/area persistence across reload is not implemented; only
-  concept selection and the guided wizard's non-file preferences persist locally.
+  concept selection and validated non-file Home/Pro entry preferences persist locally.
 
 ## Verification record
 
@@ -81,5 +94,13 @@ mask/worker tests continue to verify protected pixels and source dimensions.
 Detailed evidence and limitations are in each completed batch report.
 
 Run `pnpm typecheck && pnpm lint && pnpm test`, `pnpm test:e2e`, then `pnpm build`.
+
+The subsequent workspace/quick-start correction passed typecheck, lint and all
+package tests (75 web tests), plus all six browser journeys on 2026-11-10. All ten
+room lists and desktop/375px layouts were checked. Five test accounts/workspaces
+were cleaned up. Playwright now isolates its fake worker using `QUEUE_SCHEMA`;
+normal web/worker processes retain the default queue schema.
+The subsequent production build passes as well. This does not close G2 or the
+remaining V4 manual review gates.
 The root test command serializes Turbo package tasks to avoid the observed shared
 Vitest cache startup race. Tests use fake/mocked image and analysis providers.

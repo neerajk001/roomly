@@ -10,6 +10,14 @@ const validEnv = {
 };
 
 describe("serverEnvSchema", () => {
+  it("isolates queues using a validated schema identifier", () => {
+    expect(serverEnvSchema.parse(validEnv).QUEUE_SCHEMA).toBe("pgboss");
+    expect(serverEnvSchema.parse({ ...validEnv, QUEUE_SCHEMA: "pgboss_e2e" }).QUEUE_SCHEMA).toBe(
+      "pgboss_e2e",
+    );
+    for (const schema of ["", "bad-schema", "public.jobs", "x;drop", "a".repeat(51)])
+      expect(serverEnvSchema.safeParse({ ...validEnv, QUEUE_SCHEMA: schema }).success).toBe(false);
+  });
   it("requires explicit advice model configuration only when enabling the real provider", () => {
     expect(serverEnvSchema.parse(validEnv).ADVICE_PROVIDER).toBe("fake");
     expect(serverEnvSchema.safeParse({ ...validEnv, ADVICE_PROVIDER: "openai" }).success).toBe(

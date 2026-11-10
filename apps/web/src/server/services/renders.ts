@@ -12,6 +12,8 @@ import {
   designPreferencesSchema,
   editTargetSchema,
   type EditTarget,
+  roomIncludeItemsSchema,
+  roomIncludesAreValid,
   getStyle,
   outputStyleKey,
   outputConceptLabel,
@@ -31,6 +33,7 @@ export const createRenderSchema = z
     traditionKey: z.string().optional(),
     budgetTier: z.enum(["budget", "mid", "premium"]).optional(),
     instruction: z.string().max(600).optional(),
+    includeItems: roomIncludeItemsSchema.optional(),
     variations: z.number().int().min(1).max(4).default(4),
     quality: z.enum(["draft", "final"]).default("draft"),
     /** RESTYLE only: optional extra direction from the user. */
@@ -158,6 +161,8 @@ export async function createRender(
   if (room === null) {
     throw new AppError("NOT_FOUND", "Room not found.", 404);
   }
+  if (input.includeItems && !roomIncludesAreValid(room.type, input.includeItems))
+    throw new AppError("INVALID_INPUT", "Choose items for this room type.", 400);
 
   let sourceAssetId: string;
   let sourceWidth: number | null = null;
@@ -167,6 +172,7 @@ export async function createRender(
   let notes: string | null = null;
   let parentJobId: string | null = null;
   let editContext: {
+    includeItems?: string[];
     editTarget?: EditTarget;
     sourceOutputId?: string;
     sourceDirectionLabel?: string;
@@ -233,11 +239,13 @@ export async function createRender(
         budgetTier: z.enum(["budget", "mid", "premium"]).optional(),
         traditionKey: z.string().optional(),
         sourceDirectionLabel: z.string().optional(),
+        includeItems: roomIncludeItemsSchema.optional(),
       })
       .parse(output.job.params);
     styleKey = outputStyleKey(output.job.params, output.job.styleKey, output.index);
     notes = inherited.notes ?? null;
     editContext = {
+      ...(inherited.includeItems ? { includeItems: inherited.includeItems } : {}),
       ...(input.editTarget ? { editTarget: input.editTarget } : {}),
       sourceOutputId: output.id,
       budgetTier: inherited.budgetTier,
@@ -271,6 +279,9 @@ export async function createRender(
           params: {
             ...pickRenderParams(input.quality, sourceWidth, sourceHeight),
             ...editContext,
+            ...(input.kind === "RESTYLE" && input.includeItems
+              ? { includeItems: input.includeItems }
+              : {}),
             ...(input.kind === "RESTYLE"
               ? { conceptPlanVersion: 1, diversityRetryUsed: false }
               : {}),

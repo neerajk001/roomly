@@ -11,6 +11,9 @@ See [current project status](docs/project-status.md) for implemented behavior,
 guided-design batches 1–5, verification and remaining review gates. Implementation
 coverage does not mean every phase Definition of Done or live deployment is approved.
 
+Home starts with a photo, room type and optional room-specific must-haves on one
+screen. Detailed briefs stay in Pro; see [Home quick-start](docs/design/home-quick-start.md).
+
 ## Deployment
 
 Everything runs on a single Hostinger VPS:

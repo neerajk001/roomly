@@ -122,9 +122,18 @@ remaining V4 manual review gates.
 The root test command serializes Turbo package tasks to avoid the observed shared
 Vitest cache startup race. Tests use fake/mocked image and analysis providers.
 
-The latest [selected-area follow-up](design/selected-area-analysis.md) passes
+The [selected-area follow-up](design/selected-area-analysis.md) passes
 typecheck/lint/package tests (78 web tests) and three targeted Home/Pro browser
 journeys. Redraw, multiple regions, explicit analysis and optional custom startup
 requests are implemented. `gpt-5.4-mini` is selected; paid-provider activation
 remains pending explicit approval after automatic review blocked image egress.
 The production build and source/documentation checks also pass.
+
+The approved [comparison correction, batch 1](design/comparison-batch-1.md) now
+shares complete-image side-by-side and full-screen viewing between Home and Pro.
+The slider reveals stationary full-size images; incompatible proportions use
+side-by-side, and matching proportions do not imply verified camera alignment.
+Generation assessment and controlled wider framing remain batches 2–3 and have
+not been started. Paid-provider activation remains pending separate approval.
+Batch 1 passes typecheck/lint/package checks, both targeted Home/Pro browser
+journeys and the production build. Its report records fixture and review details.

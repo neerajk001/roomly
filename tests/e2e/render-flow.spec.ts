@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { signInWithOtp, uniqueEmail } from "./auth-helpers";
+import { verifyRoomComparison } from "./comparison-helpers";
 import { renderJobStatusSchema } from "../../packages/shared/src/render-status";
 
 function waitForCompletedRender(page: Page) {
@@ -97,6 +98,7 @@ test("full render flow: project, room, photo, 3 concepts, favorite, chat edit", 
   await sharing.getByRole("button", { name: "Close", exact: true }).click();
   await expect(page.getByRole("link", { name: "Share", exact: true })).toBeFocused();
   // Explicit concept selection drives comparison and survives a reload.
+  await verifyRoomComparison(page, "home");
   const beforeSelection = await page.getByAltText("After", { exact: true }).getAttribute("src");
   await page.getByRole("button", { name: "Select concept 2", exact: true }).click();
   await expect(page.getByAltText("After", { exact: true })).not.toHaveAttribute(

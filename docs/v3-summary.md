@@ -15,6 +15,8 @@ delivery is retained in its [batch report](design/README.md).
   retain all their controls without filling the design results. Editing opens a
   dedicated fitted canvas with an inspector and persistent Apply action; mobile
   uses bounded panes. Ideas and manual/object tools stay inside that workspace.
+  [Comparison batch 1](design/comparison-batch-1.md) adds complete-image panels,
+  full-screen viewing and a fixed-scale reveal slider shared with Pro.
 
 - The Home entry flow is now one screen: photo, room type and optional must-have
   checkboxes, then Generate. Each of the ten room types has its own list. Room

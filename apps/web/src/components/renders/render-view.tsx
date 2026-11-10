@@ -1,5 +1,6 @@
 "use client";
 
+import { RoomComparison } from "@/components/renders/RoomComparison";
 import { ConceptPreview } from "@/components/renders/ConceptPreview";
 import { ConceptEditWorkspace } from "@/components/renders/ConceptEditWorkspace";
 import { useConceptSelection } from "@/components/renders/use-concept-selection";
@@ -54,7 +55,6 @@ export function RenderView({
   const [lastRestyle, setLastRestyle] = useState<RestyleRequest | null>(null);
   const [createPending, startCreate] = useTransition();
   const [editPending, startEdit] = useTransition();
-  const [clip, setClip] = useState(50);
   const [altStyle, setAltStyle] = useState("scandinavian");
   const [compareOpen, setCompareOpen] = useState(false);
   const trackedSuccess = useRef<Set<string>>(new Set());
@@ -535,47 +535,12 @@ export function RenderView({
             </div>
           )}
 
-          {sourceUrl !== undefined && sourceUrl !== null && selected !== null && (
+          {selected !== null && (
             <details className="space-y-2">
               <summary className="cursor-pointer text-sm font-medium">
-                Compare before & after
+                Compare before &amp; after
               </summary>
-              <div className="relative overflow-hidden rounded-lg border border-border">
-                {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
-                <img src={sourceUrl} alt="Before" className="block w-full" />
-                <div
-                  className="absolute inset-0 overflow-hidden"
-                  style={{ width: `${String(clip)}%` }}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
-                  <img
-                    src={selected.url}
-                    alt="After"
-                    className="block h-full w-full object-cover"
-                    style={{ width: `${String(10000 / Math.max(clip, 1))}%`, maxWidth: "none" }}
-                  />
-                </div>
-                <span className="absolute bottom-2 left-2 rounded bg-foreground/60 px-2 py-0.5 text-xs text-white">
-                  Before
-                </span>
-                <span className="absolute bottom-2 right-2 rounded bg-foreground/60 px-2 py-0.5 text-xs text-white">
-                  After
-                </span>
-              </div>
-              <label className="block text-xs text-muted-foreground">
-                Drag to compare
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  value={clip}
-                  aria-label="Before and after slider"
-                  onChange={(event) => {
-                    setClip(Number(event.target.value));
-                  }}
-                  className="mt-1 w-full"
-                />
-              </label>
+              <RoomComparison beforeUrl={sourceUrl ?? null} afterUrl={selected.url} />
             </details>
           )}
         </div>

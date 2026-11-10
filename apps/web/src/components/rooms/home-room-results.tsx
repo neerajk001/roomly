@@ -1,5 +1,6 @@
 "use client";
 
+import { RoomComparison } from "@/components/renders/RoomComparison";
 import { ConceptPreview } from "@/components/renders/ConceptPreview";
 import { ConceptEditWorkspace } from "@/components/renders/ConceptEditWorkspace";
 import { useConceptSelection } from "@/components/renders/use-concept-selection";
@@ -54,8 +55,6 @@ export function HomeRoomResults({
   const [editorTab, setEditorTab] = useState<"edit" | "ideas">("edit");
   const [editError, setEditError] = useState<string | null>(null);
   const [panelError, setPanelError] = useState<string | null>(null);
-  const [mode, setMode] = useState<"side" | "slider">("side");
-  const [clip, setClip] = useState(50);
   const [createPending, startCreate] = useTransition();
   const [editPending, startEdit] = useTransition();
   const savingFavorites = useRef(new Set<string>());
@@ -522,121 +521,10 @@ export function HomeRoomResults({
           )}
 
           <details className="min-w-0 rounded-xl border border-border bg-card p-3">
-            <summary className="cursor-pointer text-sm font-medium">Compare before & after</summary>
-            <section className="rounded-xl border border-border bg-card">
-              <div className="flex flex-wrap items-start justify-between gap-2 border-b border-border px-3 py-2.5">
-                <div>
-                  <h2 className="text-base font-semibold text-foreground">Before / After</h2>
-                  <p className="text-[11px] text-muted-foreground">
-                    See how your space transforms.
-                  </p>
-                </div>
-                <div className="flex rounded-xl border border-border text-[11px] font-semibold">
-                  <button
-                    type="button"
-                    aria-pressed={mode === "side"}
-                    onClick={() => {
-                      setMode("side");
-                    }}
-                    className={
-                      mode === "side"
-                        ? "bg-primary px-3 py-1.5 text-white"
-                        : "bg-card px-3 py-1.5 text-foreground"
-                    }
-                  >
-                    Side by side
-                  </button>
-                  <button
-                    type="button"
-                    aria-pressed={mode === "slider"}
-                    onClick={() => {
-                      setMode("slider");
-                    }}
-                    className={
-                      mode === "slider"
-                        ? "bg-primary px-3 py-1.5 text-white"
-                        : "bg-card px-3 py-1.5 text-foreground"
-                    }
-                  >
-                    Slider
-                  </button>
-                </div>
-              </div>
-              <div className="p-3">
-                {sourceUrl === null ? (
-                  <p className="py-10 text-center text-xs text-muted-foreground">
-                    Add a room photo to see the before / after comparison.
-                  </p>
-                ) : mode === "side" ? (
-                  <div className="grid grid-cols-2 gap-2">
-                    <figure className="relative overflow-hidden rounded-xl border border-border">
-                      {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
-                      <img src={sourceUrl} alt="Before" className="h-56 w-full object-cover" />
-                      <figcaption className="absolute bottom-2 left-2 bg-foreground px-2 py-1 text-[10px] font-semibold tracking-normal text-white">
-                        Before
-                      </figcaption>
-                    </figure>
-                    <figure className="relative overflow-hidden rounded-xl border border-border">
-                      {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
-                      <img
-                        src={selected?.url ?? ""}
-                        alt="After"
-                        className="h-56 w-full object-cover"
-                      />
-                      <figcaption className="absolute bottom-2 right-2 bg-foreground px-2 py-1 text-[10px] font-semibold tracking-normal text-white">
-                        After (selected concept)
-                      </figcaption>
-                    </figure>
-                  </div>
-                ) : (
-                  <div>
-                    <div className="relative overflow-hidden rounded-xl border border-border">
-                      {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
-                      <img
-                        src={sourceUrl}
-                        alt="Before"
-                        className="block h-56 w-full object-cover"
-                      />
-                      <div
-                        className="absolute inset-0 overflow-hidden"
-                        style={{ width: `${String(clip)}%` }}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element -- signed URL */}
-                        <img
-                          src={selected?.url ?? ""}
-                          alt="After"
-                          className="block h-full object-cover"
-                          style={{
-                            width: `${String(10000 / Math.max(clip, 1))}%`,
-                            maxWidth: "none",
-                          }}
-                        />
-                      </div>
-                      <span className="absolute bottom-2 left-2 bg-foreground px-2 py-1 text-[10px] font-semibold tracking-normal text-white">
-                        Before
-                      </span>
-                      <span className="absolute bottom-2 right-2 bg-foreground px-2 py-1 text-[10px] font-semibold tracking-normal text-white">
-                        After
-                      </span>
-                    </div>
-                    <label className="mt-2 block text-[11px] text-muted-foreground">
-                      Drag to compare
-                      <input
-                        type="range"
-                        min={0}
-                        max={100}
-                        value={clip}
-                        aria-label="Before and after slider"
-                        onChange={(event) => {
-                          setClip(Number(event.target.value));
-                        }}
-                        className="mt-1 w-full accent-primary"
-                      />
-                    </label>
-                  </div>
-                )}
-              </div>
-            </section>
+            <summary className="cursor-pointer text-sm font-medium">
+              Compare before &amp; after
+            </summary>
+            <RoomComparison beforeUrl={sourceUrl} afterUrl={selected?.url ?? null} />
           </details>
         </>
       )}

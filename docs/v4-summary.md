@@ -12,6 +12,10 @@ in later core-flow batches. See [project status](project-status.md) and the unch
   project tab; rates/settings move to the profile menu. Professional capabilities
   and explicit proposal sending/approval remain available.
 
+- [Comparison batch 1](design/comparison-batch-1.md): full-image side-by-side
+  comparison, a viewport-sized viewer with mobile Before/After switching,
+  fixed-scale clipping and explicit image loading/retry states, shared with Home.
+
 - Studio profile: name, brand color, units, currency, contacts, terms and validated
   logo upload. Pro results omit the free-workspace platform watermark.
 - Clients: scoped CRUD/search/soft deletion, linked projects and brief links.

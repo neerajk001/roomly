@@ -4,6 +4,18 @@ Approved V4 maintenance task. Batch 1 comparison is complete. Wider framing and
 post-generation geometry checks remain batch 3, pending approval. Paid-provider
 activation remains separate; tests never call a paid API.
 
+### Follow-up: approved local activation — 2026-11-10
+
+- [x] Obtain explicit approval for photo egress to OpenAI and paid analysis.
+- [x] Enable `ADVICE_PROVIDER=openai` and `OPENAI_ADVICE_MODEL=gpt-5.4-mini` in ignored local configuration.
+- [x] Reload identified web/worker processes and verify their health endpoints.
+- [x] Explain missing configuration accurately instead of suggesting a later retry.
+- [x] Run all 11 package typecheck/lint/test tasks with fake providers and verify source/documentation checks.
+- [ ] Observe a successful paid generation manually; browser verification was stopped by the URL-confidence safeguard.
+
+The daily spending guard and image model are unchanged. Configuration activation
+does not establish model fidelity or close G2/V4 manual review.
+
 - [x] Add validated photo/space and requested-item assessment providers.
 - [x] Gate RESTYLE generation, cache queue retries and reserve bounded analysis spend.
 - [x] Preserve planning constraints in prompts, stop/refund uncertain jobs and prevent duplicate calls.
@@ -41,7 +53,9 @@ demo result. No camera widening or post-render geometry certification is include
 - Real RESTYLE cannot use a demo assessor. With real analysis unavailable, it
   is rejected before queuing/charging when the configuration is known to be
   unavailable; worker-side failures stop/refund. Existing advice configuration/model is reused; activation is
-  still pending explicit permission for image egress and paid API usage.
+  approved subsequently on 2026-11-10 for local `gpt-5.4-mini` photo analysis.
+  Web and worker were restarted and health checks pass; live generation remains
+  unverified because browser automation stopped at its URL-confidence safeguard.
 - Per-job assessments are cached by source/context/model; image queue retries
   reuse matching results. Failed/interrupted checks are not automatically called
   again. The worker atomically claims a queued job, preventing duplicate execution.

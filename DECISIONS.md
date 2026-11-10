@@ -1,5 +1,20 @@
 # DECISIONS.md
 
+## 2026-11-10 — Approved real analysis activation plan
+
+- Treat the user's explicit "yes do it and make it work" as approval for sending room photos to OpenAI and paid analysis under the existing daily guard.
+- Continue V4 maintenance only; do not begin billing or wider-framing batch 3.
+- Enable the already selected `gpt-5.4-mini` advice model in ignored local configuration.
+- Preserve image-model selection, daily limits, credit rules and tenant boundaries.
+- Reload only the identified RoomDesigner web and worker processes.
+- Replace the misleading retry-later configuration message with an actionable setup explanation.
+- Verify local health and the existing signed-in generation journey manually.
+- Keep all automated checks on fake or mocked providers; never run paid automated tests.
+- Record observed live results without treating activation as G2 fidelity acceptance.
+- Run required typecheck, lint and tests; update status/runbook and commit tracked changes.
+- Activation outcome: effective settings validate as OpenAI image/advice, `gpt-5.4-mini`, key present and unchanged $5 daily allowance. Identified web/worker processes restarted; web database health and worker health pass. All 11 package typecheck/lint/test tasks pass with explicit fake providers, including the unavailable-assessment no-query/no-charge/no-queue regression. Formatting, Markdown links, environment wiring and whitespace checks pass. No paid call was made: Computer Use stopped because it could not establish the browser URL confidently; no further UI input was attempted. Live generation and G2 fidelity review remain unverified. Local `.env` remains ignored and is not committed.
+
+
 ## 2026-11-10 — Application-wide friction audit
 
 User requested recommendations on steps and noise across Home and Pro. Recorded

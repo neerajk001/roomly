@@ -80,9 +80,10 @@ configured. The running web server must reload its environment after activation.
 - The parent process, web server and isolated `pgboss_e2e` worker explicitly use
   fake providers. Three recorded disposable browser accounts/workspaces were
   cleaned. Existing user rooms/photos/designs were retained. No paid API call ran.
-- Real-provider activation was blocked by automatic approval review and remains
-  pending explicit permission for sending room images/crops and paid API usage.
-  The chosen model and exact proposed configuration are recorded above; no local
-  runtime setting was changed.
+- At delivery, real-provider activation was blocked by automatic approval review;
+  no local runtime setting was changed in that task. On 2026-11-10 the user then
+  explicitly approved photo egress and paid analysis. Local advice now uses
+  `gpt-5.4-mini`; web/worker were restarted and health checks pass. A live paid
+  generation remains unverified after the browser helper's URL-confidence stop.
 - Production build passes. Source formatting, Markdown links, environment wiring
   and whitespace checks pass. No deployment or additional phase was started.

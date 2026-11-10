@@ -158,7 +158,7 @@ export async function createRender(
   )
     throw new AppError(
       "ASSESSMENT_UNAVAILABLE",
-      "Room photo checks are temporarily unavailable. No generation credits were charged. Try again later.",
+      "Photo analysis has not been enabled. Ask the app owner to finish setup before generating. No generation credits were charged.",
       503,
     );
 

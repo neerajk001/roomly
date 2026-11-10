@@ -125,8 +125,8 @@ Vitest cache startup race. Tests use fake/mocked image and analysis providers.
 The [selected-area follow-up](design/selected-area-analysis.md) passes
 typecheck/lint/package tests (78 web tests) and three targeted Home/Pro browser
 journeys. Redraw, multiple regions, explicit analysis and optional custom startup
-requests are implemented. `gpt-5.4-mini` is selected; paid-provider activation
-remains pending explicit approval after automatic review blocked image egress.
+requests are implemented. The user explicitly approved paid photo analysis on
+2026-11-10; local advice now uses `gpt-5.4-mini` after restarting web and worker.
 The production build and source/documentation checks also pass.
 
 The approved [comparison correction, batch 1](design/comparison-batch-1.md) now
@@ -136,12 +136,15 @@ side-by-side, and matching proportions do not imply verified camera alignment.
 The [batch 2 assessment gate](design/room-assessment-batch-2.md) now checks photo
 evidence and qualitative furniture placement before full-room generation, with
 latest-photo recovery and atomic refunds. Controlled wider framing and output
-verification remain batch 3, pending approval. Paid-provider activation remains
-pending separately: real RESTYLE requests cannot run unchecked while analysis is
+verification remain batch 3, pending approval. Local paid-provider activation is
+approved and configured. Real RESTYLE cannot run unchecked while analysis is
 unavailable; known unavailable configuration is rejected before queuing/charging.
 Batch 1 passes typecheck/lint/package checks, both targeted Home/Pro browser
 journeys and the production build. Its report records fixture and review details.
 Batch 2 passes final typecheck/lint/package checks (80 web, 32 shared, 25 AI and
 23 worker tests), three browser journeys and the production build. Recovery UI was
 reviewed at 375px; three recorded browser accounts/workspaces were cleaned. No
-paid API call, real analysis activation or batch 3 work occurred.
+paid API call, real analysis activation or batch 3 work occurred in that batch.
+Subsequent activation verified healthy web/database and worker services. Browser
+verification was stopped by the Computer Use URL-confidence safeguard, so a live
+paid generation has not been verified and G2 fidelity acceptance remains open.

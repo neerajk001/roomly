@@ -74,8 +74,10 @@ or fake advice checks rejects new RESTYLE requests before charging/queuing;
 worker-side assessment failures stop/refund. Demo evidence is accepted
 only with the fake image provider. Existing EDIT requests retain their current
 behavior. Enabling a provider sends the source photo to OpenAI and incurs API
-costs; the previously recorded activation approval is still pending. Do not
-silently enable it or substitute demo evidence.
+costs. On 2026-11-10 the user explicitly approved local activation with
+`gpt-5.4-mini`; the ignored root configuration now enables real advice.
+Other environments still require their own configured credentials and approval.
+Never substitute demo evidence for real checks.
 
 After approved activation, restart web/worker processes to load environment and
 code changes. A blocked photo needs a clearer/wider upload in Room setup; the

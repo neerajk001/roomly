@@ -17,6 +17,10 @@ delivery is retained in its [batch report](design/README.md).
   uses bounded panes. Ideas and manual/object tools stay inside that workspace.
   [Comparison batch 1](design/comparison-batch-1.md) adds complete-image panels,
   full-screen viewing and a fixed-scale reveal slider shared with Pro.
+  [Assessment batch 2](design/room-assessment-batch-2.md) checks photo evidence and
+  requested-item fit before full-room generation, with in-context recovery and
+  atomic refunds. New designs use the newest confirmed photo; old comparisons
+  retain their own source. Real checks require the pending provider activation.
 
 - The Home entry flow is now one screen: photo, room type and optional must-have
   checkboxes, then Generate. Each of the ten room types has its own list. Room

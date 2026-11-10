@@ -65,6 +65,26 @@ guard. Advice is cached per output/provider with at most two attempts; older
 cached advice without object bounds uses manual selection. See the
 [pipeline](spec/04-ai-pipeline.md) and [project status](project-status.md).
 
+### Automatic room checks before full-room generation
+
+[Room assessment batch 2](design/room-assessment-batch-2.md) gates RESTYLE image
+calls using the same advice-provider configuration and call allowance. Real image
+generation requires real room assessment; `IMAGE_PROVIDER=openai` with unavailable
+or fake advice checks rejects new RESTYLE requests before charging/queuing;
+worker-side assessment failures stop/refund. Demo evidence is accepted
+only with the fake image provider. Existing EDIT requests retain their current
+behavior. Enabling a provider sends the source photo to OpenAI and incurs API
+costs; the previously recorded activation approval is still pending. Do not
+silently enable it or substitute demo evidence.
+
+After approved activation, restart web/worker processes to load environment and
+code changes. A blocked photo needs a clearer/wider upload in Room setup; the
+newest confirmed room photo becomes the source of the next design. Infeasible
+items require revised choices, not an expanded room. Assessment/provider failure
+refunds the reserved generation credits; it does not automatically retry a paid
+vision call. Same-job image retries reuse matching assessment and recheck spend
+headroom. This is conservative accounting, not a provider-enforced hard cap.
+
 Local `pnpm dev` uses port 3001; the local env template's app/auth URLs match it.
 Production uses HTTPS URLs and container port 3000 behind host Nginx. The root
 test command serializes package tasks; CI explicitly uses fake image and advice

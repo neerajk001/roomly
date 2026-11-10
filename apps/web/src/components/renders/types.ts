@@ -1,4 +1,4 @@
-import type { ConceptAdvice, EditTarget } from "@roomdesigner/shared";
+import type { ConceptAdvice, EditTarget, RoomAssessment } from "@roomdesigner/shared";
 
 export interface RenderOutputView {
   advice?: ConceptAdvice;
@@ -12,6 +12,11 @@ export interface RenderOutputView {
 }
 
 export interface RenderJobView {
+  sourceUrl?: string;
+  notes?: string;
+  roomAssessment?: RoomAssessment;
+  renderStage?: "checking-room" | "generating";
+  errorCode?: string | null;
   includeItems?: string[];
   sourceOutputId?: string | null;
   editTarget?: EditTarget;
@@ -27,6 +32,11 @@ export interface RenderJobView {
 }
 
 export interface RenderJobStatusResponse {
+  sourceUrl?: string;
+  notes?: string;
+  roomAssessment?: RoomAssessment;
+  renderStage?: "checking-room" | "generating";
+  errorCode?: string | null;
   includeItems?: string[];
   sourceOutputId?: string | null;
   editTarget?: EditTarget;

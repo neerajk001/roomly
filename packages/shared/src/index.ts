@@ -62,3 +62,4 @@ export {
 } from "./room-needs";
 export * from "./edit-target";
 export * from "./room-checklists";
+export * from "./room-assessment";

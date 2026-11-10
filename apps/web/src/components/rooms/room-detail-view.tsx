@@ -3,6 +3,9 @@ import { RoomWorkspace } from "./RoomWorkspace";
 import { SharePanel } from "@/components/share/share-panel";
 import { RoomBriefSummary } from "./RoomBriefSummary";
 import {
+  savedRoomRequest,
+  savedRoomAssessment,
+  savedRenderStage,
   outputConceptLabel,
   readDiversityReport,
   outputStyleKey,
@@ -80,6 +83,14 @@ export async function RoomDetailView({
       kind: job.kind,
       status: job.status,
       errorMessage: job.errorMessage,
+      errorCode: job.errorCode,
+      notes: savedRoomRequest(job.params),
+      sourceUrl:
+        job.sourceAsset.workspaceId === workspace.id
+          ? await presignGet(job.sourceAsset.storageKey)
+          : undefined,
+      roomAssessment: savedRoomAssessment(job.params),
+      renderStage: savedRenderStage(job.params),
       creditsCharged: job.creditsCharged,
       label: job.kind === "EDIT" ? (job.instruction ?? "Edit") : "Base concept",
       styleKey: job.styleKey,
@@ -176,7 +187,7 @@ export async function RoomDetailView({
             roomLabel={roomLabel}
             initialJob={initialJob}
             history={jobViews}
-            sourceUrl={photos[0]?.url ?? null}
+            sourceUrl={photos.at(-1)?.url ?? null}
             notes={projectMeta?.notes ?? null}
           />
         }
@@ -245,7 +256,7 @@ export async function RoomDetailView({
               hasPhoto={photos.length > 0}
               initialJob={initialJob}
               history={jobViews}
-              sourceUrl={photos[0]?.url ?? null}
+              sourceUrl={photos.at(-1)?.url ?? null}
             />
           </section>
         }

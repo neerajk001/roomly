@@ -16,6 +16,12 @@ in later core-flow batches. See [project status](project-status.md) and the unch
   comparison, a viewport-sized viewer with mobile Before/After switching,
   fixed-scale clipping and explicit image loading/retry states, shared with Home.
 
+- [Room assessment batch 2](design/room-assessment-batch-2.md): the shared RESTYLE
+  gate checks visible space and qualitative furniture placement before image
+  generation, preserving supplied dimensions and access constraints. Blocked
+  requests stop/refund with recovery guidance. Pro generation preferences remain
+  available; no exact-fit or post-render geometry certification is claimed.
+
 - Studio profile: name, brand color, units, currency, contacts, terms and validated
   logo upload. Pro results omit the free-workspace platform watermark.
 - Clients: scoped CRUD/search/soft deletion, linked projects and brief links.

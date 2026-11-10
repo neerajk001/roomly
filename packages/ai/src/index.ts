@@ -51,3 +51,4 @@ export {
   type ImageQuality,
   type ImageSize,
 } from "./types";
+export * from "./room-assessment";

@@ -49,6 +49,42 @@ afterAll(async () => {
 const ctx = (): { userId: string; workspaceId: string } => ({ userId, workspaceId });
 
 describe("createRoom", () => {
+  it("uses the newest confirmed room photo after a wider replacement is uploaded", async () => {
+    const room = await createRoom(prisma, ctx(), projectId, {
+      name: "Updated photo",
+      type: "LIVING_ROOM",
+      openings: [],
+    });
+    const start = Date.now();
+    const ids: string[] = [];
+    for (let i = 0; i < 3; i++) {
+      const asset = await prisma.asset.create({
+        data: {
+          workspaceId,
+          roomId: room.id,
+          kind: "ORIGINAL_PHOTO",
+          mime: "image/jpeg",
+          sizeBytes: 100,
+          storageKey: `test/${suffix}/replacement-${i}.jpg`,
+          createdAt: new Date(start + i * 1000),
+          confirmedAt: i < 2 ? new Date() : null,
+        },
+      });
+      ids.push(asset.id);
+    }
+    await prisma.creditLedger.create({
+      data: { workspaceId, delta: 3, reason: "ADJUSTMENT", refId: "replacement-" + room.id },
+    });
+    const render = await createRender(
+      prisma,
+      { ...ctx(), emailVerified: true },
+      { roomId: room.id, kind: "RESTYLE", styleKey: "modern", quality: "draft", variations: 1 },
+    );
+    const job = await prisma.renderJob.findFirstOrThrow({
+      where: { id: render.jobId, workspaceId },
+    });
+    expect(job.sourceAssetId).toBe(ids[1]);
+  });
   it("creates a named project and first room together, and rejects another workspace's client", async () => {
     const client = await prisma.client.create({ data: { workspaceId, name: "Quick client" } });
     try {

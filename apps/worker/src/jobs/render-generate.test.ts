@@ -1,7 +1,8 @@
 import { createFakeProvider, ProviderError, type ImageProvider } from "@roomdesigner/ai";
 import { prisma } from "@roomdesigner/db";
 import sharp from "sharp";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { createDemoRoomAssessmentProvider } from "@roomdesigner/ai";
 import { processRenderJob, type RenderJobDeps } from "./render-generate";
 import { claimDiversityRetry, recordDiversityResult } from "./diversity-retry";
 
@@ -114,14 +115,14 @@ function depsWith(provider: ImageProvider, uploads: string[] = []): RenderJobDep
 }
 
 const transientProvider: ImageProvider = {
-  name: "transient",
+  name: "fake",
   edit: async () => {
     throw new ProviderError("PROVIDER_UNAVAILABLE", "busy", "transient");
   },
 };
 
 const permanentProvider: ImageProvider = {
-  name: "permanent",
+  name: "fake",
   edit: async () => {
     throw new ProviderError("MODERATION", "Blocked by the provider.", "permanent");
   },
@@ -140,6 +141,71 @@ async function balance(workspaceId: string): Promise<number> {
 }
 
 describe("processRenderJob", () => {
+  it("stops insufficient photos and impossible furniture before generation and refunds once", async () => {
+    for (const blocked of ["needs-photo", "review-items"] as const) {
+      const fixture = await createFixture(3);
+      const edit = vi.fn(createFakeProvider().edit);
+      const assessor = createDemoRoomAssessmentProvider();
+      const original = assessor.assess;
+      assessor.assess = async (input) => ({
+        ...(await original(input)),
+        decision: blocked,
+        confidence: blocked === "needs-photo" ? "low" : "high",
+        nextStep: "Review your room photo and choices.",
+        items: input.context.requestedItems.map((item) => ({
+          key: item.key,
+          fit: blocked === "review-items" ? ("cannot-fit" as const) : ("uncertain" as const),
+          footprint: "This item cannot be placed reliably in the visible space.",
+          placement: "Keep the door approach clear.",
+        })),
+      });
+      try {
+        await prisma.renderJob.update({
+          where: { id: fixture.jobId, workspaceId: fixture.workspaceId },
+          data: {
+            variations: 3,
+            params: { providerQuality: "low", size: "1024x1024", includeItems: ["sofa"] },
+          },
+        });
+        const deps = { ...depsWith({ name: "fake", edit }), assessor };
+        await processRenderJob(deps, { jobId: fixture.jobId, retryCount: 0, retryLimit: 2 });
+        await processRenderJob(deps, { jobId: fixture.jobId, retryCount: 1, retryLimit: 2 });
+        const job = await prisma.renderJob.findFirstOrThrow({
+          where: { id: fixture.jobId, workspaceId: fixture.workspaceId },
+          include: { outputs: true },
+        });
+        expect(job.status).toBe("FAILED");
+        expect(job.errorCode).toBe(
+          blocked === "needs-photo" ? "ROOM_PHOTO_INSUFFICIENT" : "ROOM_ITEMS_DONT_FIT",
+        );
+        expect(job.outputs).toHaveLength(0);
+        expect(edit).not.toHaveBeenCalled();
+        expect(await balance(fixture.workspaceId)).toBe(3);
+        expect(await refundCount(fixture.jobId)).toBe(1);
+      } finally {
+        await cleanup(fixture);
+      }
+    }
+  });
+  it("allows only one concurrent worker to assess and generate a job", async () => {
+    const fixture = await createFixture();
+    const fake = createFakeProvider();
+    const edit = vi.fn(fake.edit);
+    const assessor = createDemoRoomAssessmentProvider();
+    const assess = vi.fn(assessor.assess);
+    try {
+      const deps = { ...depsWith({ name: "fake", edit }), assessor: { ...assessor, assess } };
+      await Promise.all(
+        [1, 2].map(() =>
+          processRenderJob(deps, { jobId: fixture.jobId, retryCount: 0, retryLimit: 0 }),
+        ),
+      );
+      expect(assess).toHaveBeenCalledTimes(1);
+      expect(edit).toHaveBeenCalledTimes(4);
+    } finally {
+      await cleanup(fixture);
+    }
+  });
   it("sends an aligned mask and preserves protected pixels in a targeted edit", async () => {
     const fixture = await createFixture(3);
     const editTarget = {
@@ -299,7 +365,7 @@ describe("processRenderJob", () => {
         },
       });
       const provider: ImageProvider = {
-        name: "recording-fake",
+        name: "fake",
         edit: async (input) => {
           expect(input.image).toEqual(TINY_JPEG);
           prompts.push(input.prompt);

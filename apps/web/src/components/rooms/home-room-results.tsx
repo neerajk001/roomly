@@ -1,5 +1,6 @@
 "use client";
 
+import { RoomAssessmentNotice } from "@/components/renders/RoomAssessmentNotice";
 import { RoomComparison } from "@/components/renders/RoomComparison";
 import { ConceptPreview } from "@/components/renders/ConceptPreview";
 import { ConceptEditWorkspace } from "@/components/renders/ConceptEditWorkspace";
@@ -107,6 +108,11 @@ export function HomeRoomResults({
         kind: incoming.kind,
         status: incoming.status,
         errorMessage: incoming.errorMessage,
+        errorCode: incoming.errorCode,
+        notes: incoming.notes,
+        sourceUrl: incoming.sourceUrl,
+        roomAssessment: incoming.roomAssessment,
+        renderStage: incoming.renderStage,
         creditsCharged: incoming.creditsCharged,
         outputs: incoming.outputs,
         label: incoming.label ?? (incoming.kind === "EDIT" ? "Edit" : "Base concept"),
@@ -188,6 +194,7 @@ export function HomeRoomResults({
     quality: "draft" | "final";
     variations: number;
     notes: string;
+    includeItems?: string[];
   }) => {
     setPanelError(null);
     startCreate(async () => {
@@ -195,7 +202,10 @@ export function HomeRoomResults({
       formData.set("roomId", roomId);
       formData.set("projectId", projectId);
       formData.set("kind", "RESTYLE");
-      formData.set("includeItems", includeItemsForRequest);
+      formData.set(
+        "includeItems",
+        input.includeItems ? JSON.stringify(input.includeItems) : includeItemsForRequest,
+      );
       formData.set("styleKey", input.styleKey);
       formData.set("quality", input.quality);
       formData.set("variations", String(input.variations));
@@ -260,7 +270,7 @@ export function HomeRoomResults({
                 styleKey: styleKey ?? "modern",
                 quality: "draft",
                 variations: 3,
-                notes: notes ?? "",
+                notes: current?.notes ?? notes ?? "",
               })
             }
             className="rounded-lg border border-border bg-card px-3 py-2 text-xs disabled:opacity-50"
@@ -298,6 +308,35 @@ export function HomeRoomResults({
       )}
 
       <RenderStatusNotice message={polling.error} onRetry={polling.retry} />
+      <RoomAssessmentNotice
+        key={(current?.id ?? "empty") + ":" + (current?.roomAssessment?.decision ?? "pending")}
+        assessment={current?.roomAssessment}
+        checking={
+          current?.kind === "RESTYLE" &&
+          (status === "QUEUED" || status === "RUNNING") &&
+          current?.renderStage !== "generating"
+        }
+        includeItems={current?.includeItems}
+        notes={current?.notes ?? notes ?? ""}
+        busy={createPending}
+        onRetry={() =>
+          submitRestyle({
+            styleKey: styleKey ?? "modern",
+            quality: "draft",
+            variations: 3,
+            notes: current?.notes ?? notes ?? "",
+          })
+        }
+        onRevise={(items, request) =>
+          submitRestyle({
+            styleKey: styleKey ?? "modern",
+            quality: "draft",
+            variations: 3,
+            notes: request,
+            includeItems: items,
+          })
+        }
+      />
       {panelError !== null && (
         <p role="alert" className="border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
           {panelError}
@@ -341,29 +380,31 @@ export function HomeRoomResults({
         </div>
       )}
 
-      {current !== null && status === "FAILED" && (
-        <div className="rounded-xl border border-border bg-card p-5">
-          <p className="text-base font-semibold text-foreground">That render didn&apos;t work</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {current.errorMessage ?? "Something went wrong."} Your credits were refunded.
-          </p>
-          <button
-            type="button"
-            disabled={createPending}
-            onClick={() => {
-              submitRestyle({
-                styleKey: styleKey ?? "modern",
-                quality: "draft",
-                variations: 3,
-                notes: notes ?? "",
-              });
-            }}
-            className="mt-4 inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground disabled:opacity-60"
-          >
-            Try again
-          </button>
-        </div>
-      )}
+      {current !== null &&
+        status === "FAILED" &&
+        (!current.roomAssessment || current.roomAssessment.decision === "ready") && (
+          <div className="rounded-xl border border-border bg-card p-5">
+            <p className="text-base font-semibold text-foreground">That render didn&apos;t work</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {current.errorMessage ?? "Something went wrong."} Your credits were refunded.
+            </p>
+            <button
+              type="button"
+              disabled={createPending}
+              onClick={() => {
+                submitRestyle({
+                  styleKey: styleKey ?? "modern",
+                  quality: "draft",
+                  variations: 3,
+                  notes: current?.notes ?? notes ?? "",
+                });
+              }}
+              className="mt-4 inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground disabled:opacity-60"
+            >
+              Try again
+            </button>
+          </div>
+        )}
 
       {current !== null && status === "SUCCEEDED" && outputs.length > 0 && (
         <>
@@ -524,7 +565,10 @@ export function HomeRoomResults({
             <summary className="cursor-pointer text-sm font-medium">
               Compare before &amp; after
             </summary>
-            <RoomComparison beforeUrl={sourceUrl} afterUrl={selected?.url ?? null} />
+            <RoomComparison
+              beforeUrl={current?.sourceUrl ?? sourceUrl}
+              afterUrl={selected?.url ?? null}
+            />
           </details>
         </>
       )}

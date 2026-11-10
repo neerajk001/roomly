@@ -133,7 +133,15 @@ The approved [comparison correction, batch 1](design/comparison-batch-1.md) now
 shares complete-image side-by-side and full-screen viewing between Home and Pro.
 The slider reveals stationary full-size images; incompatible proportions use
 side-by-side, and matching proportions do not imply verified camera alignment.
-Generation assessment and controlled wider framing remain batches 2–3 and have
-not been started. Paid-provider activation remains pending separate approval.
+The [batch 2 assessment gate](design/room-assessment-batch-2.md) now checks photo
+evidence and qualitative furniture placement before full-room generation, with
+latest-photo recovery and atomic refunds. Controlled wider framing and output
+verification remain batch 3, pending approval. Paid-provider activation remains
+pending separately: real RESTYLE requests cannot run unchecked while analysis is
+unavailable; known unavailable configuration is rejected before queuing/charging.
 Batch 1 passes typecheck/lint/package checks, both targeted Home/Pro browser
 journeys and the production build. Its report records fixture and review details.
+Batch 2 passes final typecheck/lint/package checks (80 web, 32 shared, 25 AI and
+23 worker tests), three browser journeys and the production build. Recovery UI was
+reviewed at 375px; three recorded browser accounts/workspaces were cleaned. No
+paid API call, real analysis activation or batch 3 work occurred.

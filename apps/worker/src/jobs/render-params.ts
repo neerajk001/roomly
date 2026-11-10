@@ -4,11 +4,15 @@ import {
   diversityReportSchema,
   editTargetSchema,
   roomIncludeItemsSchema,
+  roomAssessmentRecordSchema,
 } from "@roomdesigner/shared";
 
 export const renderParamsSchema = z
   .object({
     ...designPreferencesSchema.shape,
+    roomAssessment: roomAssessmentRecordSchema.optional(),
+    renderStage: z.enum(["checking-room", "generating"]).optional(),
+    adviceSpendByDay: z.record(z.string(), z.number().int().nonnegative().safe()).optional(),
     sourceOutputId: z.string().optional(),
     includeItems: roomIncludeItemsSchema.optional(),
     editTarget: editTargetSchema.optional(),

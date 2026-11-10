@@ -150,6 +150,17 @@ export async function createRender(
   if (!ctx.emailVerified) {
     throw new AppError("EMAIL_NOT_VERIFIED", "Verify your email address first.", 403);
   }
+  const configuration = getServerEnv();
+  if (
+    input.kind === "RESTYLE" &&
+    configuration.IMAGE_PROVIDER === "openai" &&
+    configuration.ADVICE_PROVIDER !== "openai"
+  )
+    throw new AppError(
+      "ASSESSMENT_UNAVAILABLE",
+      "Room photo checks are temporarily unavailable. No generation credits were charged. Try again later.",
+      503,
+    );
 
   const room = await db.room.findFirst({
     where: {
@@ -192,7 +203,7 @@ export async function createRender(
         kind: { in: ["ORIGINAL_PHOTO", "BRIEF_UPLOAD"] },
         confirmedAt: { not: null },
       },
-      orderBy: { createdAt: "asc" },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       select: { id: true, width: true, height: true },
     });
     if (photo === null) {

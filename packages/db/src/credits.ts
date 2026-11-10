@@ -3,7 +3,10 @@ import type { Prisma, TransactionClient } from "./index";
 export class InsufficientCreditsError extends Error {
   readonly code = "INSUFFICIENT_CREDITS";
 
-  constructor(readonly balance: number, readonly required: number) {
+  constructor(
+    readonly balance: number,
+    readonly required: number,
+  ) {
     super("Not enough credits for this render.");
     this.name = "InsufficientCreditsError";
   }
@@ -54,7 +57,7 @@ export async function reserveCredits(
  * makes a second refund a no-op.
  */
 export async function refundCredits(
-  db: Prisma,
+  db: Pick<Prisma, "creditLedger">,
   input: { workspaceId: string; jobId: string; cost: number },
 ): Promise<void> {
   if (input.cost <= 0) return;

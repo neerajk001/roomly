@@ -1,4 +1,7 @@
 import {
+  savedRoomRequest,
+  savedRoomAssessment,
+  savedRenderStage,
   outputConceptLabel,
   readDiversityReport,
   outputStyleKey,
@@ -22,6 +25,7 @@ export async function GET(
     const job = await prisma.renderJob.findFirst({
       where: { id, workspaceId: ctx.workspace.id },
       include: {
+        sourceAsset: { select: { workspaceId: true, storageKey: true } },
         outputs: {
           orderBy: { index: "asc" },
           include: {
@@ -61,6 +65,14 @@ export async function GET(
       label: job.kind === "EDIT" ? (job.instruction ?? "Edit") : "Base concept",
       status: job.status,
       errorMessage: job.errorMessage,
+      errorCode: job.errorCode,
+      notes: savedRoomRequest(job.params),
+      sourceUrl:
+        job.sourceAsset.workspaceId === ctx.workspace.id
+          ? await presignGet(job.sourceAsset.storageKey)
+          : undefined,
+      roomAssessment: savedRoomAssessment(job.params),
+      renderStage: savedRenderStage(job.params),
       creditsCharged: job.creditsCharged,
       styleKey: job.styleKey,
       similarConcepts: readDiversityReport(job.params)?.similarConcepts ?? false,

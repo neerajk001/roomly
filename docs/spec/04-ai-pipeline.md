@@ -132,6 +132,32 @@ Targets retain the original `region` with optional `additionalRegions` (at most
 five total). Server/worker validation bounds combined coverage to 80%; gaps and
 outside pixels stay protected. Rectangle edges may still show seams.
 
+Before RESTYLE image calls, [batch 2 room assessment](../design/room-assessment-batch-2.md)
+checks the latest confirmed source photo, room boundaries/floor evidence, access
+constraints, supplied millimetre measurements and each requested furnishing's
+qualitative footprint/placement. Low confidence, missing evidence or uncertain
+fit requires a better photo; an infeasible requested item requires revised
+choices. No guessed dimensions or measured-fit guarantees are stored. The layout
+plan reaches every variation and diversity retry with the existing structural
+lock. EDIT keeps its existing focused behavior; camera widening and post-render
+geometry verification are later batch 3 work.
+
+Jobs claim QUEUED→RUNNING atomically. Assessment is attempted at most once per
+job; ready evidence is reused only for the same source/context/model on queue
+retries. Changed context or interrupted/failed assessment does not trigger another
+automatic vision call. Real assessment reserves the existing per-call allowance
+under the shared spend lock in `adviceSpendByDay`, including failed attempts; the
+guard includes expected image-call headroom and rechecks cached retries. API calls
+run outside database transactions. Blocked jobs publish no outputs; FAILED status
+and idempotent generation-credit refund commit together.
+
+Fake image jobs use an explicitly labelled demo assessor. Real image jobs require
+the configured OpenAI advice provider/model and cannot pass using demo evidence.
+Without that approved activation, real RESTYLE generation stops/refunds instead
+of generating unchecked images. No provider setting is changed by this batch.
+New designs use the newest confirmed photo; history/status expose the authorized
+input URL used by each job, so older comparisons keep their own source image.
+
 On-demand concept analysis is separate from render generation. It accepts only
 an authorized output ID and optional validated target/hint, loads a server-owned
 thumbnail plus ordered selection close-ups, and validates up to three

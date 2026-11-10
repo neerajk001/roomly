@@ -6,6 +6,7 @@ import { z } from "zod";
 import { requireWorkspace } from "../auth/session";
 import { AppError } from "../app-error";
 import { createRender, createRenderSchema } from "../services/renders";
+import { checkRateLimit } from "../rate-limit";
 
 export interface RenderFormState {
   error?: string;
@@ -83,6 +84,8 @@ export async function createRenderAction(
   }
 
   const { user, workspace } = await requireWorkspace();
+  if (!(await checkRateLimit(`render-create:${workspace.id}`, 30, 10 * 60_000)))
+    return { error: "Too many generation requests. Please try again later." };
   try {
     const result = await createRender(
       prisma,

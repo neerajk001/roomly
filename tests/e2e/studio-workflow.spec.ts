@@ -54,6 +54,9 @@ test("designer brief, concept, estimate, proposal and anonymous approval", async
     await page.getByRole("tab", { name: "Designs", exact: true }).click();
     await page.getByRole("button", { name: "Generate 3 concepts" }).click();
     await expect(page.getByAltText("Concept 3")).toBeVisible({ timeout: 120_000 });
+    await expect(
+      page.getByText("Demo planning · photo analysis is disabled", { exact: true }),
+    ).toBeVisible();
     await verifyRoomComparison(page, "pro");
     await page.setViewportSize({ width: 375, height: 812 });
     await page.getByRole("button", { name: "Edit this", exact: true }).first().click();

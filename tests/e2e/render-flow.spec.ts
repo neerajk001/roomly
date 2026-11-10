@@ -82,6 +82,8 @@ test("full render flow: project, room, photo, 3 concepts, favorite, chat edit", 
   ).toBeVisible();
   const base = renderJobStatusSchema.parse(await (await baseCompleted).json());
   const second = base.outputs[1];
+  expect(base.roomAssessment?.source).toBe("demo");
+  expect(base.renderStage).toBe("generating");
   expect(second).toBeDefined();
   await page.getByRole("link", { name: "Share", exact: true }).click();
   const sharing = page.getByRole("dialog", { name: "Share designs", exact: true });

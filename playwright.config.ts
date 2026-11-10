@@ -36,6 +36,7 @@ export default defineConfig({
       QUEUE_SCHEMA: "pgboss_e2e",
       ADVICE_PROVIDER: "fake",
       EMAIL_PROVIDER: "console",
+      SIGNUP_FREE_CREDITS: "12",
     },
   },
 });

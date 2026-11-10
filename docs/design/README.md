@@ -25,7 +25,9 @@ custom input beside the initial room-item checklist.
 
 Latest approved comparison work: [comparison correction, batch 1](comparison-batch-1.md)
 shares full-image side-by-side, full-screen and fixed-scale slider views between
-Home and Pro. Generation assessment/wider framing remain later batches.
+Home and Pro. [Room assessment, batch 2](room-assessment-batch-2.md) adds the
+pre-generation evidence/placement gate and recovery. Wider framing and output
+geometry verification remain batch 3, pending approval.
 
 Current Home entry: [one-screen quick-start](home-quick-start.md) replaces the
 homeowner questionnaire with a photo, room type and room-specific must-haves.

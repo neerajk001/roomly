@@ -29,7 +29,7 @@ export function GeneratePanel({
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<string[]>([]);
   return (
-    <section className="space-y-4">
+    <section id="generation-choices" className="space-y-4">
       {!hasPhoto && (
         <p className="text-sm text-muted-foreground">Add a room photo in Room setup first.</p>
       )}

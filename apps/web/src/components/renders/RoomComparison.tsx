@@ -174,7 +174,7 @@ export function RoomComparison({
           >
             <figcaption className="shrink-0 border-b border-border bg-card px-3 py-2 text-sm font-medium">
               {label}
-              {label === "After" ? " · selected concept" : " · original photo"}
+              {label === "After" ? " · selected concept" : " · source image"}
             </figcaption>
             <div className={full ? "min-h-0 flex-1" : "h-[55dvh] min-h-72 max-h-[760px]"}>
               {picture(url, label)}

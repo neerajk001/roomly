@@ -1,5 +1,6 @@
 "use client";
 
+import { RoomAssessmentNotice } from "@/components/renders/RoomAssessmentNotice";
 import { RoomComparison } from "@/components/renders/RoomComparison";
 import { ConceptPreview } from "@/components/renders/ConceptPreview";
 import { ConceptEditWorkspace } from "@/components/renders/ConceptEditWorkspace";
@@ -108,6 +109,11 @@ export function RenderView({
         kind: incoming.kind,
         status: incoming.status,
         errorMessage: incoming.errorMessage,
+        errorCode: incoming.errorCode,
+        notes: incoming.notes,
+        sourceUrl: incoming.sourceUrl,
+        roomAssessment: incoming.roomAssessment,
+        renderStage: incoming.renderStage,
         creditsCharged: incoming.creditsCharged,
         outputs: incoming.outputs,
         label: incoming.label ?? (incoming.kind === "EDIT" ? "Edit" : "Base concept"),
@@ -274,6 +280,18 @@ export function RenderView({
       </details>
 
       <RenderStatusNotice message={polling.error} onRetry={polling.retry} />
+      <RoomAssessmentNotice
+        key={(current?.id ?? "empty") + ":" + (current?.roomAssessment?.decision ?? "pending")}
+        assessment={current?.roomAssessment}
+        checking={
+          current?.kind === "RESTYLE" &&
+          (status === "QUEUED" || status === "RUNNING") &&
+          current?.renderStage !== "generating"
+        }
+        includeItems={current?.includeItems}
+        notes={current?.notes ?? lastRestyle?.notes ?? ""}
+        busy={createPending}
+      />
       {jobs.length > 1 && (
         <div className="flex flex-wrap gap-1.5" aria-label="Render history">
           {jobs.map((job, index) => (
@@ -405,28 +423,30 @@ export function RenderView({
         </Card>
       )}
 
-      {current !== null && current.status === "FAILED" && (
-        <Card className="border-destructive/40">
-          <CardHeader>
-            <CardTitle>That render didn’t work</CardTitle>
-            <CardDescription>
-              {current.errorMessage ?? "Something went wrong."} Your credits were refunded.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={lastRestyle === null || createPending}
-              onClick={() => {
-                if (lastRestyle !== null) submitRestyle(lastRestyle);
-              }}
-            >
-              Try again
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+      {current !== null &&
+        current.status === "FAILED" &&
+        (!current.roomAssessment || current.roomAssessment.decision === "ready") && (
+          <Card className="border-destructive/40">
+            <CardHeader>
+              <CardTitle>That render didn’t work</CardTitle>
+              <CardDescription>
+                {current.errorMessage ?? "Something went wrong."} Your credits were refunded.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={lastRestyle === null || createPending}
+                onClick={() => {
+                  if (lastRestyle !== null) submitRestyle(lastRestyle);
+                }}
+              >
+                Try again
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
       {current !== null && current.status === "SUCCEEDED" && (
         <div className="space-y-3">
@@ -540,7 +560,10 @@ export function RenderView({
               <summary className="cursor-pointer text-sm font-medium">
                 Compare before &amp; after
               </summary>
-              <RoomComparison beforeUrl={sourceUrl ?? null} afterUrl={selected.url} />
+              <RoomComparison
+                beforeUrl={current?.sourceUrl ?? sourceUrl ?? null}
+                afterUrl={selected.url}
+              />
             </details>
           )}
         </div>

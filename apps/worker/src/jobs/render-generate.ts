@@ -8,6 +8,8 @@ import {
   type ImageQuality,
   type ImageProvider,
   type ImageSize,
+  type RoomAssessmentProvider,
+  sanitizeInstruction,
 } from "@roomdesigner/ai";
 import { refundCredits, type Prisma } from "@roomdesigner/db";
 import {
@@ -26,11 +28,13 @@ import {
   outputStyleKey,
   roomIncludesAreValid,
   roomIncludesPrompt,
+  checklistForRoom,
 } from "@roomdesigner/shared";
 import { randomUUID } from "node:crypto";
 import { renderParamsSchema, type RenderParams } from "./render-params";
 import { improveConceptDiversity } from "./concept-diversity";
 import { claimDiversityRetry, recordDiversityResult } from "./diversity-retry";
+import { assessRoomBeforeGeneration, roomAssessmentPrompt } from "./room-assessment";
 
 const ROOM_TYPE_LABELS: Record<string, string> = {
   LIVING_ROOM: "living room",
@@ -54,6 +58,7 @@ export interface RenderJobDeps {
   download(key: string): Promise<Buffer>;
   upload(input: { key: string; body: Buffer; contentType: string }): Promise<void>;
   now(): Date;
+  assessor?: RoomAssessmentProvider;
 }
 
 export type ProcessOutcome = "ok" | "retry";
@@ -96,7 +101,7 @@ export async function processRenderJob(
     where: { id: input.jobId },
     include: {
       room: { include: { project: true } },
-      sourceAsset: { select: { id: true, storageKey: true, mime: true } },
+      sourceAsset: { select: { id: true, workspaceId: true, storageKey: true, mime: true } },
     },
   });
   if (job === null) {
@@ -112,14 +117,15 @@ export async function processRenderJob(
 
   const isFinalAttempt = input.retryCount >= input.retryLimit;
 
-  await db.renderJob.update({
-    where: { id: job.id },
+  const claim = await db.renderJob.updateMany({
+    where: { id: job.id, workspaceId: job.workspaceId, status: "QUEUED" },
     data: {
       status: "RUNNING",
       attempts: { increment: 1 },
       startedAt: job.startedAt ?? deps.now(),
     },
   });
+  if (claim.count !== 1) return "ok";
 
   try {
     const params = renderParamsSchema.safeParse(job.params);
@@ -136,14 +142,70 @@ export async function processRenderJob(
       return "ok";
     }
 
+    if (job.sourceAsset.workspaceId !== job.workspaceId)
+      throw new ProviderError("INVALID_JOB", "The source photo is unavailable.", "permanent");
+    const source = await deps.download(job.sourceAsset.storageKey);
+    let planningPrompt = "";
+    if (job.kind === "RESTYLE") {
+      const requestedItems = [
+        ...(params.data.includeItems ?? []).map((key) => ({
+          key,
+          label: checklistForRoom(job.room.type).find(([id]) => id === key)?.[1] ?? key,
+        })),
+        ...(params.data.stagingItems ?? []).map((key) => ({ key: "staging:" + key, label: key })),
+      ];
+      const dimensionsMm = {
+        width: job.room.widthMm,
+        length: job.room.lengthMm,
+        height: job.room.heightMm,
+      };
+      const assessment = await assessRoomBeforeGeneration(db, {
+        jobId: job.id,
+        workspaceId: job.workspaceId,
+        sourceAssetId: job.sourceAssetId,
+        image: source,
+        imageProviderName: deps.provider.name,
+        provider: deps.assessor,
+        imageBudgetMicros:
+          deps.provider.name === "fake" ? 0 : job.variations * CONSERVATIVE_IMAGE_COST_MICROS,
+        context: {
+          roomType: job.room.type,
+          dimensionsMm,
+          requestedItems: [...new Map(requestedItems.map((item) => [item.key, item])).values()],
+          keepList: job.room.project.keepList,
+          renterMode: job.room.project.renterMode,
+          notes: sanitizeInstruction(params.data.notes ?? job.room.project.notes ?? ""),
+        },
+      });
+      if (assessment.decision !== "ready") {
+        await finalizeFailure(
+          deps,
+          job,
+          assessment.decision === "needs-photo" ? "ROOM_PHOTO_INSUFFICIENT" : "ROOM_ITEMS_DONT_FIT",
+          assessment.nextStep,
+        );
+        return "ok";
+      }
+      planningPrompt = roomAssessmentPrompt(assessment, dimensionsMm);
+      const latest = await db.renderJob.findFirstOrThrow({
+        where: { id: job.id, workspaceId: job.workspaceId },
+      });
+      const refreshed = renderParamsSchema.parse(latest.params);
+      const saved = await db.renderJob.update({
+        where: { id: job.id, workspaceId: job.workspaceId },
+        data: { params: { ...refreshed, renderStage: "generating" } },
+      });
+      params.data = renderParamsSchema.parse(saved.params);
+    }
     const directions = Array.from({ length: job.variations }, (_, index) =>
       conceptDirectionFor(outputStyleKey(params.data, job.styleKey, index), index),
     );
     const prompts = Array.from({ length: job.variations }, (_, index) => {
-      const base = buildPromptForJob(
-        { ...job, styleKey: outputStyleKey(params.data, job.styleKey, index) },
-        params.data,
-      );
+      const base =
+        buildPromptForJob(
+          { ...job, styleKey: outputStyleKey(params.data, job.styleKey, index) },
+          params.data,
+        ) + (planningPrompt ? "\n" + planningPrompt : "");
       const direction = directions[index];
       return job.kind === "RESTYLE" && direction
         ? buildConceptPrompt(
@@ -154,7 +216,6 @@ export async function processRenderJob(
         : base;
     });
     const prompt = prompts[0] ?? buildPromptForJob(job, params.data);
-    const source = await deps.download(job.sourceAsset.storageKey);
     const targeted = params.data.editTarget
       ? await prepareMaskedEdit(source, editTargetRegions(params.data.editTarget))
       : null;
@@ -297,7 +358,7 @@ export async function processRenderJob(
     }
 
     await db.renderJob.update({
-      where: { id: job.id },
+      where: { id: job.id, workspaceId: job.workspaceId },
       data: {
         status: "SUCCEEDED",
         finishedAt: deps.now(),
@@ -311,7 +372,7 @@ export async function processRenderJob(
     const transient = !(error instanceof ProviderError) || error.errorClass === "transient";
     if (transient && !isFinalAttempt) {
       await db.renderJob.update({
-        where: { id: job.id },
+        where: { id: job.id, workspaceId: job.workspaceId },
         data: { status: "QUEUED", errorCode: null, errorMessage: null },
       });
       return "retry";
@@ -376,19 +437,21 @@ async function finalizeFailure(
   code: string,
   message: string,
 ): Promise<void> {
-  await deps.db.renderJob.update({
-    where: { id: job.id },
-    data: {
-      status: "FAILED",
-      finishedAt: deps.now(),
-      errorCode: code,
-      errorMessage: message,
-    },
-  });
-  await refundCredits(deps.db, {
-    workspaceId: job.workspaceId,
-    jobId: job.id,
-    cost: job.creditsCharged,
+  await deps.db.$transaction(async (tx) => {
+    await refundCredits(tx, {
+      workspaceId: job.workspaceId,
+      jobId: job.id,
+      cost: job.creditsCharged,
+    });
+    await tx.renderJob.update({
+      where: { id: job.id, workspaceId: job.workspaceId },
+      data: {
+        status: "FAILED",
+        finishedAt: deps.now(),
+        errorCode: code,
+        errorMessage: message,
+      },
+    });
   });
 }
 

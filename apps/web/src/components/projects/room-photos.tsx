@@ -137,6 +137,10 @@ export function RoomPhotos({ roomId, photos }: { roomId: string; photos: Existin
 
   return (
     <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">
+        The newest confirmed photo is used for new designs. Existing designs keep their original
+        source image.
+      </p>
       {photos.length > 0 && (
         <ul className="flex flex-wrap gap-2">
           {photos.map((photo) => (

@@ -29,7 +29,7 @@ describe("room assessment boundaries", () => {
   it("accepts complete item coverage and preserves explicit planning limitations", () => {
     expect(validateRoomAssessment(ready, ["sofa"])).toEqual(ready);
   });
-  it("overrides contradictory ready decisions when photo evidence is insufficient", () => {
+  it("allows partial room views and uncertain scale without forcing a wider photo", () => {
     for (const patch of [
       { confidence: "low" as const },
       { boundariesVisible: false },
@@ -39,9 +39,20 @@ describe("room assessment boundaries", () => {
       { items: [{ ...ready.items[0]!, fit: "uncertain" as const }] },
     ])
       expect(validateRoomAssessment({ ...ready, ...patch }, ["sofa"])).toMatchObject({
-        decision: "needs-photo",
-        nextStep: expect.stringContaining("wider"),
+        decision: "ready",
+        ...patch,
       });
+  });
+  it("keeps an explicit unusable-photo decision and requires actionable recovery", () => {
+    const unusable = {
+      ...ready,
+      decision: "needs-photo",
+      confidence: "low",
+      summary: "The image is too dark to recognise any interior detail.",
+      nextStep: "Upload a room photo with enough light to see the interior.",
+    };
+    expect(validateRoomAssessment(unusable, ["sofa"])).toEqual(unusable);
+    expect(() => validateRoomAssessment({ ...unusable, nextStep: "" }, ["sofa"])).toThrow();
   });
   it("blocks infeasible furniture rather than enlarging the room", () => {
     expect(

@@ -73,4 +73,37 @@ describe("room assessment providers", () => {
       ).rejects.toThrow();
     }
   });
+  it("passes recognisable close-up planning through with uncertainty preserved", async () => {
+    const content = {
+      ...(await createDemoRoomAssessmentProvider().assess({
+        image: Buffer.from("photo"),
+        mime: "image/jpeg",
+        context,
+      })),
+      confidence: "low",
+      boundariesVisible: false,
+      floorVisible: false,
+      fixedFeatures: [],
+      limitations: ["Only part of the room is visible; exact fit is unknown."],
+      items: [
+        {
+          key: "sofa",
+          fit: "uncertain",
+          footprint: "Use a compact sofa.",
+          placement: "Use the visible wall without adding floor space.",
+        },
+      ],
+    };
+    parse.mockResolvedValue({ output_parsed: content });
+    const result = await createOpenAIRoomAssessmentProvider({
+      apiKey: "fake",
+      model: "chosen",
+    }).assess({ image: Buffer.from("photo"), mime: "image/jpeg", context });
+    expect(result).toMatchObject({
+      decision: "ready",
+      confidence: "low",
+      boundariesVisible: false,
+      items: [{ fit: "uncertain" }],
+    });
+  });
 });

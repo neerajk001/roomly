@@ -1,5 +1,21 @@
 # DECISIONS.md
 
+## 2026-11-10 — Reduce photo rejection friction
+
+- Apply the user's request to relax photo requirements as V4 maintenance.
+- Remove automatic rejection for low confidence, cropped boundaries or hidden floor.
+- Accept uncertain furniture fit as planning context instead of requiring another upload.
+- Keep schema validation and complete requested-item coverage at external boundaries.
+- Reserve needs-photo for genuinely unusable or unrelated images, not ordinary close-ups.
+- Tell the assessor to proceed with visible-space styling and compact furnishings.
+- Keep existing walls, camera and room size unchanged; do not invent unseen space.
+- Preserve definite infeasible-item recovery, refunds, authorization and spend guards.
+- Carry uncertainty into generation as conservative guidance rather than a rejection.
+- Add shared/provider/worker regression coverage using fake or mocked providers only.
+- Update current behavior documentation, run required checks and commit for review.
+- Verification: all 11 package typecheck/lint/test tasks pass with explicit fake providers. New shared and mocked OpenAI regressions accept partial views/low confidence/uncertain fit; worker integration actually produces an output, retains visible-space constraints and performs no success refund. Existing unusable-photo/no-call/refund, tenant, spend and retry tests pass. Assessment cache policy is versioned to prevent reuse across the change; prior failed jobs are retained and a new explicit generation reassesses the same photo. Formatting, links/env wiring and whitespace checks pass. The development worker's watcher reloaded the changed source and reports ready. No new env variables, dependencies, schema migration, UI step, paid call or batch 3 work.
+
+
 ## 2026-11-10 — Approved real analysis activation plan
 
 - Treat the user's explicit "yes do it and make it work" as approval for sending room photos to OpenAI and paid analysis under the existing daily guard.

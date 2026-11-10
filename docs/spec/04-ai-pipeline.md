@@ -135,9 +135,12 @@ outside pixels stay protected. Rectangle edges may still show seams.
 Before RESTYLE image calls, [batch 2 room assessment](../design/room-assessment-batch-2.md)
 checks the latest confirmed source photo, room boundaries/floor evidence, access
 constraints, supplied millimetre measurements and each requested furnishing's
-qualitative footprint/placement. Low confidence, missing evidence or uncertain
-fit requires a better photo; an infeasible requested item requires revised
-choices. No guessed dimensions or measured-fit guarantees are stored. The layout
+qualitative footprint/placement. Recognisable partial/close-up room photos can
+proceed with low confidence, hidden floor, missing corners or uncertain fit;
+these observations guide compact furnishings within the visible space.
+Only genuinely unusable/unrelated images require another photo; clearly
+infeasible requested items require revised choices after considering compact
+alternatives. No guessed dimensions or measured-fit guarantees are stored. The layout
 plan reaches every variation and diversity retry with the existing structural
 lock. EDIT keeps its existing focused behavior; camera widening and post-render
 geometry verification are later batch 3 work.

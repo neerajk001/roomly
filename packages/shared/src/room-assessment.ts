@@ -47,20 +47,8 @@ export function validateRoomAssessment(
     keys.some((key) => !requestedKeys.includes(key))
   )
     throw new Error("Assessment item coverage is invalid.");
-  if (
-    result.confidence === "low" ||
-    !result.boundariesVisible ||
-    !result.floorVisible ||
-    result.fixedFeatures.length === 0 ||
-    result.layoutGuidance.length === 0 ||
-    result.items.some((item) => item.fit === "uncertain")
-  ) {
-    return {
-      ...result,
-      decision: "needs-photo",
-      nextStep: "Upload a wider, clear photo showing the room corners, floor and doors or windows.",
-    };
-  }
+  // Partial room views and uncertain scale are normal inputs for concept visuals.
+  // Keep those observations as guidance; only an explicit unusable-photo decision blocks.
   if (result.items.some((item) => item.fit === "cannot-fit"))
     return {
       ...result,

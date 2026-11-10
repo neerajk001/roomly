@@ -141,6 +141,53 @@ async function balance(workspaceId: string): Promise<number> {
 }
 
 describe("processRenderJob", () => {
+  it("generates a partial room view with uncertain fit while preserving visible-space constraints", async () => {
+    const fixture = await createFixture(1);
+    const fake = createFakeProvider();
+    const edit = vi.fn(fake.edit);
+    const assessor = createDemoRoomAssessmentProvider();
+    const original = assessor.assess;
+    assessor.assess = async (input) => ({
+      ...(await original(input)),
+      confidence: "low",
+      boundariesVisible: false,
+      floorVisible: false,
+      fixedFeatures: [],
+      layoutGuidance: [],
+      limitations: ["The photo shows only part of the room."],
+      items: input.context.requestedItems.map((item) => ({
+        key: item.key,
+        fit: "uncertain",
+        footprint: "Choose a compact sofa; exact scale is unknown.",
+        placement: "Along the visible wall, preserving the existing room size.",
+      })),
+    });
+    try {
+      await prisma.renderJob.update({
+        where: { id: fixture.jobId, workspaceId: fixture.workspaceId },
+        data: {
+          variations: 1,
+          params: { providerQuality: "low", size: "1024x1024", includeItems: ["sofa"] },
+        },
+      });
+      await processRenderJob(
+        { ...depsWith({ name: "fake", edit }), assessor },
+        { jobId: fixture.jobId, retryCount: 0, retryLimit: 0 },
+      );
+      const job = await prisma.renderJob.findFirstOrThrow({
+        where: { id: fixture.jobId, workspaceId: fixture.workspaceId },
+        include: { outputs: true },
+      });
+      expect(job.status).toBe("SUCCEEDED");
+      expect(job.outputs).toHaveLength(1);
+      expect(edit).toHaveBeenCalledTimes(1);
+      expect(edit.mock.calls[0]?.[0].prompt).toContain("Design only the visible space");
+      expect(edit.mock.calls[0]?.[0].prompt).toContain("exact scale is unknown");
+      expect(await refundCount(fixture.jobId)).toBe(0);
+    } finally {
+      await cleanup(fixture);
+    }
+  });
   it("stops insufficient photos and impossible furniture before generation and refunds once", async () => {
     for (const blocked of ["needs-photo", "review-items"] as const) {
       const fixture = await createFixture(3);

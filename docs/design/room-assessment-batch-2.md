@@ -30,16 +30,37 @@ demo result. No camera widening or post-render geometry certification is include
 
 ## Delivered behavior
 
+### Follow-up: accept normal partial room views
+
+- [x] Remove automatic rejections for low confidence, missing floor/boundaries,
+  absent fixed-feature observations and uncertain furniture fit.
+- [x] Make close-ups/partial rooms ready by default in assessment instructions;
+  reserve photo rejection for unrelated or genuinely unrecognisable images.
+- [x] Preserve conservative visible-space generation, compact furniture guidance
+  and definite infeasible-item recovery without expanding the room.
+- [x] Verify shared/provider/worker regressions and all required package checks.
+
+This relaxes the original batch's evidence thresholds below. Existing failed
+jobs retain their history; starting generation again reassesses the same photo
+under the updated policy. No mandatory wider-photo upload is introduced.
+All 11 package typecheck/lint/test tasks pass with fake/mocked providers. The new
+worker regression completes a concept from a low-confidence, partially visible
+room with uncertain furniture fit, preserves conservative prompt context and
+does not refund a successful job. Unusable-photo/refund tests still pass. Source
+formatting, documentation checks and whitespace checks pass. The development
+worker reloaded the changed policy; no paid verification call was made.
+
 - An automatic RESTYLE assessment examines the source photo and stored room type,
   user-supplied millimetre dimensions, kept items, renter constraints, notes and
-  requested item categories. It requires floor/boundary evidence, specific fixed
-  features and a useful layout plan. Contradictory ready responses are demoted.
+  requested item categories. Visible floor/boundaries and fixed features inform
+  the plan when available; their absence no longer overrides a ready decision.
 - Every requested category needs a unique fit/compact/cannot-fit/uncertain entry
   with qualitative footprint and placement. Missing/invented/duplicate entries
   fail validation. Nothing is allowed to expand the room or change the camera.
   Supplied dimensions reach the generator; no numeric dimensions are guessed.
-- Insufficient evidence stops before image generation and requests one clearer,
-  wider photo. Infeasible items stop with revised-choice guidance. Home can uncheck
+- Genuinely unusable/unrelated photos stop before image generation and request
+  a recognisable room photo. Normal partial views proceed with limitations.
+  Clearly infeasible items stop with revised-choice guidance. Home can uncheck
   selected items and update its short request in place; Pro retains its generation
   preferences. Photo setup is accessible from recovery, including repeated use.
 - Photo recovery can start a new explicit generation after uploading a better

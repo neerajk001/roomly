@@ -80,7 +80,9 @@ Other environments still require their own configured credentials and approval.
 Never substitute demo evidence for real checks.
 
 After approved activation, restart web/worker processes to load environment and
-code changes. A blocked photo needs a clearer/wider upload in Room setup; the
+code changes. Normal close-up/partial room photos are accepted: missing corners,
+hidden floor and uncertain scale guide conservative styling rather than rejection.
+Only an unrelated or genuinely unrecognisable photo needs replacement in Room setup; the
 newest confirmed room photo becomes the source of the next design. Infeasible
 items require revised choices, not an expanded room. Assessment/provider failure
 refunds the reserved generation credits; it does not automatically retry a paid

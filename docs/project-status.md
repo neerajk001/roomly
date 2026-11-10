@@ -136,7 +136,11 @@ side-by-side, and matching proportions do not imply verified camera alignment.
 The [batch 2 assessment gate](design/room-assessment-batch-2.md) now checks photo
 evidence and qualitative furniture placement before full-room generation, with
 latest-photo recovery and atomic refunds. Controlled wider framing and output
-verification remain batch 3, pending approval. Local paid-provider activation is
+verification remain batch 3, pending approval. A follow-up relaxes the photo gate:
+recognisable close-ups/partial rooms proceed even with low confidence, hidden floor
+or uncertain item fit. Analysis guides compact styling within visible space;
+unrelated or genuinely unrecognisable photos still require replacement.
+Local paid-provider activation is
 approved and configured. Real RESTYLE cannot run unchecked while analysis is
 unavailable; known unavailable configuration is rejected before queuing/charging.
 Batch 1 passes typecheck/lint/package checks, both targeted Home/Pro browser

@@ -37,7 +37,7 @@ jobs:
     # Configure required reviewers on this environment for manual approval.
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.event.inputs.ref || github.sha }}
 

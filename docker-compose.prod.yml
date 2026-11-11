@@ -1,6 +1,7 @@
 # Production stack for the Hostinger VPS: host Nginx (TLS) + Next.js web
 # (UI/API) + pg-boss worker. Nginx terminates TLS and proxies to the web
-# container published on 127.0.0.1:3000.
+# container published on 127.0.0.1:5001 (3000 is taken by another app on the
+# shared VPS).
 #
 # Usage on the VPS:
 #   cp deploy/.env.production.example .env.production  # fill in real values
@@ -25,7 +26,7 @@ services:
       HOSTNAME: 0.0.0.0
       NODE_OPTIONS: "--max-old-space-size=768"
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:5001:3000"
     read_only: true
     tmpfs:
       - /tmp:size=128m,mode=1777

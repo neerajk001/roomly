@@ -24,6 +24,6 @@
   "dependencies": {
     "@react-pdf/renderer": "^4.9.0",
     "@roomdesigner/config": "workspace:*",
-    "react": "19.3.0"
+    "react": "19.3.1"
   }
 }

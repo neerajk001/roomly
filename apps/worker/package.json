@@ -28,7 +28,7 @@
     "@roomdesigner/db": "workspace:*",
     "@roomdesigner/shared": "workspace:*",
     "@roomdesigner/storage": "workspace:*",
-    "pg-boss": "^12.38.0",
+    "pg-boss": "^12.38.1",
     "zod": "catalog:"
   }
 }
